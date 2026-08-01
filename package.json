@@ -1,0 +1,16 @@
+{
+  "name": "cloud-stack",
+  "version": "1.0.0",
+  "description": "Unified Railway, GitHub, and Firebase Integration Stack",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "railway",
+    "github",
+    "firebase"
+  ],
+  "author": "",
+  "license": "ISC"
+}

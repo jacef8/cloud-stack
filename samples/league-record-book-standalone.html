@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>League Record Book</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --e0:#0C0A09;
+  --e1:rgba(30,25,22,.82);
+  --e1-hi:rgba(41,34,29,.88);
+  --e2:rgba(52,43,36,.92);
+  --e2-hi:rgba(66,55,45,.95);
+  --recess:#080706;
+  --ink:#FFFFFF;
+  --ink-2:rgba(255,255,255,.82);
+  --ink-3:rgba(255,255,255,.66);
+  --accent:#FFB020;
+  --accent-2:#FF5C4D;
+  --good:#3DDC84;
+  --bad:#FF4257;
+  --r:20px; --r-s:14px;
+  --disp:'Archivo',system-ui,sans-serif;
+  --text:'Inter Tight',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --raise:
+    inset 0 1px 0 rgba(255,255,255,.10),
+    inset 0 -1px 0 rgba(0,0,0,.5),
+    0 1px 2px rgba(0,0,0,.6),
+    0 6px 14px -8px rgba(0,0,0,.9);
+  --well-sh:
+    inset 0 3px 8px rgba(0,0,0,.9),
+    inset 0 -1px 0 rgba(255,255,255,.05);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--e0);color:var(--ink);font-family:var(--text);font-size:15px;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+button{font:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* ambient */
+.amb{position:fixed;z-index:0;pointer-events:none;border-radius:50%;filter:blur(90px)}
+.a1{width:min(900px,95vw);height:min(900px,95vw);left:46%;top:46%;transform:translate(-50%,-50%);
+  background:radial-gradient(circle,rgba(255,176,32,.17),rgba(255,92,77,.08) 44%,transparent 70%);
+  animation:br 20s ease-in-out infinite alternate}
+.a2{width:min(620px,80vw);height:min(620px,80vw);right:-14vw;bottom:-16vh;
+  background:radial-gradient(circle,rgba(255,92,77,.14),transparent 68%)}
+@keyframes br{to{transform:translate(-50%,-52%) scale(1.09)}}
+.grain{position:fixed;inset:0;z-index:30;pointer-events:none;opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* shell */
+.dash{position:relative;z-index:1;height:100dvh;padding-block:14px;
+  padding-inline:clamp(16px,1.4vw,22px);display:grid;gap:14px;
+  grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
+.dash>*{min-height:0}
+.rail,.main,.detail{overflow:auto;scrollbar-width:thin}
+@media(min-width:1100px){.dash{grid-template-columns:minmax(0,286px) minmax(0,1fr) minmax(0,336px)}.bar{grid-column:1/-1}}
+@media(min-width:700px) and (max-width:1099px){.dash{grid-template-columns:minmax(0,252px) minmax(0,1fr)}.bar{grid-column:1/-1}}
+@media(max-width:1099px){.dash>.detail{display:none}}
+
+.card{background:linear-gradient(158deg,var(--e1-hi),var(--e1) 70%);
+  backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%);
+  border:1px solid rgba(255,255,255,.07);border-radius:var(--r);box-shadow:var(--raise);
+  animation:rise .6s cubic-bezier(.2,.8,.2,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}}
+.card:nth-child(2){animation-delay:.06s}
+.card:nth-child(3){animation-delay:.12s}
+
+/* top bar */
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 16px}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.mark{width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;
+  background:linear-gradient(150deg,var(--accent),var(--accent-2));color:#26150A;
+  font-family:var(--disp);font-weight:800;font-size:17px;
+  box-shadow:0 4px 14px rgba(255,140,40,.45),inset 0 1px 0 rgba(255,255,255,.6)}
+.brand h1{margin:0;font-family:var(--disp);font-weight:800;font-size:19px;letter-spacing:-.02em;line-height:1.1}
+.brand span{display:block;font-family:var(--mono);font-size:12px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-3);margin-top:2px}
+.sample{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+  color:#2A1B06;background:linear-gradient(150deg,#FFD37A,var(--accent));
+  padding:5px 11px;border-radius:999px;font-weight:700;
+  box-shadow:0 3px 10px rgba(255,176,32,.4),inset 0 1px 0 rgba(255,255,255,.6)}
+.pills{display:flex;flex-wrap:wrap;padding:3px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);gap:2px}
+.pills button{padding:6px 13px;border:none;border-radius:999px;background:transparent;
+  color:var(--ink-3);cursor:pointer;transition:.18s;font-family:var(--mono);font-size:12px;letter-spacing:.06em}
+.pills button[aria-pressed="true"]{color:#26150A;font-weight:700;
+  background:linear-gradient(150deg,#FFD37A,var(--accent));
+  box-shadow:0 4px 12px rgba(255,176,32,.5),inset 0 1px 0 rgba(255,255,255,.6)}
+.barspace{flex:1 1 20px}
+
+/* rail */
+.rail{padding:14px}
+.rail h2,.detail h2{margin:0 0 4px;font-family:var(--mono);font-size:12px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.hint{margin:0 0 12px;font-size:13px;color:var(--ink-3);line-height:1.45}
+.statlist{display:flex;flex-direction:column;gap:8px}
+.stat{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 11px;
+  border:1px solid rgba(255,255,255,.06);border-radius:var(--r-s);cursor:pointer;color:var(--ink-2);
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.13),inset 0 -1px 0 rgba(0,0,0,.5),0 10px 20px -8px rgba(0,0,0,.95);
+  transition:transform .16s,color .16s}
+.stat:hover{transform:translateY(-1px);color:var(--ink)}
+.stat[data-sel="1"]{color:var(--ink);border-color:rgba(255,176,32,.55);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 0 0 1px rgba(255,176,32,.3),0 10px 20px -8px rgba(0,0,0,.95)}
+.stat[data-off="1"] .sname{color:rgba(255,255,255,.42)}
+.sname{flex:1;min-width:0;font-size:14px;font-weight:600;line-height:1.25}
+.sunit{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);font-weight:400;margin-top:2px}
+.sw{flex:none;width:38px;height:20px;border-radius:999px;background:var(--recess);
+  box-shadow:var(--well-sh);border:none;position:relative;cursor:pointer;padding:0}
+.sw i{position:absolute;top:50%;left:11px;width:15px;height:15px;border-radius:50%;
+  transform:translate(-50%,-50%);transition:left .18s,background .18s;
+  background:radial-gradient(circle at 34% 30%,#9A928A,#5D554E);
+  box-shadow:0 3px 8px rgba(0,0,0,.85),inset 0 -2px 3px rgba(0,0,0,.28)}
+.sw[aria-pressed="true"] i{left:27px;background:radial-gradient(circle at 34% 30%,#FFE6B0,var(--accent));
+  box-shadow:0 0 10px rgba(255,176,32,.8),0 3px 8px rgba(0,0,0,.85)}
+.railfoot{margin-top:14px;padding:11px;border-radius:var(--r-s);background:var(--recess);box-shadow:var(--well-sh)}
+.railfoot p{margin:0;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--ink-3);line-height:1.5}
+.railfoot b{color:var(--accent);font-weight:700}
+
+/* main */
+.main{padding:16px;display:flex;flex-direction:column;gap:16px}
+.anchor{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:20px;align-items:center}
+@media(max-width:860px){.anchor{grid-template-columns:minmax(0,1fr)}}
+.gwrap{position:relative;width:100%;max-width:300px;margin-inline:auto;aspect-ratio:1}
+.gwrap svg{width:100%;height:auto;display:block}
+.spin{transform-origin:170px 170px;animation:sp 44s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.gcenter{position:absolute;inset:0;display:grid;place-content:center;text-align:center;pointer-events:none}
+.gcenter b{display:block;font-family:var(--disp);font-weight:800;font-size:clamp(52px,7.4vw,86px);
+  line-height:.86;letter-spacing:-.05em;font-variant-numeric:tabular-nums;color:#fff}
+.gcenter em{display:block;font-family:var(--mono);font-style:normal;font-size:12px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-3);margin-top:12px}
+.ahead h3{margin:0;font-family:var(--disp);font-size:clamp(24px,3vw,34px);font-weight:800;
+  letter-spacing:-.025em;line-height:1.05;text-wrap:balance}
+.akicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 8px;font-weight:500}
+.aholder{margin:14px 0 0;display:flex;align-items:center;gap:12px}
+.av{width:46px;height:46px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-family:var(--disp);font-weight:700;font-size:16px;color:#26150A;
+  background:linear-gradient(150deg,#FFD37A,var(--accent));
+  box-shadow:0 4px 12px rgba(255,176,32,.45),inset 0 1px 0 rgba(255,255,255,.6)}
+.aholder div p{margin:0;font-size:17px;font-weight:700}
+.aholder div span{font-family:var(--mono);font-size:13px;color:var(--ink-3)}
+
+/* record rows */
+.sechead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:2px}
+.sechead h4{margin:0;font-family:var(--mono);font-size:12px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.sechead em{font-family:var(--mono);font-style:normal;font-size:12px;color:var(--ink-3)}
+.rows{display:flex;flex-direction:column;gap:7px}
+.row{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:12px;align-items:center;
+  padding:9px 12px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.055);
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 -1px 0 rgba(0,0,0,.5),0 8px 16px -10px rgba(0,0,0,.95);
+  transition:transform .15s}
+.row:hover{transform:translateY(-1px)}
+.row.top{border-color:rgba(255,176,32,.45)}
+.rk{font-family:var(--mono);font-size:13px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.row.top .rk{color:var(--accent);font-weight:700}
+.rn{font-size:15px;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rv{text-align:right}
+.rv b{font-family:var(--disp);font-size:19px;font-weight:800;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums}
+.rwell{grid-column:1/-1;height:6px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);overflow:hidden}
+.rwell i{display:block;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--accent-2),var(--accent));
+  box-shadow:0 0 10px rgba(255,176,32,.7)}
+.empty{padding:26px 14px;text-align:center;font-size:14px;color:var(--ink-3);
+  border-radius:var(--r-s);background:var(--recess);box-shadow:var(--well-sh)}
+
+/* detail */
+.detail{padding:14px}
+.awards{display:flex;flex-direction:column;gap:9px;margin-top:10px}
+.award{display:grid;grid-template-columns:66px minmax(0,1fr);gap:12px;align-items:center;padding:10px;
+  border-radius:var(--r-s);border:1px solid rgba(255,255,255,.055);
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 8px 16px -10px rgba(0,0,0,.95)}
+.award svg{width:66px;height:66px;display:block}
+.dialv{font-family:var(--disp);font-size:15px;font-weight:800;fill:#fff;
+  font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.award h5{margin:0;font-size:12px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--accent);font-weight:500;line-height:1.3}
+.award p{margin:4px 0 0;font-size:15px;font-weight:700;line-height:1.2}
+.award span{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:3px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* drawer + dialog */
+.drawer-only{display:none}
+.ghostbtn{border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:8px 15px;cursor:pointer;
+  color:var(--ink);background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 6px 14px -8px rgba(0,0,0,.9);
+  font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.scrim{position:fixed;inset:0;z-index:39;background:rgba(0,0,0,.72)}
+dialog{border:none;padding:0;background:transparent;max-width:min(420px,92vw);width:100%}
+dialog::backdrop{background:rgba(0,0,0,.72)}
+.dlg{padding:14px}
+@media(min-width:1100px){.ddet{display:none}}
+@media(max-width:699px){
+  .drawer-only{display:inline-block}
+  .dash{height:auto;min-height:100dvh;grid-template-rows:none}
+  .dash>.rail{position:fixed;z-index:40;top:0;right:0;bottom:0;width:min(360px,88vw);
+    border-radius:var(--r) 0 0 var(--r);transform:translateX(105%);transition:transform .22s ease;
+    max-height:100dvh}
+  .dash>.rail.open{transform:none}
+  .rail .closebar{position:sticky;bottom:-14px;margin:12px -14px -14px;padding:12px 14px;
+    background:linear-gradient(0deg,rgba(20,16,14,.98),rgba(20,16,14,.8))}
+  .rail .closebar button{width:100%}
+  .gwrap{max-width:240px}
+}
+.closebar{display:none}
+@media(max-width:699px){.closebar{display:block}}
+@media (prefers-reduced-motion:reduce){.card,.a1,.spin,.row,.stat{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+
+<div class="amb a1"></div><div class="amb a2"></div><div class="grain"></div>
+
+<div class="dash">
+  <header class="card bar">
+    <div class="brand">
+      <div class="mark">RB</div>
+      <div>
+        <h1>Apalachee Dynasty League</h1>
+        <span>Record book · 2019–2025</span>
+      </div>
+    </div>
+    <span class="sample">Sample data</span>
+    <div class="barspace"></div>
+    <div class="pills" id="seasons" role="group" aria-label="Season"></div>
+    <button class="ghostbtn drawer-only" id="openRail">Stats</button>
+    <button class="ghostbtn ddet" id="openDet">Awards</button>
+  </header>
+
+  <aside class="card rail" id="rail">
+    <h2>Tracked stats</h2>
+    <p class="hint">Tap a stat to see its all-time board. Use the switch to decide which ones count toward the end-of-year awards.</p>
+    <div class="statlist" id="statlist"></div>
+    <div class="railfoot"><p>Tracking <b id="trackCount">7</b> of <b>9</b> stats · <b id="recCount">72</b> records logged</p></div>
+    <div class="closebar"><button class="ghostbtn" id="closeRail">Show the board</button></div>
+  </aside>
+
+  <main class="card main">
+    <section class="anchor">
+      <div class="gwrap">
+        <svg viewBox="0 0 340 340" role="img" id="gsvg" aria-label="Record leader gauge">
+          <defs>
+            <linearGradient id="gg" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0%" stop-color="#FF5C4D"/><stop offset="58%" stop-color="#FFB020"/>
+              <stop offset="100%" stop-color="#FFE08A"/>
+            </linearGradient>
+            <filter id="gglow" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="4" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <circle class="spin" cx="170" cy="170" r="163" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1" stroke-dasharray="1.5 13"/>
+          <circle cx="170" cy="170" r="130" fill="none" stroke="rgba(0,0,0,.65)" stroke-width="24" stroke-linecap="round" stroke-dasharray="613 817" transform="rotate(135 170 170)"/>
+          <circle id="garc" cx="170" cy="170" r="130" fill="none" stroke="url(#gg)" stroke-width="22" stroke-linecap="round" stroke-dasharray="0 817" transform="rotate(135 170 170)" filter="url(#gglow)" style="transition:stroke-dasharray .5s cubic-bezier(.2,.8,.2,1)"/>
+        </svg>
+        <div class="gcenter"><b id="gval">—</b><em id="gunit">points</em></div>
+      </div>
+      <div class="ahead">
+        <p class="akicker" id="kicker">All-time leader</p>
+        <h3 id="statTitle">Highest single game</h3>
+        <div class="aholder">
+          <div class="av" id="avi">H</div>
+          <div>
+            <p id="hname">Helaman</p>
+            <span id="hctx">Wk 11 vs Dax · 2023</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sechead"><h4 id="boardLabel">All-time board</h4><em id="boardCount"></em></div>
+      <div class="rows" id="rows"></div>
+    </section>
+  </main>
+
+  <aside class="card detail" id="detail">
+    <h2>2025 award ballot</h2>
+    <p class="hint">One trophy per tracked stat, taken from this season only.</p>
+    <div class="awards" id="awards"></div>
+  </aside>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<dialog id="detDlg"><div class="card dlg">
+  <h2>2025 award ballot</h2>
+  <p class="hint">One trophy per tracked stat, taken from this season only.</p>
+  <div class="awards" id="awardsD"></div>
+  <button class="ghostbtn" id="closeDet" style="margin-top:12px;width:100%">Close</button>
+</div></dialog>
+
+<script>
+const STATS=[
+ {id:'hi',name:'Highest single game',unit:'points',dec:1,scale:250,rows:[
+  ['Helaman',214.8,'Wk 11 vs Dax',2023],['Kade',208.4,'Wk 6 vs Jace',2025],['Jace',201.6,'Wk 14 vs Wes',2021],
+  ['Dax',197.2,'Wk 3 vs Lehi',2025],['Brock',194.9,'Wk 9 vs Ammon',2019],['Tyrell',190.1,'Wk 12 vs Gentry',2024],
+  ['Ammon',188.7,'Wk 2 vs Cory',2022],['Gentry',186.3,'Wk 7 vs Brock',2020]],award:'Biggest game of the year'},
+ {id:'blow',name:'Biggest blowout',unit:'margin',dec:1,scale:120,rows:[
+  ['Kade',109.6,'Wk 6 over Jace',2025],['Helaman',98.2,'Wk 11 over Dax',2023],['Wes',91.4,'Wk 4 over Ruben',2022],
+  ['Jace',88.7,'Wk 14 over Wes',2021],['Dax',84.0,'Wk 3 over Lehi',2025],['Brock',79.5,'Wk 9 over Ammon',2019],
+  ['Lehi',76.8,'Wk 8 over Cory',2024],['Gentry',71.2,'Wk 5 over Tyrell',2020]],award:'Woodshed award'},
+ {id:'thin',name:'Narrowest win',unit:'margin',dec:2,scale:2,invert:true,rows:[
+  ['Ruben',0.04,'Wk 13 over Kade',2024],['Tyrell',0.12,'Wk 7 over Jace',2025],['Cory',0.20,'Wk 2 over Brock',2021],
+  ['Jace',0.36,'Wk 10 over Gentry',2023],['Ammon',0.48,'Wk 5 over Wes',2019],['Dax',0.62,'Wk 9 over Lehi',2022],
+  ['Helaman',0.74,'Wk 15 over Ruben',2025],['Brock',0.90,'Wk 1 over Cory',2020]],award:'Heart attack award',asc:true},
+ {id:'loss',name:'Most points in a loss',unit:'points',dec:1,scale:200,rows:[
+  ['Jace',186.4,'Wk 6 lost to Kade',2025],['Dax',180.9,'Wk 11 lost to Helaman',2023],['Gentry',174.2,'Wk 12 lost to Tyrell',2024],
+  ['Wes',169.8,'Wk 14 lost to Jace',2021],['Cory',165.1,'Wk 2 lost to Ammon',2022],['Lehi',161.7,'Wk 3 lost to Dax',2025],
+  ['Ammon',158.3,'Wk 9 lost to Brock',2019],['Ruben',154.0,'Wk 8 lost to Lehi',2020]],award:'Hard luck award'},
+ {id:'streak',name:'Longest win streak',unit:'games',dec:0,scale:14,rows:[
+  ['Helaman',11,'Wk 3–13',2023],['Jace',9,'Wk 5–13',2021],['Kade',8,'Wk 1–8',2025],['Dax',8,'Wk 6–13',2022],
+  ['Brock',7,'Wk 2–8',2019],['Tyrell',7,'Wk 7–13',2024],['Gentry',6,'Wk 8–13',2020],['Wes',6,'Wk 1–6',2025]],award:'Hot hand award'},
+ {id:'pf',name:'Most points, full season',unit:'points',dec:1,scale:2200,rows:[
+  ['Kade',2104.6,'14–3, champion',2025],['Helaman',2061.2,'13–4, champion',2023],['Jace',1994.8,'12–5, runner-up',2021],
+  ['Tyrell',1952.3,'11–6, champion',2024],['Dax',1918.7,'10–7, third',2025],['Brock',1887.5,'12–5, champion',2019],
+  ['Gentry',1854.9,'11–6, runner-up',2020],['Ammon',1822.4,'10–7, fourth',2022]],award:'Scoring title'},
+ {id:'bench',name:'Points left on the bench',unit:'points',dec:1,scale:100,rows:[
+  ['Cory',86.4,'Wk 8, lost by 3.2',2024],['Ruben',79.1,'Wk 12, lost by 11.6',2025],['Lehi',74.6,'Wk 4, won by 24.0',2022],
+  ['Wes',70.2,'Wk 9, lost by 1.4',2021],['Ammon',66.8,'Wk 6, lost by 18.3',2023],['Brock',63.5,'Wk 2, won by 30.7',2019],
+  ['Gentry',59.9,'Wk 11, lost by 7.8',2020],['Jace',57.1,'Wk 5, lost by 2.9',2025]],award:'Wrong lineup award'},
+ {id:'faab',name:'Most FAAB on one player',unit:'dollars',dec:0,pre:'$',scale:200,off:true,rows:[
+  ['Dax',188,'Puka Nacua, Wk 3',2023],['Jace',164,'Bucky Irving, Wk 9',2024],['Helaman',151,'Kimani Vidal, Wk 5',2025],
+  ['Kade',139,'Jaylen Warren, Wk 4',2022],['Tyrell',122,'Cordarrelle Patterson, Wk 6',2021],['Wes',110,'Gus Edwards, Wk 12',2025],
+  ['Brock',97,'Kyle Rudolph, Wk 7',2019],['Ruben',84,'Mike Davis, Wk 2',2020]],award:'Overpay award'},
+ {id:'trades',name:'Trades in a season',unit:'trades',dec:0,scale:20,off:true,rows:[
+  ['Ruben',17,'traded with 9 of 11',2025],['Kade',13,'six in-season flips',2024],['Helaman',11,'four draft-pick swaps',2023],
+  ['Dax',10,'three-team deal in Wk 7',2025],['Jace',8,'two blockbusters',2022],['Lehi',7,'all before Wk 9',2021],
+  ['Gentry',5,'one at the deadline',2020],['Brock',4,'quiet year',2019]],award:'Wheeler dealer'}
+];
+const SEASONS=['ALL',2025,2024,2023,2022,2021,2020,2019];
+let sel=STATS[0].id, season='ALL';
+const tracked=new Set(STATS.filter(s=>!s.off).map(s=>s.id));
+const $=id=>document.getElementById(id);
+const fmt=(s,v)=>(s.pre||'')+v.toFixed(s.dec).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+const entries=(s,yr)=>{const r=s.rows.filter(r=>yr==='ALL'||r[3]===yr);
+  return r.slice().sort((a,b)=>s.asc?a[1]-b[1]:b[1]-a[1]);};
+const pct=(s,v)=>{const p=s.invert?1-v/s.scale:v/s.scale;return Math.max(.04,Math.min(1,p));};
+
+function renderSeasons(){
+  $('seasons').innerHTML=SEASONS.map(y=>
+    `<button type="button" data-y="${y}" aria-pressed="${String(y)===String(season)}">${y==='ALL'?'All-time':y}</button>`).join('');
+}
+function renderStats(){
+  $('statlist').innerHTML=STATS.map(s=>`
+   <div class="stat" role="button" tabindex="0" data-id="${s.id}" data-sel="${s.id===sel?1:0}" data-off="${tracked.has(s.id)?0:1}">
+     <span class="sname">${s.name}<span class="sunit">${s.unit}</span></span>
+     <button class="sw" type="button" data-sw="${s.id}" aria-pressed="${tracked.has(s.id)}"
+       aria-label="Count ${s.name} toward awards"><i></i></button>
+   </div>`).join('');
+  $('trackCount').textContent=tracked.size;
+  $('recCount').textContent=STATS.reduce((n,s)=>n+s.rows.length,0);
+}
+function renderBoard(){
+  const s=STATS.find(x=>x.id===sel), list=entries(s,season);
+  $('statTitle').textContent=s.name;
+  $('gunit').textContent=s.unit;
+  $('kicker').textContent=season==='ALL'?'All-time leader':season+' leader';
+  $('boardLabel').textContent=season==='ALL'?'All-time board':season+' board';
+  $('boardCount').textContent=list.length+(list.length===1?' record':' records');
+  if(list.length){
+    const top=list[0];
+    $('gval').textContent=fmt(s,top[1]);
+    $('garc').setAttribute('stroke-dasharray',(613*pct(s,top[1])).toFixed(0)+' 817');
+    $('avi').textContent=top[0][0];
+    $('hname').textContent=top[0];
+    $('hctx').textContent=top[2]+' · '+top[3];
+  }else{
+    $('gval').textContent='—';$('garc').setAttribute('stroke-dasharray','0 817');
+    $('avi').textContent='–';$('hname').textContent='No record yet';$('hctx').textContent=season+' season';
+  }
+  $('rows').innerHTML=list.length?list.map((r,i)=>`
+    <div class="row${i===0?' top':''}">
+      <span class="rk">${String(i+1).padStart(2,'0')}</span>
+      <span class="rn">${r[0]}<span class="rc">${r[2]} · ${r[3]}</span></span>
+      <span class="rv"><b>${fmt(s,r[1])}</b></span>
+      <span class="rwell"><i style="width:${(pct(s,r[1])*100).toFixed(1)}%"></i></span>
+    </div>`).join(''):`<div class="empty">No ${s.name.toLowerCase()} on the books for ${season}.</div>`;
+}
+function renderAwards(){
+  const html=STATS.filter(s=>tracked.has(s.id)).map(s=>{
+    const list=entries(s,2025);if(!list.length)return '';
+    const w=list[0],p=pct(s,w[1]);
+    return `<div class="award">
+      <svg viewBox="0 0 66 66" aria-hidden="true">
+        <circle cx="33" cy="33" r="26" fill="none" stroke="rgba(0,0,0,.65)" stroke-width="7"/>
+        <circle cx="33" cy="33" r="26" fill="none" stroke="url(#gg)" stroke-width="6" stroke-linecap="round"
+          stroke-dasharray="${(163*p).toFixed(0)} 164" transform="rotate(-90 33 33)"
+          style="filter:drop-shadow(0 0 5px rgba(255,176,32,.9))"/>
+        <text class="dialv" x="33" y="38" text-anchor="middle">${s.dec>1?w[1].toFixed(2):Math.round(w[1])}</text>
+      </svg>
+      <div><h5>${s.award}</h5><p>${w[0]}</p><span>${w[2]}</span></div></div>`;
+  }).join('');
+  const out=html||`<div class="empty">No stats tracked. Switch one on to build the ballot.</div>`;
+  $('awards').innerHTML=out;$('awardsD').innerHTML=out;
+}
+function renderAll(){renderSeasons();renderStats();renderBoard();renderAwards();}
+
+$('seasons').addEventListener('click',e=>{const b=e.target.closest('button[data-y]');if(!b)return;
+  const y=b.dataset.y;season=y==='ALL'?'ALL':+y;renderSeasons();renderBoard();});
+$('statlist').addEventListener('click',e=>{
+  const sw=e.target.closest('.sw');
+  if(sw){const id=sw.dataset.sw;tracked.has(id)?tracked.delete(id):tracked.add(id);renderStats();renderAwards();return;}
+  const st=e.target.closest('.stat');if(!st)return;sel=st.dataset.id;renderStats();renderBoard();});
+$('statlist').addEventListener('keydown',e=>{
+  if(e.key!=='Enter'&&e.key!==' ')return;const st=e.target.closest('.stat');
+  if(st&&!e.target.closest('.sw')){e.preventDefault();sel=st.dataset.id;renderStats();renderBoard();}});
+
+const rail=$('rail'),scrim=$('scrim');
+const openRail=()=>{rail.classList.add('open');scrim.hidden=false;};
+const shutRail=()=>{rail.classList.remove('open');scrim.hidden=true;};
+$('openRail').addEventListener('click',openRail);
+$('closeRail').addEventListener('click',shutRail);
+scrim.addEventListener('click',shutRail);
+$('openDet').addEventListener('click',()=>$('detDlg').showModal());
+$('closeDet').addEventListener('click',()=>$('detDlg').close());
+
+renderAll();
+</script>
+
+</body>
+</html>

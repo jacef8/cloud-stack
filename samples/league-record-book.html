@@ -157,17 +157,17 @@ button{font:inherit}
 
 /* ══ main ══ */
 .main{padding:17px 19px;display:flex;flex-direction:column;gap:16px}
-.anchor{display:grid;grid-template-columns:minmax(0,276px) minmax(0,1fr);gap:24px;align-items:center}
+.anchor{display:grid;grid-template-columns:minmax(0,322px) minmax(0,1fr);gap:24px;align-items:center}
 @media(max-width:880px){.anchor{grid-template-columns:minmax(0,1fr);gap:10px}}
-.gwrap{position:relative;width:100%;max-width:276px;margin-inline:auto;aspect-ratio:1}
+.gwrap{position:relative;width:100%;max-width:322px;margin-inline:auto;aspect-ratio:1}
 .gwrap::before{content:"";position:absolute;inset:11%;border-radius:50%;
   background:radial-gradient(circle,rgba(79,216,255,.16),transparent 66%)}
 .gwrap svg{position:relative;width:100%;height:auto;display:block;overflow:visible}
 .spin{transform-origin:170px 170px;animation:sp 56s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
-.gcenter{position:absolute;inset:20%;display:grid;place-content:center;text-align:center;pointer-events:none}
-.gcenter b{display:block;font-family:var(--disp);font-weight:900;line-height:.88;
-  letter-spacing:-.05em;font-variant-numeric:tabular-nums;color:#fff;font-size:62px}
+.gcenter{position:absolute;inset:17%;display:grid;place-content:center;text-align:center;pointer-events:none}
+.gcenter b{display:block;font-family:var(--disp);font-weight:900;line-height:.86;
+  letter-spacing:-.055em;font-variant-numeric:tabular-nums;color:#fff;font-size:96px}
 .gcenter em{display:block;font-family:var(--mono);font-style:normal;font-size:12px;letter-spacing:.16em;
   text-transform:uppercase;color:var(--ink-3);margin-top:12px}
 .akicker{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;
@@ -275,7 +275,7 @@ dialog::backdrop{background:rgba(2,4,10,.78)}
     background:linear-gradient(0deg,rgba(10,14,24,.98),rgba(10,14,24,.84))}
   .rail .closebar button{width:100%}
   .main{padding:15px}
-  .gwrap{max-width:226px}
+  .gwrap{max-width:252px}
 }
 @media (prefers-reduced-motion:reduce){.panel,.a1,.a2,.spin,.row,.stat,.award{animation:none!important;transition:none!important}}
 </style>
@@ -326,17 +326,17 @@ dialog::backdrop{background:rgba(2,4,10,.78)}
               <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
             </filter>
           </defs>
-          <circle class="spin" cx="170" cy="170" r="162" fill="none" stroke="rgba(255,255,255,.16)"
+          <circle class="spin" cx="170" cy="170" r="166" fill="none" stroke="rgba(255,255,255,.16)"
                   stroke-width="1" stroke-dasharray="1.5 15"/>
-          <circle cx="170" cy="170" r="150" fill="none" stroke="rgba(255,255,255,.13)"
+          <circle cx="170" cy="170" r="157" fill="none" stroke="rgba(255,255,255,.13)"
                   stroke-width="7" stroke-dasharray="1.5 33.3" transform="rotate(135 170 170)"
                   stroke-linecap="round" pathLength="100"/>
-          <circle cx="170" cy="170" r="132" fill="none" stroke="rgba(0,0,0,.72)" stroke-width="23"
-                  stroke-linecap="round" stroke-dasharray="622 830" transform="rotate(135 170 170)"/>
-          <circle id="garc" cx="170" cy="170" r="132" fill="none" stroke="url(#gg)" stroke-width="21"
-                  stroke-linecap="round" stroke-dasharray="0 830" transform="rotate(135 170 170)"
+          <circle cx="170" cy="170" r="138" fill="none" stroke="rgba(0,0,0,.72)" stroke-width="21"
+                  stroke-linecap="round" stroke-dasharray="650 867" transform="rotate(135 170 170)"/>
+          <circle id="garc" cx="170" cy="170" r="138" fill="none" stroke="url(#gg)" stroke-width="19"
+                  stroke-linecap="round" stroke-dasharray="0 867" transform="rotate(135 170 170)"
                   filter="url(#gglow)" style="transition:stroke-dasharray .55s cubic-bezier(.2,.8,.2,1)"/>
-          <circle id="gcap" cx="170" cy="38" r="7" fill="#fff"
+          <circle id="gcap" cx="170" cy="32" r="6.5" fill="#fff"
                   style="filter:drop-shadow(0 2px 5px rgba(0,0,0,.9));transition:transform .55s cubic-bezier(.2,.8,.2,1)"/>
         </svg>
         <div class="gcenter"><b id="gval">—</b><em id="gunit">points</em></div>
@@ -453,14 +453,14 @@ function fitNumber(el){
   const box=el.parentElement.getBoundingClientRect().width;
   if(!box)return;
   const avail=box*0.94;
-  el.style.fontSize='64px';
+  el.style.fontSize='96px';
   const w=el.scrollWidth;
-  if(w>avail)el.style.fontSize=Math.max(26,Math.floor(64*avail/w))+'px';
+  if(w>avail)el.style.fontSize=Math.max(30,Math.floor(96*avail/w))+'px';
 }
 function setCap(p){
   const a=(135+270*p)*Math.PI/180;
-  const x=170+132*Math.cos(a), y=170+132*Math.sin(a);
-  $('gcap').setAttribute('transform',`translate(${(x-170).toFixed(1)} ${(y-38).toFixed(1)})`);
+  const x=170+138*Math.cos(a), y=170+138*Math.sin(a);
+  $('gcap').setAttribute('transform',`translate(${(x-170).toFixed(1)} ${(y-32).toFixed(1)})`);
 }
 function renderBoard(){
   const s=STATS.find(x=>x.id===sel), list=entries(s,season);
@@ -472,14 +472,14 @@ function renderBoard(){
   if(list.length){
     const top=list[0],txt=fmt(s,top[1]),p=pct(s,top[1]);
     const g=$('gval');g.textContent=txt;fitNumber(g);
-    $('garc').setAttribute('stroke-dasharray',(622*p).toFixed(0)+' 830');
+    $('garc').setAttribute('stroke-dasharray',(650*p).toFixed(0)+' 867');
     $('gcap').style.opacity='1';setCap(p);
     $('avi').textContent=top[0][0];
     $('hname').textContent=top[0];
     $('hctx').textContent=top[2]+' · '+top[3];
   }else{
     $('gval').textContent='—';fitNumber($('gval'));
-    $('garc').setAttribute('stroke-dasharray','0 830');$('gcap').style.opacity='0';
+    $('garc').setAttribute('stroke-dasharray','0 867');$('gcap').style.opacity='0';
     $('avi').textContent='–';$('hname').textContent='No record yet';$('hctx').textContent=season+' season';
   }
   $('rows').innerHTML=list.length?list.map((r,i)=>rowHTML(s,r,i)).join('')

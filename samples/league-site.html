@@ -55,7 +55,7 @@ button{font:inherit;color:inherit}
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
 
 /* ═══ shell: icon dock + content ═══ */
-.site{position:relative;z-index:1;height:100dvh;display:grid;gap:13px;
+.site{position:relative;z-index:1;height:100vh;height:100dvh;display:grid;gap:13px;
   grid-template-columns:76px minmax(0,1fr);padding:13px clamp(14px,1.3vw,20px)}
 .site>*{min-height:0}
 .panel{position:relative;border-radius:var(--r);animation:rise .6s cubic-bezier(.2,.8,.2,1) both}
@@ -114,6 +114,7 @@ button{font:inherit;color:inherit}
 .page{display:none;min-height:0}
 .page[data-on="1"]{display:grid;gap:13px}
 .scroll{overflow:auto;scrollbar-width:thin;min-height:0}
+.panel{min-height:120px}
 .scroll::-webkit-scrollbar{width:8px}
 .scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:99px}
 
@@ -130,7 +131,10 @@ button{font:inherit;color:inherit}
   border-radius:var(--r-s);background:var(--recess);box-shadow:var(--well-sh)}
 
 /* gauge */
-.gwrap{position:relative;width:100%;max-width:300px;margin-inline:auto;aspect-ratio:1}
+.gwrap{position:relative;width:100%;max-width:300px;margin-left:auto;margin-right:auto}
+.gwrap::after{content:"";display:block;padding-bottom:100%}
+@supports (aspect-ratio:1){.gwrap{aspect-ratio:1}.gwrap::after{display:none}}
+.gwrap>svg{position:absolute;inset:0;top:0;left:0;width:100%;height:100%}
 .gwrap::before{content:"";position:absolute;inset:12%;border-radius:50%;
   background:radial-gradient(circle,rgba(0,232,160,.15),transparent 66%)}
 .gwrap svg{position:relative;width:100%;height:auto;display:block;overflow:visible}
@@ -352,7 +356,7 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
   .vsmid{text-align:center}
 }
 @media(max-width:699px){
-  .site{height:auto;min-height:100dvh;grid-template-columns:minmax(0,1fr);
+  .site{height:auto;min-height:100vh;min-height:100dvh;grid-template-columns:minmax(0,1fr);
     padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
   .site>.dock{position:fixed;left:0;right:0;bottom:0;z-index:40;flex-direction:row;justify-content:space-around;
     border-radius:var(--r) var(--r) 0 0;padding:9px 8px calc(9px + env(safe-area-inset-bottom,0px));gap:4px}
@@ -368,6 +372,13 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
 @media (prefers-reduced-motion:reduce){.panel,.a1,.spin,.row,.stat,.mcard,.ring{animation:none!important;transition:none!important}}
 </style>
 
+<noscript><div style="position:fixed;inset:0;top:0;left:0;right:0;bottom:0;z-index:99;display:grid;
+  place-content:center;text-align:center;padding:24px;background:#080B0A;color:#fff;
+  font-family:system-ui,sans-serif">
+  <p style="font-size:19px;font-weight:700;margin:0 0 8px">This page needs JavaScript</p>
+  <p style="font-size:15px;color:rgba(255,255,255,.67);margin:0;max-width:34ch;line-height:1.5">
+  Every board on the site is built in the browser. Open the file in Chrome, Safari, Firefox or Edge
+  with scripting enabled.</p></div></noscript>
 <div class="amb a1"></div><div class="amb a2"></div><div class="field"></div><div class="vign"></div><div class="grain"></div>
 
 <svg style="position:absolute;width:0;height:0" aria-hidden="true" focusable="false"><defs>
@@ -749,8 +760,12 @@ function openMgr(name){
         <span class="rwell"><i style="width:${rivals[rivals.length-1].w/GP*100}%"></i></span></div>
     </div>
     <button class="ghostbtn" id="mdlgClose" style="margin-top:14px;width:100%">Close</button>`;
-  $('mdlg').showModal();
-  $('mdlgClose').onclick=()=>$('mdlg').close();
+  const d=$('mdlg');
+  if(typeof d.showModal==='function')d.showModal();
+  else{d.setAttribute('open','');d.style.cssText='display:block;position:fixed;z-index:50;'+
+    'top:50%;left:50%;transform:translate(-50%,-50%);max-height:88vh;overflow:auto';}
+  $('mdlgClose').onclick=()=>{
+    if(typeof d.close==='function')d.close();else{d.removeAttribute('open');d.style.display='none';}};
 }
 
 /* ═══ MATCHUPS ═══ */

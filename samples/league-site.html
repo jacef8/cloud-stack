@@ -1,4 +1,4 @@
-<title>Apalachee Dynasty League</title>
+<title>Tribes of Gridiron Record Book</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
 <style>
@@ -394,7 +394,7 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
 
 <div class="site">
   <nav class="panel glass dock" aria-label="Sections">
-    <div class="crest">ADL</div>
+    <div class="crest">12T</div>
     <button class="nav" data-go="home" aria-current="page" aria-label="Overview"><svg viewBox="0 0 24 24"><path d="M4 11.5 12 5l8 6.5"/><path d="M6 11v8h12v-8"/></svg></button>
     <span class="navlab">Home</span>
     <button class="nav" data-go="records" aria-label="Records"><svg viewBox="0 0 24 24"><path d="M5 4h14v16l-7-4-7 4z"/><path d="M9 9h6"/></svg></button>
@@ -410,9 +410,9 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
 
   <div class="col">
     <header class="panel glass bar">
-      <h1>Apalachee Dynasty League<span id="crumb">Overview</span></h1>
-      <span class="chip"><i></i>2025 champion · Kade</span>
-      <span class="chip mute"><i></i>Sample data</span>
+      <h1>The 12 Tribes of Gridiron<span id="crumb">Overview</span></h1>
+      <span class="chip"><i></i><span id="champChip"></span></span>
+      <span class="chip mute"><i></i>Live Sleeper data</span>
       <div class="barspace"></div>
       <div class="pills" id="seasons" role="group" aria-label="Season" hidden></div>
     </header>
@@ -442,7 +442,7 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
         </section>
       </div>
       <div class="panel glass pad" style="grid-column:2;grid-row:1;overflow:auto">
-        <div class="sechead"><h4>Champions</h4><em>seven seasons</em></div>
+        <div class="sechead"><h4>Champions</h4><em id="champNote"></em></div>
         <div class="tl" id="htl"></div>
       </div>
       <div class="panel glass pad scroll" style="grid-column:2;grid-row:2">
@@ -512,11 +512,11 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
       <main class="panel glass pad scroll h2hwrap">
         <div class="vs">
           <div class="side a">
-            <div class="bav" id="avA">K</div><h3 id="nmA">Kade</h3><p id="sbA"></p><b id="wA">0</b>
+            <div class="bav" id="avA"></div><h3 id="nmA"></h3><p id="sbA"></p><b id="wA">0</b>
           </div>
           <div class="vsmid">wins</div>
           <div class="side b">
-            <div class="bav" id="avB">H</div><h3 id="nmB">Helaman</h3><p id="sbB"></p><b id="wB">0</b>
+            <div class="bav" id="avB"></div><h3 id="nmB"></h3><p id="sbB"></p><b id="wB">0</b>
           </div>
         </div>
         <div>
@@ -534,8 +534,8 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
     <section class="page" id="p-awards">
       <div class="panel glass pad scroll">
         <div class="ahead" style="margin-bottom:10px">
-          <div><p class="eyebrow" style="margin:0">2025 award ballot</p>
-            <p class="hint" style="margin:5px 0 0">One trophy per tracked stat, from this season only. Switch a stat off to drop its trophy.</p></div>
+          <div><p class="eyebrow" style="margin:0" id="awTitle">Award ballot</p>
+            <p class="hint" style="margin:5px 0 0">One trophy per tracked stat, this season only. Switch a stat off to drop its trophy.</p></div>
           <span class="chip"><i></i><span id="awCount">7 trophies</span></span>
         </div>
         <div class="agrid" id="agrid"></div>
@@ -548,65 +548,14 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
 
 <script>
 /* ═══ data — all fabricated, labeled sample data in the UI ═══ */
-const STATS=[
- {id:'hi',name:'Highest single game',unit:'points',dec:1,scale:250,award:'Biggest game',rows:[
-  ['Helaman',214.8,'Wk 11 vs Dax',2023],['Kade',208.4,'Wk 6 vs Jace',2025],['Jace',201.6,'Wk 14 vs Wes',2021],
-  ['Dax',197.2,'Wk 3 vs Lehi',2025],['Brock',194.9,'Wk 9 vs Ammon',2019],['Tyrell',190.1,'Wk 12 vs Gentry',2024],
-  ['Ammon',188.7,'Wk 2 vs Cory',2022],['Gentry',186.3,'Wk 7 vs Brock',2020]]},
- {id:'blow',name:'Biggest blowout',unit:'margin',dec:1,scale:120,award:'Woodshed award',rows:[
-  ['Kade',109.6,'Wk 6 over Jace',2025],['Helaman',98.2,'Wk 11 over Dax',2023],['Wes',91.4,'Wk 4 over Ruben',2022],
-  ['Jace',88.7,'Wk 14 over Wes',2021],['Dax',84.0,'Wk 3 over Lehi',2025],['Brock',79.5,'Wk 9 over Ammon',2019],
-  ['Lehi',76.8,'Wk 8 over Cory',2024],['Gentry',71.2,'Wk 5 over Tyrell',2020]]},
- {id:'thin',name:'Narrowest win',unit:'margin',dec:2,scale:2,invert:true,asc:true,award:'Heart attack award',rows:[
-  ['Ruben',0.04,'Wk 13 over Kade',2024],['Tyrell',0.12,'Wk 7 over Jace',2025],['Cory',0.20,'Wk 2 over Brock',2021],
-  ['Jace',0.36,'Wk 10 over Gentry',2023],['Ammon',0.48,'Wk 5 over Wes',2019],['Dax',0.62,'Wk 9 over Lehi',2022],
-  ['Helaman',0.74,'Wk 15 over Ruben',2025],['Brock',0.90,'Wk 1 over Cory',2020]]},
- {id:'loss',name:'Most points in a loss',unit:'points',dec:1,scale:200,award:'Hard luck award',rows:[
-  ['Jace',186.4,'Wk 6 lost to Kade',2025],['Dax',180.9,'Wk 11 lost to Helaman',2023],['Gentry',174.2,'Wk 12 lost to Tyrell',2024],
-  ['Wes',169.8,'Wk 14 lost to Jace',2021],['Cory',165.1,'Wk 2 lost to Ammon',2022],['Lehi',161.7,'Wk 3 lost to Dax',2025],
-  ['Ammon',158.3,'Wk 9 lost to Brock',2019],['Ruben',154.0,'Wk 8 lost to Lehi',2020]]},
- {id:'streak',name:'Longest win streak',unit:'games',dec:0,scale:14,award:'Hot hand award',rows:[
-  ['Helaman',11,'Wk 3–13',2023],['Jace',9,'Wk 5–13',2021],['Kade',8,'Wk 1–8',2025],['Dax',8,'Wk 6–13',2022],
-  ['Brock',7,'Wk 2–8',2019],['Tyrell',7,'Wk 7–13',2024],['Gentry',6,'Wk 8–13',2020],['Wes',6,'Wk 1–6',2025]]},
- {id:'pf',name:'Most points, full season',unit:'points',dec:1,scale:2200,award:'Scoring title',rows:[
-  ['Kade',2104.6,'14–3, champion',2025],['Helaman',2061.2,'13–4, champion',2023],['Jace',1994.8,'12–5, runner-up',2021],
-  ['Tyrell',1952.3,'11–6, champion',2024],['Dax',1918.7,'10–7, third',2025],['Brock',1887.5,'12–5, champion',2019],
-  ['Gentry',1854.9,'11–6, runner-up',2020],['Ammon',1822.4,'10–7, fourth',2022]]},
- {id:'bench',name:'Points left on the bench',unit:'points',dec:1,scale:100,award:'Wrong lineup award',rows:[
-  ['Cory',86.4,'Wk 8, lost by 3.2',2024],['Ruben',79.1,'Wk 12, lost by 11.6',2025],['Lehi',74.6,'Wk 4, won by 24.0',2022],
-  ['Wes',70.2,'Wk 9, lost by 1.4',2021],['Ammon',66.8,'Wk 6, lost by 18.3',2023],['Brock',63.5,'Wk 2, won by 30.7',2019],
-  ['Gentry',59.9,'Wk 11, lost by 7.8',2020],['Jace',57.1,'Wk 5, lost by 2.9',2025]]},
- {id:'faab',name:'Most FAAB on one player',unit:'dollars',dec:0,pre:'$',scale:200,off:true,award:'Overpay award',rows:[
-  ['Dax',188,'Puka Nacua, Wk 3',2023],['Jace',164,'Bucky Irving, Wk 9',2024],['Helaman',151,'Kimani Vidal, Wk 5',2025],
-  ['Kade',139,'Jaylen Warren, Wk 4',2022],['Tyrell',122,'C. Patterson, Wk 6',2021],['Wes',110,'Gus Edwards, Wk 12',2025],
-  ['Brock',97,'Kyle Rudolph, Wk 7',2019],['Ruben',84,'Mike Davis, Wk 2',2020]]},
- {id:'trades',name:'Trades in a season',unit:'trades',dec:0,scale:20,off:true,award:'Wheeler dealer',rows:[
-  ['Ruben',17,'traded with 9 of 11',2025],['Kade',13,'six in-season flips',2024],['Helaman',11,'four pick swaps',2023],
-  ['Dax',10,'three-team deal, Wk 7',2025],['Jace',8,'two blockbusters',2022],['Lehi',7,'all before Wk 9',2021],
-  ['Gentry',5,'one at the deadline',2020],['Brock',4,'quiet year',2019]]}
-];
-const NAMES=['Kade','Helaman','Jace','Dax','Tyrell','Brock','Gentry','Ammon','Wes','Lehi','Ruben','Cory'];
-const TITLES={2019:'Brock',2020:'Wes',2021:'Dax',2022:'Lehi',2023:'Helaman',2024:'Tyrell',2025:'Kade'};
-const SEASONS=['ALL',2025,2024,2023,2022,2021,2020,2019];
-const GP=10; // meetings between any two managers, 2019–2025
-
-/* head-to-head built from a seeded generator so every total reconciles */
-const rng=(s=>()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);
-  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;})(20190826);
-const H2H={};
-NAMES.forEach(a=>H2H[a]={});
-for(let i=0;i<NAMES.length;i++)for(let j=i+1;j<NAMES.length;j++){
-  const wi=2+Math.floor(rng()*7);            // 2..8 of GP
-  H2H[NAMES[i]][NAMES[j]]=wi;
-  H2H[NAMES[j]][NAMES[i]]=GP-wi;
-}
-const MGR=NAMES.map(n=>{
-  const w=NAMES.filter(o=>o!==n).reduce((t,o)=>t+H2H[n][o],0);
-  const g=(NAMES.length-1)*GP;
-  const titles=Object.entries(TITLES).filter(([,who])=>who===n).map(([y])=>+y);
-  const recs=STATS.filter(s=>best(s,'ALL')&&best(s,'ALL')[0]===n).length;
-  return{name:n,w,l:g-w,g,ppg:+(112+ (w/g-0.5)*46 + (n.length%3)*1.4).toFixed(1),titles,recs};
-}).sort((a,b)=>b.w-a.w||b.recs-a.recs);
+const DATA={"league":"The 12 Tribes of Gridiron","prevName":"May the Best Player Win","seasons":[2023,2024,2025,2026],"current":2026,"currentWeek":3,"stats":[{"id":"hi","name":"Highest single game","unit":"points","dec":2,"scale":240,"rows":[["CO1096",226.14,"Wk 5",2023],["swagmuffin06",204.28,"Wk 16",2023],["swagmuffin06",203.56,"Wk 18",2023],["goodmojo",198.86,"Wk 13",2023],["SourJr02",198.38,"Wk 8",2023],["Nyewing",196.96,"Wk 8",2025],["goodmojo",195.2,"Wk 16",2025],["SourJr02",193.96,"Wk 10",2023]],"award":"Biggest game"},{"id":"blow","name":"Biggest blowout","unit":"margin","dec":2,"scale":110,"rows":[["TSantana",99.36,"Wk 14 over PapiChuloo0",2025],["TFragr",94.8,"Wk 10 over EvanS52",2023],["goodmojo",92.16,"Wk 7 over TSantana",2025],["swagmuffin06",91.16,"Wk 16 over TFragr",2023],["CO1096",89.0,"Wk 5 over SourJr02",2023],["TSantana",80.54,"Wk 1 over EvanS52",2023],["CO1096",80.4,"Wk 4 over Nyewing",2024],["SourJr02",78.16,"Wk 8 over TFragr",2023]],"award":"Woodshed award"},{"id":"thin","name":"Narrowest win","unit":"margin","dec":2,"scale":3,"invert":true,"asc":true,"rows":[["TSantana",0.24,"Wk 3 over SourJr02",2023],["StraightGas2025",0.44,"Wk 10 over Jonnys720",2025],["StraightGas2025",0.48,"Wk 13 over ToadBrother",2024],["CO1096",0.68,"Wk 8 over SourJr02",2024],["bucsrok99",1.32,"Wk 2 over redruss91",2026],["goodmojo",1.34,"Wk 7 over TFragr",2023],["Jonnys720",1.42,"Wk 8 over goodmojo",2025],["ToadBrother",1.68,"Wk 17 over TFragr",2024]],"award":"Heart attack award"},{"id":"loss","name":"Most points in a loss","unit":"points","dec":2,"scale":200,"rows":[["PapiChuloo0",188.96,"Wk 8 lost to Nyewing",2025],["Nyewing",177.66,"Wk 15 lost to swagmuffin06",2025],["Nyewing",166.64,"Wk 7 lost to swagmuffin06",2025],["TSantana",163.28,"Wk 12 lost to goodmojo",2023],["ToadBrother",158.72,"Wk 14 lost to EvanS52",2024],["swagmuffin06",155.3,"Wk 4 lost to TSantana",2023],["CO1096",153.94,"Wk 6 lost to goodmojo",2024],["TSantana",153.46,"Wk 11 lost to swagmuffin06",2023]],"award":"Hard luck award"},{"id":"streak","name":"Longest win streak","unit":"games","dec":0,"scale":12,"rows":[["goodmojo",10,"Wk 5\u201314",2024],["swagmuffin06",8,"Wk 6\u201313",2023],["SourJr02",7,"Wk 1\u20137",2024],["StraightGas2025",6,"Wk 7\u201312",2025],["SourJr02",5,"Wk 8\u201312",2023],["mailu",5,"Wk 3\u20137",2024],["goodmojo",5,"Wk 9\u201313",2025],["mailu",5,"Wk 10\u201314",2025]],"award":"Hot hand award"},{"id":"pf","name":"Most points, regular season","unit":"points","dec":2,"scale":2200,"rows":[["goodmojo",2109.16,"14 games",2024],["goodmojo",2094.52,"14 games",2025],["swagmuffin06",2059.14,"14 games",2023],["SourJr02",2048.82,"14 games",2023],["Nyewing",1990.92,"14 games",2025],["goodmojo",1990.0,"14 games",2023],["TFragr",1963.66,"14 games",2023],["SourJr02",1957.0,"14 games",2024]],"award":"Scoring title"},{"id":"bench","name":"Most points left on the bench","unit":"points","dec":2,"scale":130,"rows":[["SourJr02",123.9,"Wk 9, scored 122.42",2025],["StraightGas2025",120.16,"Wk 3, scored 120.36",2024],["SourJr02",105.32,"Wk 11, scored 113.56",2023],["Nyewing",98.08,"Wk 4, scored 99.36",2023],["mailu",95.78,"Wk 13, scored 146.18",2025],["EvanS52",94.72,"Wk 8, scored 131.68",2023],["ToadBrother",92.38,"Wk 4, scored 92.82",2024],["Nyewing",91.92,"Wk 15, scored 177.66",2025]],"award":"Wrong lineup award"},{"id":"waiv","name":"Most waiver claims, one season","unit":"claims","dec":0,"scale":40,"off":true,"rows":[["goodmojo",30,"won on waivers",2023],["TSantana",30,"won on waivers",2025],["TFragr",23,"won on waivers",2023],["PapiChuloo0",23,"won on waivers",2025],["TSantana",20,"won on waivers",2024],["TSantana",17,"won on waivers",2023],["EvanS52",16,"won on waivers",2023],["goodmojo",16,"won on waivers",2024]],"award":"Waiver wire award"},{"id":"trades","name":"Most trades, one season","unit":"trades","dec":0,"scale":12,"off":true,"rows":[["goodmojo",9,"completed",2023],["PapiChuloo0",9,"completed",2025],["goodmojo",9,"completed",2025],["Jonnys720",8,"completed",2025],["PapiChuloo0",8,"completed",2026],["goodmojo",7,"completed",2024],["goodmojo",7,"completed",2026],["TSantana",6,"completed",2023]],"award":"Wheeler dealer"}],"mgr":[{"name":"goodmojo","w":39,"l":12,"g":51,"ppg":145.2,"titles":[2024,2025],"recs":4,"seasons":[2023,2024,2025,2026]},{"name":"SourJr02","w":30,"l":22,"g":52,"ppg":133.9,"titles":[],"recs":1,"seasons":[2023,2024,2025,2026]},{"name":"swagmuffin06","w":30,"l":20,"g":50,"ppg":136.8,"titles":[2023],"recs":0,"seasons":[2023,2024,2025]},{"name":"TSantana","w":23,"l":25,"g":48,"ppg":124.7,"titles":[],"recs":2,"seasons":[2023,2024,2025]},{"name":"Nyewing","w":22,"l":26,"g":48,"ppg":131.1,"titles":[],"recs":0,"seasons":[2023,2024,2025]},{"name":"TFragr","w":22,"l":28,"g":50,"ppg":124.3,"titles":[],"recs":0,"seasons":[2023,2024,2025]},{"name":"CO1096","w":18,"l":29,"g":47,"ppg":118.5,"titles":[],"recs":1,"seasons":[2023,2024,2025]},{"name":"EvanS52","w":18,"l":33,"g":51,"ppg":115.5,"titles":[],"recs":0,"seasons":[2023,2024,2025,2026]},{"name":"StraightGas2025","w":18,"l":15,"g":33,"ppg":117.7,"titles":[],"recs":0,"seasons":[2024,2025]},{"name":"mailu","w":18,"l":15,"g":33,"ppg":129.1,"titles":[],"recs":0,"seasons":[2024,2025]},{"name":"Jonnys720","w":12,"l":23,"g":35,"ppg":126.0,"titles":[],"recs":0,"seasons":[2024,2025,2026]},{"name":"PapiChuloo0","w":8,"l":12,"g":20,"ppg":118.8,"titles":[],"recs":1,"seasons":[2025,2026]},{"name":"ToadBrother","w":7,"l":10,"g":17,"ppg":125.2,"titles":[],"recs":0,"seasons":[2024]},{"name":"BlueCreekRedneck","w":3,"l":0,"g":3,"ppg":150.2,"titles":[],"recs":0,"seasons":[2026]},{"name":"bucsrok99","w":3,"l":0,"g":3,"ppg":125.9,"titles":[],"recs":0,"seasons":[2026]},{"name":"Cnannon","w":2,"l":1,"g":3,"ppg":121.3,"titles":[],"recs":0,"seasons":[2026]},{"name":"LuketheNuke14","w":2,"l":1,"g":3,"ppg":141.8,"titles":[],"recs":0,"seasons":[2026]},{"name":"redruss91","w":2,"l":1,"g":3,"ppg":141.4,"titles":[],"recs":0,"seasons":[2026]},{"name":"ElijahSpikes","w":1,"l":2,"g":3,"ppg":120.1,"titles":[],"recs":0,"seasons":[2026]},{"name":"hietokolob","w":0,"l":3,"g":3,"ppg":114.7,"titles":[],"recs":0,"seasons":[2026]}],"titles":{"2023":"swagmuffin06","2024":"goodmojo","2025":"goodmojo"},"h2h":{"TFragr":{"SourJr02":3,"TSantana":3,"EvanS52":3,"CO1096":3,"Nyewing":2,"swagmuffin06":2,"goodmojo":2,"Jonnys720":2,"StraightGas2025":0,"ToadBrother":0,"mailu":1,"PapiChuloo0":1},"SourJr02":{"TFragr":4,"EvanS52":5,"TSantana":4,"Nyewing":4,"CO1096":1,"goodmojo":1,"swagmuffin06":2,"Jonnys720":3,"StraightGas2025":1,"ToadBrother":1,"mailu":2,"PapiChuloo0":2,"ElijahSpikes":0},"goodmojo":{"swagmuffin06":5,"Nyewing":4,"CO1096":3,"EvanS52":3,"TSantana":5,"SourJr02":6,"TFragr":3,"Jonnys720":3,"mailu":2,"StraightGas2025":2,"ToadBrother":1,"PapiChuloo0":1,"LuketheNuke14":0,"ElijahSpikes":1},"swagmuffin06":{"goodmojo":2,"CO1096":5,"Nyewing":5,"TSantana":3,"EvanS52":2,"TFragr":4,"SourJr02":3,"mailu":1,"ToadBrother":1,"Jonnys720":2,"StraightGas2025":1,"PapiChuloo0":1},"Nyewing":{"CO1096":2,"goodmojo":1,"swagmuffin06":0,"SourJr02":1,"TFragr":3,"EvanS52":4,"TSantana":2,"ToadBrother":1,"StraightGas2025":3,"mailu":3,"Jonnys720":1,"PapiChuloo0":1},"CO1096":{"Nyewing":3,"swagmuffin06":2,"goodmojo":1,"TFragr":3,"SourJr02":3,"TSantana":1,"EvanS52":2,"mailu":1,"ToadBrother":0,"Jonnys720":1,"StraightGas2025":1,"PapiChuloo0":0},"TSantana":{"EvanS52":4,"TFragr":1,"SourJr02":1,"swagmuffin06":2,"goodmojo":0,"CO1096":4,"Nyewing":3,"mailu":1,"Jonnys720":2,"StraightGas2025":2,"ToadBrother":1,"PapiChuloo0":2},"EvanS52":{"TSantana":2,"SourJr02":0,"TFragr":2,"goodmojo":1,"swagmuffin06":2,"Nyewing":1,"CO1096":4,"StraightGas2025":1,"ToadBrother":2,"mailu":1,"Jonnys720":1,"PapiChuloo0":1,"bucsrok99":0},"Jonnys720":{"goodmojo":1,"TFragr":2,"SourJr02":1,"TSantana":0,"mailu":0,"swagmuffin06":1,"CO1096":2,"StraightGas2025":0,"EvanS52":1,"ToadBrother":1,"Nyewing":1,"PapiChuloo0":2,"BlueCreekRedneck":0,"Cnannon":0},"ToadBrother":{"Nyewing":1,"StraightGas2025":0,"EvanS52":0,"swagmuffin06":0,"CO1096":1,"TFragr":2,"SourJr02":0,"TSantana":1,"mailu":1,"Jonnys720":1,"goodmojo":0},"StraightGas2025":{"EvanS52":4,"ToadBrother":2,"Nyewing":0,"TFragr":2,"SourJr02":1,"TSantana":2,"mailu":1,"Jonnys720":3,"goodmojo":0,"swagmuffin06":2,"CO1096":1,"PapiChuloo0":0},"mailu":{"TSantana":2,"CO1096":2,"swagmuffin06":2,"goodmojo":2,"Jonnys720":2,"EvanS52":1,"StraightGas2025":2,"Nyewing":2,"ToadBrother":0,"SourJr02":2,"TFragr":1,"PapiChuloo0":0},"PapiChuloo0":{"EvanS52":3,"StraightGas2025":2,"TSantana":0,"Jonnys720":0,"swagmuffin06":0,"TFragr":1,"CO1096":1,"Nyewing":0,"mailu":1,"goodmojo":0,"SourJr02":0,"redruss91":0},"bucsrok99":{"EvanS52":1,"redruss91":1,"hietokolob":1},"BlueCreekRedneck":{"hietokolob":1,"Jonnys720":1,"LuketheNuke14":1},"hietokolob":{"BlueCreekRedneck":0,"Cnannon":0,"bucsrok99":0},"LuketheNuke14":{"ElijahSpikes":1,"goodmojo":1,"BlueCreekRedneck":0},"ElijahSpikes":{"LuketheNuke14":0,"SourJr02":1,"goodmojo":0},"redruss91":{"Cnannon":1,"bucsrok99":0,"PapiChuloo0":1},"Cnannon":{"redruss91":0,"hietokolob":1,"Jonnys720":1}},"meet":{"TFragr":{"SourJr02":7,"TSantana":4,"EvanS52":5,"CO1096":6,"Nyewing":5,"swagmuffin06":6,"goodmojo":5,"Jonnys720":4,"StraightGas2025":2,"ToadBrother":2,"mailu":2,"PapiChuloo0":2},"SourJr02":{"TFragr":7,"EvanS52":5,"TSantana":5,"Nyewing":5,"CO1096":4,"goodmojo":7,"swagmuffin06":5,"Jonnys720":4,"StraightGas2025":2,"ToadBrother":1,"mailu":4,"PapiChuloo0":2,"ElijahSpikes":1},"goodmojo":{"swagmuffin06":7,"Nyewing":5,"CO1096":4,"EvanS52":4,"TSantana":5,"SourJr02":7,"TFragr":5,"Jonnys720":4,"mailu":4,"StraightGas2025":2,"ToadBrother":1,"PapiChuloo0":1,"LuketheNuke14":1,"ElijahSpikes":1},"swagmuffin06":{"goodmojo":7,"CO1096":7,"Nyewing":5,"TSantana":5,"EvanS52":4,"TFragr":6,"SourJr02":5,"mailu":3,"ToadBrother":1,"Jonnys720":3,"StraightGas2025":3,"PapiChuloo0":1},"Nyewing":{"CO1096":5,"goodmojo":5,"swagmuffin06":5,"SourJr02":5,"TFragr":5,"EvanS52":5,"TSantana":5,"ToadBrother":2,"StraightGas2025":3,"mailu":5,"Jonnys720":2,"PapiChuloo0":1},"CO1096":{"Nyewing":5,"swagmuffin06":7,"goodmojo":4,"TFragr":6,"SourJr02":4,"TSantana":5,"EvanS52":6,"mailu":3,"ToadBrother":1,"Jonnys720":3,"StraightGas2025":2,"PapiChuloo0":1},"TSantana":{"EvanS52":6,"TFragr":4,"SourJr02":5,"swagmuffin06":5,"goodmojo":5,"CO1096":5,"Nyewing":5,"mailu":3,"Jonnys720":2,"StraightGas2025":4,"ToadBrother":2,"PapiChuloo0":2},"EvanS52":{"TSantana":6,"SourJr02":5,"TFragr":5,"goodmojo":4,"swagmuffin06":4,"Nyewing":5,"CO1096":6,"StraightGas2025":5,"ToadBrother":2,"mailu":2,"Jonnys720":2,"PapiChuloo0":4,"bucsrok99":1},"Jonnys720":{"goodmojo":4,"TFragr":4,"SourJr02":4,"TSantana":2,"mailu":2,"swagmuffin06":3,"CO1096":3,"StraightGas2025":3,"EvanS52":2,"ToadBrother":2,"Nyewing":2,"PapiChuloo0":2,"BlueCreekRedneck":1,"Cnannon":1},"ToadBrother":{"Nyewing":2,"StraightGas2025":2,"EvanS52":2,"swagmuffin06":1,"CO1096":1,"TFragr":2,"SourJr02":1,"TSantana":2,"mailu":1,"Jonnys720":2,"goodmojo":1},"StraightGas2025":{"EvanS52":5,"ToadBrother":2,"Nyewing":3,"TFragr":2,"SourJr02":2,"TSantana":4,"mailu":3,"Jonnys720":3,"goodmojo":2,"swagmuffin06":3,"CO1096":2,"PapiChuloo0":2},"mailu":{"TSantana":3,"CO1096":3,"swagmuffin06":3,"goodmojo":4,"Jonnys720":2,"EvanS52":2,"StraightGas2025":3,"Nyewing":5,"ToadBrother":1,"SourJr02":4,"TFragr":2,"PapiChuloo0":1},"PapiChuloo0":{"EvanS52":4,"StraightGas2025":2,"TSantana":2,"Jonnys720":2,"swagmuffin06":1,"TFragr":2,"CO1096":1,"Nyewing":1,"mailu":1,"goodmojo":1,"SourJr02":2,"redruss91":1},"bucsrok99":{"EvanS52":1,"redruss91":1,"hietokolob":1},"BlueCreekRedneck":{"hietokolob":1,"Jonnys720":1,"LuketheNuke14":1},"hietokolob":{"BlueCreekRedneck":1,"Cnannon":1,"bucsrok99":1},"LuketheNuke14":{"ElijahSpikes":1,"goodmojo":1,"BlueCreekRedneck":1},"ElijahSpikes":{"LuketheNuke14":1,"SourJr02":1,"goodmojo":1},"redruss91":{"Cnannon":1,"bucsrok99":1,"PapiChuloo0":1},"Cnannon":{"redruss91":1,"hietokolob":1,"Jonnys720":1}},"totalRecords":72};
+const STATS=DATA.stats, MGR=DATA.mgr, TITLES=DATA.titles;
+const NAMES=MGR.map(m=>m.name);
+const SEASONS=['ALL',2026,2025,2024,2023];
+const wins=(a,b)=>((DATA.h2h[a]||{})[b])||0;
+const meetings=(a,b)=>((DATA.meet[a]||{})[b])||0;
+const CHAMP_YEAR=Math.max(...Object.keys(TITLES).map(Number));
+const CHAMP=TITLES[CHAMP_YEAR];
 
 /* ═══ helpers ═══ */
 const $=id=>document.getElementById(id);
@@ -633,25 +582,34 @@ const rowHTML=(s,r,i,ghost)=>`<div class="row${i===0&&!ghost?' top':''}"${ghost?
   <span class="rwell"><i style="width:${(pct(s,r[1])*100).toFixed(1)}%"></i></span></div>`;
 
 /* ═══ state ═══ */
-let page='home', sel=STATS[0].id, season='ALL', pA='Kade', pB='Helaman';
+let page='home', sel=STATS[0].id, season='ALL', pA=MGR[0].name, pB=MGR[1].name;
 const tracked=new Set(STATS.filter(s=>!s.off).map(s=>s.id));
 
 /* ═══ OVERVIEW ═══ */
 function renderHome(){
-  const pfs=STATS.find(s=>s.id==='pf'), champRow=pfs.rows.find(r=>r[0]==='Kade');
-  const p=pct(pfs,champRow[1]);
+  const pfs=STATS.find(s=>s.id==='pf');
+  const champRow=pfs.rows.find(r=>r[0]===CHAMP&&r[3]===CHAMP_YEAR)||pfs.rows.find(r=>r[0]===CHAMP);
+  const k=MGR.find(m=>m.name===CHAMP);
+  const p=champRow?pct(pfs,champRow[1]):0;
   $('hgarc').setAttribute('stroke-dasharray',(650*p).toFixed(0)+' 867');
-  $('hgval').textContent=fmt(pfs,champRow[1]);fitNumber($('hgval'),86);
-  const k=MGR.find(m=>m.name==='Kade');
-  $('hline').textContent=`Kade went 14–3 and won the title, setting the league's single-season scoring mark along the way. `+
-    `All-time he is ${k.w}–${k.l} across ${k.g} games and holds ${k.recs} of the ${STATS.length} records on the books.`;
+  $('hgval').textContent=champRow?fmt(pfs,champRow[1]):'—';fitNumber($('hgval'),86);
+  $('hheadline').textContent=CHAMP;
+  document.querySelector('#p-home .kick').textContent=CHAMP_YEAR+' champion';
+  document.querySelector('#p-home .gcenter em').textContent='points, '+CHAMP_YEAR;
+  $('hline').textContent=`${CHAMP} took the ${CHAMP_YEAR} title`+
+    (champRow?` and put up ${fmt(pfs,champRow[1])} points in the regular season.`:'.')+
+    ` All-time ${k.w}–${k.l} across ${k.g} games, holding ${k.recs} of the ${STATS.length} records on the books.`+
+    ` ${DATA.current} is ${DATA.currentWeek} weeks old and still open.`;
   $('htiles').innerHTML=[
-    ['Seasons',7,1],['Managers',NAMES.length,1],
-    ['Records',STATS.reduce((n,s)=>n+s.rows.length,0),1],
+    ['Seasons',DATA.seasons.length,1],['Managers',NAMES.length,1],
+    ['Entries',DATA.totalRecords,1],
     ['Tracked',tracked.size+'/'+STATS.length,tracked.size/STATS.length]
   ].map(([lab,v,f])=>`<div class="tile"><b>${v}</b><span>${lab}</span><div class="tb" style="width:${(f*100).toFixed(0)}%"></div></div>`).join('');
-  $('htl').innerHTML=Object.entries(TITLES).map(([y,who])=>
-    `<div class="tlx${y==='2025'?' now':''}"><div class="dot"></div><b>${who}</b><span>${y}</span></div>`).join('');
+  const yrs=Object.keys(TITLES).map(Number).sort((a,b)=>a-b);
+  $('champNote').textContent=yrs.length+(yrs.length===1?' title decided':' titles decided');
+  $('htl').innerHTML=yrs.map(y=>
+    `<div class="tlx${y===CHAMP_YEAR?' now':''}"><div class="dot"></div><b>${TITLES[y]}</b><span>${y}</span></div>`)
+    .concat([`<div class="tlx"><div class="dot"></div><b>—</b><span>${DATA.current}</span></div>`]).join('');
   const held={};NAMES.forEach(n=>held[n]=0);
   STATS.forEach(s=>{const b=best(s,'ALL');if(b)held[b[0]]++;});
   const rank=MGR.map(m=>({...m,held:held[m.name]})).sort((a,b)=>b.held-a.held||b.titles.length-a.titles.length||b.w-a.w);
@@ -729,7 +687,9 @@ function renderMgrs(){
 function openMgr(name){
   const m=MGR.find(x=>x.name===name);
   const held=STATS.map(s=>{const b=best(s,'ALL');return b&&b[0]===name?{s,b}:null;}).filter(Boolean);
-  const rivals=NAMES.filter(o=>o!==name).map(o=>({o,w:H2H[name][o]})).sort((a,b)=>b.w-a.w);
+  const rivals=NAMES.filter(o=>o!==name&&meetings(name,o)>0)
+    .map(o=>({o,w:wins(name,o),g:meetings(name,o)}))
+    .sort((a,b)=>(b.w/b.g)-(a.w/a.g)||b.g-a.g);
   $('mdlgBody').innerHTML=`
     <div class="mtop" style="margin-bottom:13px">
       <div class="mav${m.titles.length?'':' none'}" style="width:48px;height:48px;font-size:17px">${initial(m.name)}</div>
@@ -750,15 +710,15 @@ function openMgr(name){
       <span class="rv"><b>${fmt(s,b[1])}</b></span>
       <span class="rwell"><i style="width:${(pct(s,b[1])*100).toFixed(1)}%"></i></span></div>`).join('')}</div>`
       :`<div class="empty">Holds no league record yet.</div>`}
-    <div class="sechead" style="margin-top:13px"><h4>Best and worst matchups</h4><em>of ${GP} meetings</em></div>
-    <div class="rows">
+    <div class="sechead" style="margin-top:13px"><h4>Best and worst matchups</h4><em>${rivals.length} opponents faced</em></div>
+    ${rivals.length?`<div class="rows">
       <div class="row"><span class="rk">W</span><span class="rn">${rivals[0].o}<span class="rc">owns this matchup</span></span>
-        <span class="rv"><b>${rivals[0].w}–${GP-rivals[0].w}</b></span>
-        <span class="rwell"><i style="width:${rivals[0].w/GP*100}%"></i></span></div>
-      <div class="row"><span class="rk">L</span><span class="rn">${rivals[rivals.length-1].o}<span class="rc">can't beat them</span></span>
-        <span class="rv"><b>${rivals[rivals.length-1].w}–${GP-rivals[rivals.length-1].w}</b></span>
-        <span class="rwell"><i style="width:${rivals[rivals.length-1].w/GP*100}%"></i></span></div>
-    </div>
+        <span class="rv"><b>${rivals[0].w}–${rivals[0].g-rivals[0].w}</b></span>
+        <span class="rwell"><i style="width:${(rivals[0].w/rivals[0].g*100).toFixed(0)}%"></i></span></div>
+      <div class="row"><span class="rk">L</span><span class="rn">${rivals[rivals.length-1].o}<span class="rc">worst matchup</span></span>
+        <span class="rv"><b>${rivals[rivals.length-1].w}–${rivals[rivals.length-1].g-rivals[rivals.length-1].w}</b></span>
+        <span class="rwell"><i style="width:${(rivals[rivals.length-1].w/rivals[rivals.length-1].g*100).toFixed(0)}%"></i></span></div>
+    </div>`:`<div class="empty">No games played yet.</div>`}
     <button class="ghostbtn" id="mdlgClose" style="margin-top:14px;width:100%">Close</button>`;
   const d=$('mdlg');
   if(typeof d.showModal==='function')d.showModal();
@@ -777,7 +737,7 @@ function renderPickers(){
   mk('pickA',pA,pB);mk('pickB',pB,pA);
 }
 function renderH2H(){
-  const wA=H2H[pA][pB], wB=GP-wA;
+  const wA=wins(pA,pB), wB=wins(pB,pA), GP=meetings(pA,pB)||(wA+wB);
   $('avA').textContent=initial(pA);$('avB').textContent=initial(pB);
   $('nmA').textContent=pA;$('nmB').textContent=pB;
   const mA=MGR.find(m=>m.name===pA),mB=MGR.find(m=>m.name===pB);
@@ -785,9 +745,10 @@ function renderH2H(){
   $('sbA').textContent=`${mA.w}–${mA.l} all-time · ${tl(mA.titles.length)}`;
   $('sbB').textContent=`${mB.w}–${mB.l} all-time · ${tl(mB.titles.length)}`;
   $('wA').textContent=wA;$('wB').textContent=wB;
-  $('spA').style.width=(wA/GP*100)+'%';$('spB').style.width=(wB/GP*100)+'%';
+  const den=GP||1;
+  $('spA').style.width=(wA/den*100)+'%';$('spB').style.width=(wB/den*100)+'%';
   $('lbA').textContent=pA+' '+wA;
-  $('lbMid').textContent=GP+' meetings since 2019';
+  $('lbMid').textContent=GP?(GP+(GP===1?' meeting':' meetings')+' since '+DATA.seasons[0]):'never played each other';
   $('lbB').textContent=wB+' '+pB;
   const mine=[];
   STATS.forEach(s=>entries(s,'ALL').forEach((r,i)=>{
@@ -805,8 +766,10 @@ function renderH2H(){
 /* ═══ AWARDS ═══ */
 function renderAwards(){
   $('awCount').textContent=tracked.size+(tracked.size===1?' trophy':' trophies');
+  $('awTitle').textContent=DATA.current+' award ballot';
   $('agrid').innerHTML=STATS.map(s=>{
-    const list=entries(s,2025),on=tracked.has(s.id);
+    const list=entries(s,DATA.current).length?entries(s,DATA.current):entries(s,CHAMP_YEAR);
+    const on=tracked.has(s.id);
     if(!list.length)return '';
     const w=list[0],p=pct(s,w[1]);
     return `<div class="acard${on?'':' off'}">
@@ -863,5 +826,6 @@ addEventListener('resize',()=>{
   if(page==='records')fitNumber($('gval'),96);
   if(page==='home')fitNumber($('hgval'),86);
 });
+$('champChip').textContent=CHAMP_YEAR+' champion · '+CHAMP;
 go('home');
 </script>

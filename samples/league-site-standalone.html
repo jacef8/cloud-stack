@@ -1,0 +1,864 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Apalachee Dynasty League</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --e0:#080B0A;
+  --e1:rgba(19,27,26,.78);
+  --e1-hi:rgba(28,39,38,.86);
+  --e2:rgba(41,57,55,.92);
+  --e2-hi:rgba(56,76,73,.95);
+  --recess:#030605;
+  --ink:#FFFFFF;
+  --ink-2:rgba(255,255,255,.85);
+  --ink-3:rgba(255,255,255,.67);
+  --accent:#00E8A0;
+  --accent-2:#00D9FF;
+  --accent-lo:#039C73;
+  --on-accent:#03170F;
+  --r:22px; --r-s:14px;
+  --disp:'Space Grotesk',system-ui,sans-serif;
+  --text:'Instrument Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --raise:
+    inset 0 1px 0 rgba(255,255,255,.12),
+    inset 0 -1px 0 rgba(0,0,0,.55),
+    0 1px 2px rgba(0,0,0,.65),
+    0 9px 20px -11px rgba(0,0,0,.96);
+  --well-sh:
+    inset 0 3px 8px rgba(0,0,0,.92),
+    inset 0 -1px 0 rgba(255,255,255,.055);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--e0);color:var(--ink);font-family:var(--text);font-size:15px;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+
+/* ═══ environment ═══ */
+.amb{position:fixed;z-index:0;pointer-events:none;border-radius:50%;filter:blur(98px)}
+.a1{width:min(980px,104vw);height:min(700px,74vw);left:44%;top:34%;transform:translate(-50%,-50%);
+  background:radial-gradient(circle,rgba(0,232,160,.17),rgba(0,217,255,.08) 46%,transparent 72%);
+  animation:br 23s ease-in-out infinite alternate}
+.a2{width:min(560px,72vw);height:min(560px,72vw);right:-12vw;bottom:-18vh;
+  background:radial-gradient(circle,rgba(0,217,255,.13),transparent 68%)}
+@keyframes br{to{transform:translate(-50%,-39%) scale(1.09)}}
+.field{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:repeating-linear-gradient(90deg,rgba(190,255,235,.05) 0 1px,transparent 1px 92px),
+   repeating-linear-gradient(90deg,rgba(190,255,235,.022) 0 1px,transparent 1px 23px);
+  mask-image:radial-gradient(ellipse 82% 64% at 50% 42%,#000 18%,transparent 78%)}
+.vign{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 96% 80% at 48% 32%,transparent 44%,rgba(2,5,4,.76))}
+.grain{position:fixed;inset:0;z-index:30;pointer-events:none;opacity:.04;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ═══ shell: icon dock + content ═══ */
+.site{position:relative;z-index:1;height:100dvh;display:grid;gap:13px;
+  grid-template-columns:76px minmax(0,1fr);padding:13px clamp(14px,1.3vw,20px)}
+.site>*{min-height:0}
+.panel{position:relative;border-radius:var(--r);animation:rise .6s cubic-bezier(.2,.8,.2,1) both}
+.panel::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(168deg,rgba(255,255,255,.08),rgba(255,255,255,.012) 34%,transparent 62%)}
+.glass{background:linear-gradient(158deg,var(--e1-hi),var(--e1) 74%);
+  backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);
+  border:1px solid rgba(255,255,255,.09);box-shadow:var(--raise)}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}}
+
+/* dock */
+.dock{display:flex;flex-direction:column;align-items:center;gap:7px;padding:13px 0}
+.dock .crest{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;margin-bottom:6px;
+  background:linear-gradient(150deg,var(--accent),var(--accent-2));color:var(--on-accent);
+  font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:-.02em;
+  box-shadow:0 5px 18px rgba(0,232,160,.42),inset 0 1px 0 rgba(255,255,255,.7)}
+.nav{width:50px;height:50px;border-radius:50%;border:1px solid rgba(255,255,255,.07);cursor:pointer;
+  display:grid;place-items:center;position:relative;
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 8px 17px -10px rgba(0,0,0,.96);
+  transition:transform .16s,background .16s}
+.nav svg{width:21px;height:21px;fill:none;stroke:var(--ink-3);stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round;transition:stroke .16s}
+.nav:hover{transform:translateY(-2px)}
+.nav:hover svg{stroke:var(--ink)}
+.nav[aria-current="page"]{background:linear-gradient(150deg,#6BFFCF,var(--accent));
+  border-color:transparent;box-shadow:0 5px 16px rgba(0,232,160,.5),inset 0 1px 0 rgba(255,255,255,.7)}
+.nav[aria-current="page"] svg{stroke:var(--on-accent);stroke-width:2}
+.navlab{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--ink-3);
+  margin-top:-2px;margin-bottom:4px}
+.nav[aria-current="page"]+.navlab{color:var(--accent)}
+.dockspace{flex:1}
+
+/* content column */
+.col{display:grid;grid-template-rows:auto minmax(0,1fr);gap:13px;min-height:0}
+.bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:11px 16px}
+.bar h1{margin:0;font-family:var(--disp);font-weight:700;font-size:19px;letter-spacing:-.02em;line-height:1.1}
+.bar h1 span{display:block;font-family:var(--mono);font-size:12px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);margin-top:3px;font-weight:400}
+.chip{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);padding:6px 11px;border-radius:999px;
+  background:var(--recess);box-shadow:var(--well-sh)}
+.chip i{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 7px rgba(0,232,160,.9)}
+.chip.mute i{background:rgba(255,255,255,.33);box-shadow:none}
+.barspace{flex:1 1 14px}
+.pills[hidden]{display:none}
+.pills{display:flex;flex-wrap:wrap;padding:3px;border-radius:999px;background:var(--recess);
+  box-shadow:var(--well-sh);gap:2px}
+.pills button{padding:6px 12px;border:none;border-radius:999px;background:transparent;color:var(--ink-3);
+  cursor:pointer;transition:.18s;font-family:var(--mono);font-size:12px;letter-spacing:.04em}
+.pills button:hover{color:var(--ink)}
+.pills button[aria-pressed="true"]{color:var(--on-accent);font-weight:700;
+  background:linear-gradient(150deg,#6BFFCF,var(--accent));
+  box-shadow:0 4px 12px rgba(0,232,160,.5),inset 0 1px 0 rgba(255,255,255,.72)}
+
+.page{display:none;min-height:0}
+.page[data-on="1"]{display:grid;gap:13px}
+.scroll{overflow:auto;scrollbar-width:thin;min-height:0}
+.scroll::-webkit-scrollbar{width:8px}
+.scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:99px}
+
+/* shared bits */
+.eyebrow{margin:0 0 4px;font-family:var(--mono);font-size:12px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.hint{margin:0 0 12px;font-size:13px;color:var(--ink-3);line-height:1.5}
+.sechead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:8px}
+.sechead h4{margin:0;font-family:var(--mono);font-size:12px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:500}
+.sechead em{font-family:var(--mono);font-style:normal;font-size:12px;color:var(--ink-3)}
+.pad{padding:15px 17px}
+.empty{padding:22px 14px;text-align:center;font-size:14px;color:var(--ink-3);
+  border-radius:var(--r-s);background:var(--recess);box-shadow:var(--well-sh)}
+
+/* gauge */
+.gwrap{position:relative;width:100%;max-width:300px;margin-inline:auto;aspect-ratio:1}
+.gwrap::before{content:"";position:absolute;inset:12%;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,232,160,.15),transparent 66%)}
+.gwrap svg{position:relative;width:100%;height:auto;display:block;overflow:visible}
+.spin{transform-origin:170px 170px;animation:sp 52s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.gcenter{position:absolute;inset:18%;display:grid;place-content:center;text-align:center;pointer-events:none}
+.gcenter b{display:block;font-family:var(--disp);font-weight:700;line-height:.87;letter-spacing:-.05em;
+  font-variant-numeric:tabular-nums;color:#fff;font-size:86px}
+.gcenter em{display:block;font-family:var(--mono);font-style:normal;font-size:12px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--ink-3);margin-top:11px}
+
+/* rows */
+.rows{display:flex;flex-direction:column;gap:6px}
+.row{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:11px;align-items:center;
+  padding:9px 12px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.055);
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 -1px 0 rgba(0,0,0,.52),0 8px 17px -12px rgba(0,0,0,.97);
+  transition:transform .15s}
+.row:hover{transform:translateY(-1px)}
+.row.top{border-color:rgba(0,232,160,.42)}
+.rk{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-family:var(--mono);
+  font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums;background:var(--recess);box-shadow:var(--well-sh)}
+.row.top .rk{color:var(--on-accent);font-weight:700;background:linear-gradient(150deg,#6BFFCF,var(--accent));
+  box-shadow:0 3px 9px rgba(0,232,160,.5),inset 0 1px 0 rgba(255,255,255,.7)}
+.rn{font-size:15px;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rv b{font-family:var(--disp);font-size:18px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.rwell{grid-column:1/-1;height:5px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);overflow:hidden}
+.rwell i{display:block;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--accent-2),var(--accent));box-shadow:0 0 9px rgba(0,232,160,.6)}
+
+/* ═══ OVERVIEW: bento ═══ */
+#p-home{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);grid-template-rows:minmax(0,auto) minmax(0,1fr)}
+.hero{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:20px;align-items:center}
+.hero h2{margin:0;font-family:var(--disp);font-size:clamp(26px,3vw,36px);font-weight:700;
+  letter-spacing:-.035em;line-height:1.04;text-wrap:balance}
+.kick{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin:0 0 8px}
+.kick::before{content:"";width:16px;height:1px;background:linear-gradient(90deg,transparent,var(--accent))}
+.heroline{margin:14px 0 0;font-size:15px;color:var(--ink-3);line-height:1.5;max-width:44ch}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px;margin-top:16px}
+.tile{padding:11px 12px;border-radius:var(--r-s);background:var(--recess);box-shadow:var(--well-sh)}
+.tile b{display:block;font-family:var(--disp);font-size:25px;font-weight:700;letter-spacing:-.04em;
+  font-variant-numeric:tabular-nums;line-height:1}
+.tile span{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:6px;
+  letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile .tb{height:4px;border-radius:999px;margin-top:8px;
+  background:linear-gradient(90deg,var(--accent-2),var(--accent));box-shadow:0 0 8px rgba(0,232,160,.55)}
+.ring{display:grid;grid-template-columns:auto minmax(0,1fr);gap:11px;align-items:center;
+  padding:9px 11px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.05);
+  background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.016));transition:transform .15s}
+.ring:hover{transform:translateY(-1px)}
+.ring svg{width:50px;height:50px;display:block}
+.rlab{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.rman{font-size:15px;font-weight:700;margin-top:3px;letter-spacing:-.01em}
+.rsub{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dialv{font-family:var(--disp);font-size:13px;font-weight:700;fill:#fff;font-variant-numeric:tabular-nums;
+  letter-spacing:-.03em}
+/* champions timeline */
+.hbars{display:flex;flex-direction:column;gap:6px}
+.hb{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:11px;align-items:center;
+  padding:8px 11px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.05);
+  background:linear-gradient(160deg,rgba(255,255,255,.048),rgba(255,255,255,.016));transition:transform .15s}
+.hb:hover{transform:translateY(-1px)}
+.hb.lead{border-color:rgba(0,232,160,.4);background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 8px 17px -12px rgba(0,0,0,.97)}
+.hb .hav{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:var(--disp);
+  font-size:12px;font-weight:700;color:var(--on-accent);background:linear-gradient(150deg,#8BFFDA,var(--accent))}
+.hb .hav.none{background:linear-gradient(150deg,#5E6E6A,#38443F);color:rgba(255,255,255,.75)}
+.hb .hn{font-size:14px;font-weight:700;letter-spacing:-.01em}
+.hb .hs{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:2px}
+.hb .hv{font-family:var(--disp);font-size:17px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.hb .hw{grid-column:1/-1;height:5px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);overflow:hidden}
+.hb .hw i{display:block;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--accent-2),var(--accent));box-shadow:0 0 9px rgba(0,232,160,.6)}
+.tl{display:flex;gap:7px;overflow:visible}
+.tlx{flex:1;min-width:0;padding:10px 6px;border-radius:var(--r-s);text-align:center;
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));border:1px solid rgba(255,255,255,.05);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 8px 17px -12px rgba(0,0,0,.97)}
+.tlx.now{border-color:rgba(0,232,160,.45)}
+.tlx b{display:block;font-size:14px;font-weight:700;letter-spacing:-.01em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tlx span{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:4px}
+.tlx .dot{width:8px;height:8px;border-radius:50%;margin:0 auto 7px;background:rgba(255,255,255,.22)}
+.tlx.now .dot{background:var(--accent);box-shadow:0 0 8px rgba(0,232,160,.9)}
+
+/* ═══ RECORDS ═══ */
+#p-records{grid-template-columns:minmax(0,262px) minmax(0,1fr)}
+.statlist{display:flex;flex-direction:column;gap:6px}
+.stat{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:9px 10px;position:relative;
+  border:1px solid transparent;border-radius:var(--r-s);cursor:pointer;color:var(--ink-2);
+  background:linear-gradient(160deg,rgba(255,255,255,.048),rgba(255,255,255,.016));
+  transition:background .16s,color .16s,border-color .16s,transform .16s}
+.stat:hover{background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.03));
+  color:var(--ink);transform:translateX(2px)}
+.stat[data-sel="1"]{color:var(--ink);border-color:rgba(0,232,160,.45);
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.17),0 9px 19px -11px rgba(0,0,0,.97)}
+.stat[data-sel="1"]::after{content:"";position:absolute;left:0;top:14%;bottom:14%;width:3px;border-radius:99px;
+  background:linear-gradient(180deg,var(--accent),var(--accent-lo));box-shadow:0 0 8px rgba(0,232,160,.85)}
+.stat[data-off="1"] .sname{color:rgba(255,255,255,.42)}
+.sname{flex:1;min-width:0;font-size:14px;font-weight:700;line-height:1.25;letter-spacing:-.01em}
+.sunit{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);font-weight:400;margin-top:2px}
+.sw{flex:none;width:36px;height:19px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);
+  border:none;position:relative;cursor:pointer;padding:0}
+.sw i{position:absolute;top:50%;left:10.5px;width:14px;height:14px;border-radius:50%;
+  transform:translate(-50%,-50%);transition:left .2s cubic-bezier(.3,1.35,.5,1),background .2s;
+  background:radial-gradient(circle at 34% 28%,#8DA39D,#49574F);
+  box-shadow:0 3px 8px rgba(0,0,0,.9),inset 0 -2px 3px rgba(0,0,0,.3)}
+.sw[aria-pressed="true"] i{left:25.5px;background:radial-gradient(circle at 34% 28%,#D8FFF1,var(--accent));
+  box-shadow:0 0 10px rgba(0,232,160,.85),0 3px 8px rgba(0,0,0,.9)}
+.railfoot{margin-top:12px;padding:10px 12px;border-radius:var(--r-s);background:var(--recess);box-shadow:var(--well-sh)}
+.railfoot p{margin:0;font-family:var(--mono);font-size:12px;color:var(--ink-3);line-height:1.6}
+.railfoot b{color:var(--accent);font-weight:700}
+.rec-main{display:flex;flex-direction:column;gap:15px}
+.anchor{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:22px;align-items:center}
+.ahold{margin:15px 0 0;display:flex;align-items:center;gap:12px}
+.av{width:44px;height:44px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-family:var(--disp);font-weight:700;font-size:16px;color:var(--on-accent);
+  background:linear-gradient(150deg,#8BFFDA,var(--accent));
+  box-shadow:0 5px 14px rgba(0,232,160,.42),inset 0 1px 0 rgba(255,255,255,.7)}
+.ahold p{margin:0;font-size:17px;font-weight:700;letter-spacing:-.015em}
+.ahold span{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+
+/* ═══ MANAGERS ═══ */
+#p-mgrs{grid-template-rows:minmax(0,1fr)}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:9px}
+.mcard{text-align:left;padding:12px;border-radius:var(--r-s);cursor:pointer;
+  border:1px solid rgba(255,255,255,.055);
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 9px 19px -12px rgba(0,0,0,.97);
+  transition:transform .16s,border-color .16s}
+.mcard:hover{transform:translateY(-2px);border-color:rgba(0,232,160,.4)}
+.mtop{display:flex;align-items:center;gap:10px}
+.mav{width:38px;height:38px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-family:var(--disp);font-weight:700;font-size:14px;color:var(--on-accent);
+  background:linear-gradient(150deg,#8BFFDA,var(--accent));
+  box-shadow:0 4px 12px rgba(0,232,160,.36),inset 0 1px 0 rgba(255,255,255,.65)}
+.mav.none{background:linear-gradient(150deg,#5E6E6A,#38443F);color:rgba(255,255,255,.75);box-shadow:none}
+.mname{font-size:16px;font-weight:700;letter-spacing:-.015em;line-height:1.1}
+.mrec{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:3px}
+.mstats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:11px}
+.ms{padding:8px 9px;border-radius:11px;background:var(--recess);box-shadow:var(--well-sh)}
+.ms b{display:block;font-family:var(--disp);font-size:17px;font-weight:700;letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums;line-height:1}
+.ms span{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:4px}
+.mbar{height:5px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);margin-top:10px;overflow:hidden}
+.mbar i{display:block;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--accent-2),var(--accent));box-shadow:0 0 9px rgba(0,232,160,.6)}
+
+/* ═══ MATCHUPS ═══ */
+#p-h2h{grid-template-columns:minmax(0,300px) minmax(0,1fr)}
+.picker{display:flex;flex-direction:column;gap:5px;margin-top:9px}
+.pk{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:11px;cursor:pointer;
+  border:1px solid transparent;color:var(--ink-2);text-align:left;
+  background:linear-gradient(160deg,rgba(255,255,255,.045),rgba(255,255,255,.015));transition:.15s}
+.pk:hover{background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.03));color:var(--ink)}
+.pk[data-sel="1"]{border-color:rgba(0,232,160,.5);background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+.pk .pav{width:26px;height:26px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-family:var(--disp);font-size:12px;font-weight:700;color:var(--on-accent);
+  background:linear-gradient(150deg,#8BFFDA,var(--accent))}
+.pk span{flex:1;min-width:0;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pk em{font-family:var(--mono);font-style:normal;font-size:12px;color:var(--ink-3)}
+.h2hwrap{display:flex;flex-direction:column;gap:15px}
+.vs{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:16px;align-items:center}
+.side{text-align:center}
+.side .bav{width:62px;height:62px;border-radius:50%;margin:0 auto 10px;display:grid;place-items:center;
+  font-family:var(--disp);font-weight:700;font-size:22px;color:var(--on-accent);
+  background:linear-gradient(150deg,#8BFFDA,var(--accent));
+  box-shadow:0 6px 18px rgba(0,232,160,.42),inset 0 1px 0 rgba(255,255,255,.7)}
+.side.b .bav{background:linear-gradient(150deg,#9BE8FF,var(--accent-2));
+  box-shadow:0 6px 18px rgba(0,217,255,.42),inset 0 1px 0 rgba(255,255,255,.7)}
+.side h3{margin:0;font-family:var(--disp);font-size:20px;font-weight:700;letter-spacing:-.02em}
+.side p{margin:5px 0 0;font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.side b{display:block;font-family:var(--disp);font-size:54px;font-weight:700;letter-spacing:-.05em;
+  line-height:1;margin-top:12px;font-variant-numeric:tabular-nums}
+.vsmid{font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--ink-3);text-transform:uppercase}
+.split{height:12px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);overflow:hidden;display:flex}
+.split i{display:block;height:100%}
+.split .sa{background:linear-gradient(90deg,var(--accent-lo),var(--accent));box-shadow:0 0 10px rgba(0,232,160,.55)}
+.split .sb{background:linear-gradient(90deg,#0B86A8,var(--accent-2));box-shadow:0 0 10px rgba(0,217,255,.5)}
+.splitlab{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;
+  color:var(--ink-3);margin-top:7px}
+
+/* ═══ AWARDS ═══ */
+#p-awards{grid-template-rows:minmax(0,1fr)}
+.agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:9px}
+.acard{padding:12px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.055);
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 9px 19px -12px rgba(0,0,0,.97);
+  display:grid;grid-template-columns:62px minmax(0,1fr);gap:12px;align-items:center}
+.acard.off{background:linear-gradient(160deg,rgba(255,255,255,.035),rgba(255,255,255,.012));box-shadow:none}
+.acard.off .rman{color:var(--ink-3)}
+.acard svg{width:62px;height:62px;display:block}
+.ahead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+/* ═══ dialog ═══ */
+dialog{border:none;padding:0;background:transparent;max-width:min(440px,92vw);width:100%}
+dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
+.dlg{padding:16px}
+.ghostbtn{border:1px solid rgba(255,255,255,.13);border-radius:999px;padding:8px 15px;cursor:pointer;
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 6px 15px -9px rgba(0,0,0,.95);
+  font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+
+/* ═══ breakpoints ═══ */
+@media(max-width:1099px){
+  #p-home{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
+  .hero{grid-template-columns:minmax(0,1fr);gap:10px}
+  .gwrap{max-width:240px}
+  .gcenter b{font-size:70px}
+}
+@media(max-width:820px){
+  .anchor{grid-template-columns:minmax(0,1fr);gap:10px}
+  .vs{grid-template-columns:minmax(0,1fr);gap:10px}
+  .vsmid{text-align:center}
+}
+@media(max-width:699px){
+  .site{height:auto;min-height:100dvh;grid-template-columns:minmax(0,1fr);
+    padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  .site>.dock{position:fixed;left:0;right:0;bottom:0;z-index:40;flex-direction:row;justify-content:space-around;
+    border-radius:var(--r) var(--r) 0 0;padding:9px 8px calc(9px + env(safe-area-inset-bottom,0px));gap:4px}
+  .dock .crest,.navlab{display:none}
+  .nav{width:46px;height:46px}
+  .page[data-on="1"]{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:none!important}
+  .col{grid-template-rows:auto auto}
+  .scroll{overflow:visible}
+  .gwrap{max-width:216px}
+  .gcenter b{font-size:62px}
+  .rec-rail{order:2}
+}
+@media (prefers-reduced-motion:reduce){.panel,.a1,.spin,.row,.stat,.mcard,.ring{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+
+<div class="amb a1"></div><div class="amb a2"></div><div class="field"></div><div class="vign"></div><div class="grain"></div>
+
+<svg style="position:absolute;width:0;height:0" aria-hidden="true" focusable="false"><defs>
+  <linearGradient id="gg" x1="0" y1="1" x2="1" y2="0">
+    <stop offset="0%" stop-color="#00D9FF"/><stop offset="55%" stop-color="#00E8A0"/>
+    <stop offset="100%" stop-color="#B6FF3D"/>
+  </linearGradient>
+  <filter id="gglow" x="-60%" y="-60%" width="220%" height="220%">
+    <feGaussianBlur stdDeviation="4" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+</defs></svg>
+
+<div class="site">
+  <nav class="panel glass dock" aria-label="Sections">
+    <div class="crest">ADL</div>
+    <button class="nav" data-go="home" aria-current="page" aria-label="Overview"><svg viewBox="0 0 24 24"><path d="M4 11.5 12 5l8 6.5"/><path d="M6 11v8h12v-8"/></svg></button>
+    <span class="navlab">Home</span>
+    <button class="nav" data-go="records" aria-label="Records"><svg viewBox="0 0 24 24"><path d="M5 4h14v16l-7-4-7 4z"/><path d="M9 9h6"/></svg></button>
+    <span class="navlab">Book</span>
+    <button class="nav" data-go="mgrs" aria-label="Managers"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.4"/><path d="M5 20c.8-4 3.6-6 7-6s6.2 2 7 6"/></svg></button>
+    <span class="navlab">Teams</span>
+    <button class="nav" data-go="h2h" aria-label="Matchups"><svg viewBox="0 0 24 24"><path d="M4 8h5l2 8h5"/><path d="M16 5l4 3-4 3"/><path d="M20 16h-3"/></svg></button>
+    <span class="navlab">H2H</span>
+    <button class="nav" data-go="awards" aria-label="Awards"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="5"/><path d="M8.5 13.5 7 21l5-2.6L17 21l-1.5-7.5"/></svg></button>
+    <span class="navlab">Awards</span>
+    <div class="dockspace"></div>
+  </nav>
+
+  <div class="col">
+    <header class="panel glass bar">
+      <h1>Apalachee Dynasty League<span id="crumb">Overview</span></h1>
+      <span class="chip"><i></i>2025 champion · Kade</span>
+      <span class="chip mute"><i></i>Sample data</span>
+      <div class="barspace"></div>
+      <div class="pills" id="seasons" role="group" aria-label="Season" hidden></div>
+    </header>
+
+    <!-- ══ OVERVIEW ══ -->
+    <section class="page" id="p-home" data-on="1">
+      <div class="panel glass pad" style="grid-column:1;grid-row:1/-1;display:flex;flex-direction:column;gap:15px;overflow:auto" >
+        <div class="hero">
+          <div class="gwrap">
+            <svg viewBox="0 0 340 340" role="img" aria-label="Champion season points against the league record">
+              <circle class="spin" cx="170" cy="170" r="164" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1" stroke-dasharray="1.5 14"/>
+              <circle cx="170" cy="170" r="138" fill="none" stroke="rgba(0,0,0,.7)" stroke-width="21" stroke-linecap="round" stroke-dasharray="650 867" transform="rotate(135 170 170)"/>
+              <circle id="hgarc" cx="170" cy="170" r="138" fill="none" stroke="url(#gg)" stroke-width="19" stroke-linecap="round" stroke-dasharray="0 867" transform="rotate(135 170 170)" filter="url(#gglow)" style="transition:stroke-dasharray .6s cubic-bezier(.2,.8,.2,1)"/>
+            </svg>
+            <div class="gcenter"><b id="hgval">—</b><em>points, 2025</em></div>
+          </div>
+          <div>
+            <p class="kick">Reigning champion</p>
+            <h2 id="hheadline">Kade</h2>
+            <p class="heroline" id="hline"></p>
+            <div class="tiles" id="htiles"></div>
+          </div>
+        </div>
+        <section>
+          <div class="sechead"><h4>Where the records live</h4><em id="hbarNote"></em></div>
+          <div class="hbars" id="hbars"></div>
+        </section>
+      </div>
+      <div class="panel glass pad" style="grid-column:2;grid-row:1;overflow:auto">
+        <div class="sechead"><h4>Champions</h4><em>seven seasons</em></div>
+        <div class="tl" id="htl"></div>
+      </div>
+      <div class="panel glass pad scroll" style="grid-column:2;grid-row:2">
+        <div class="sechead"><h4>Standing records</h4><em id="hrecNote"></em></div>
+        <div class="rows" id="hrecs" style="gap:6px"></div>
+      </div>
+    </section>
+
+    <!-- ══ RECORDS ══ -->
+    <section class="page" id="p-records">
+      <aside class="panel glass pad scroll rec-rail">
+        <p class="eyebrow">Tracked stats</p>
+        <p class="hint">Tap a stat to open its board. The switch decides whether it earns a trophy at the end of the year.</p>
+        <div class="statlist" id="statlist"></div>
+        <div class="railfoot"><p>Tracking <b id="trackCount">7</b> of <b>9</b> · <b id="recCount">72</b> records on file</p></div>
+      </aside>
+      <main class="panel glass pad scroll rec-main">
+        <section class="anchor">
+          <div class="gwrap">
+            <svg viewBox="0 0 340 340" role="img" id="gsvg" aria-label="Record leader gauge">
+              <circle class="spin" cx="170" cy="170" r="164" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1" stroke-dasharray="1.5 14"/>
+              <circle cx="170" cy="170" r="157" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="7" stroke-dasharray="1.5 33.3" transform="rotate(135 170 170)" stroke-linecap="round" pathLength="100"/>
+              <circle cx="170" cy="170" r="138" fill="none" stroke="rgba(0,0,0,.7)" stroke-width="21" stroke-linecap="round" stroke-dasharray="650 867" transform="rotate(135 170 170)"/>
+              <circle id="garc" cx="170" cy="170" r="138" fill="none" stroke="url(#gg)" stroke-width="19" stroke-linecap="round" stroke-dasharray="0 867" transform="rotate(135 170 170)" filter="url(#gglow)" style="transition:stroke-dasharray .55s cubic-bezier(.2,.8,.2,1)"/>
+              <circle id="gcap" cx="170" cy="32" r="6.5" fill="#fff" style="filter:drop-shadow(0 2px 5px rgba(0,0,0,.9));transition:transform .55s cubic-bezier(.2,.8,.2,1)"/>
+            </svg>
+            <div class="gcenter"><b id="gval">—</b><em id="gunit">points</em></div>
+          </div>
+          <div>
+            <p class="kick" id="kicker">All-time leader</p>
+            <h2 id="statTitle" style="margin:0;font-family:var(--disp);font-size:clamp(25px,3vw,35px);font-weight:700;letter-spacing:-.035em;line-height:1.04">Highest single game</h2>
+            <div class="ahold">
+              <div class="av" id="avi">H</div>
+              <div><p id="hname">Helaman</p><span id="hctx">Wk 11 vs Dax · 2023</span></div>
+            </div>
+          </div>
+        </section>
+        <section>
+          <div class="sechead"><h4 id="boardLabel">All-time board</h4><em id="boardCount"></em></div>
+          <div class="rows" id="rows"></div>
+          <div id="ghostWrap" hidden>
+            <div class="sechead" style="margin-top:14px"><h4>All-time, for comparison</h4><em>top 5, all seasons</em></div>
+            <div class="rows" id="ghostRows"></div>
+          </div>
+        </section>
+      </main>
+    </section>
+
+    <!-- ══ MANAGERS ══ -->
+    <section class="page" id="p-mgrs">
+      <div class="panel glass pad scroll">
+        <div class="sechead"><h4>Managers</h4><em>all-time, 2019–2025 · tap a card</em></div>
+        <div class="mgrid" id="mgrid"></div>
+      </div>
+    </section>
+
+    <!-- ══ MATCHUPS ══ -->
+    <section class="page" id="p-h2h">
+      <aside class="panel glass pad scroll">
+        <p class="eyebrow">Pick two</p>
+        <p class="hint">Choose a manager on each side to pull their all-time series.</p>
+        <div class="sechead" style="margin-top:4px"><h4>Side A</h4></div>
+        <div class="picker" id="pickA"></div>
+        <div class="sechead" style="margin-top:12px"><h4>Side B</h4></div>
+        <div class="picker" id="pickB"></div>
+      </aside>
+      <main class="panel glass pad scroll h2hwrap">
+        <div class="vs">
+          <div class="side a">
+            <div class="bav" id="avA">K</div><h3 id="nmA">Kade</h3><p id="sbA"></p><b id="wA">0</b>
+          </div>
+          <div class="vsmid">wins</div>
+          <div class="side b">
+            <div class="bav" id="avB">H</div><h3 id="nmB">Helaman</h3><p id="sbB"></p><b id="wB">0</b>
+          </div>
+        </div>
+        <div>
+          <div class="split"><i class="sa" id="spA"></i><i class="sb" id="spB"></i></div>
+          <div class="splitlab"><span id="lbA"></span><span id="lbMid"></span><span id="lbB"></span></div>
+        </div>
+        <div>
+          <div class="sechead"><h4>Records between them</h4><em id="h2hNote"></em></div>
+          <div class="rows" id="h2hRows"></div>
+        </div>
+      </main>
+    </section>
+
+    <!-- ══ AWARDS ══ -->
+    <section class="page" id="p-awards">
+      <div class="panel glass pad scroll">
+        <div class="ahead" style="margin-bottom:10px">
+          <div><p class="eyebrow" style="margin:0">2025 award ballot</p>
+            <p class="hint" style="margin:5px 0 0">One trophy per tracked stat, from this season only. Switch a stat off to drop its trophy.</p></div>
+          <span class="chip"><i></i><span id="awCount">7 trophies</span></span>
+        </div>
+        <div class="agrid" id="agrid"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<dialog id="mdlg"><div class="panel glass dlg" id="mdlgBody"></div></dialog>
+
+<script>
+/* ═══ data — all fabricated, labeled sample data in the UI ═══ */
+const STATS=[
+ {id:'hi',name:'Highest single game',unit:'points',dec:1,scale:250,award:'Biggest game',rows:[
+  ['Helaman',214.8,'Wk 11 vs Dax',2023],['Kade',208.4,'Wk 6 vs Jace',2025],['Jace',201.6,'Wk 14 vs Wes',2021],
+  ['Dax',197.2,'Wk 3 vs Lehi',2025],['Brock',194.9,'Wk 9 vs Ammon',2019],['Tyrell',190.1,'Wk 12 vs Gentry',2024],
+  ['Ammon',188.7,'Wk 2 vs Cory',2022],['Gentry',186.3,'Wk 7 vs Brock',2020]]},
+ {id:'blow',name:'Biggest blowout',unit:'margin',dec:1,scale:120,award:'Woodshed award',rows:[
+  ['Kade',109.6,'Wk 6 over Jace',2025],['Helaman',98.2,'Wk 11 over Dax',2023],['Wes',91.4,'Wk 4 over Ruben',2022],
+  ['Jace',88.7,'Wk 14 over Wes',2021],['Dax',84.0,'Wk 3 over Lehi',2025],['Brock',79.5,'Wk 9 over Ammon',2019],
+  ['Lehi',76.8,'Wk 8 over Cory',2024],['Gentry',71.2,'Wk 5 over Tyrell',2020]]},
+ {id:'thin',name:'Narrowest win',unit:'margin',dec:2,scale:2,invert:true,asc:true,award:'Heart attack award',rows:[
+  ['Ruben',0.04,'Wk 13 over Kade',2024],['Tyrell',0.12,'Wk 7 over Jace',2025],['Cory',0.20,'Wk 2 over Brock',2021],
+  ['Jace',0.36,'Wk 10 over Gentry',2023],['Ammon',0.48,'Wk 5 over Wes',2019],['Dax',0.62,'Wk 9 over Lehi',2022],
+  ['Helaman',0.74,'Wk 15 over Ruben',2025],['Brock',0.90,'Wk 1 over Cory',2020]]},
+ {id:'loss',name:'Most points in a loss',unit:'points',dec:1,scale:200,award:'Hard luck award',rows:[
+  ['Jace',186.4,'Wk 6 lost to Kade',2025],['Dax',180.9,'Wk 11 lost to Helaman',2023],['Gentry',174.2,'Wk 12 lost to Tyrell',2024],
+  ['Wes',169.8,'Wk 14 lost to Jace',2021],['Cory',165.1,'Wk 2 lost to Ammon',2022],['Lehi',161.7,'Wk 3 lost to Dax',2025],
+  ['Ammon',158.3,'Wk 9 lost to Brock',2019],['Ruben',154.0,'Wk 8 lost to Lehi',2020]]},
+ {id:'streak',name:'Longest win streak',unit:'games',dec:0,scale:14,award:'Hot hand award',rows:[
+  ['Helaman',11,'Wk 3–13',2023],['Jace',9,'Wk 5–13',2021],['Kade',8,'Wk 1–8',2025],['Dax',8,'Wk 6–13',2022],
+  ['Brock',7,'Wk 2–8',2019],['Tyrell',7,'Wk 7–13',2024],['Gentry',6,'Wk 8–13',2020],['Wes',6,'Wk 1–6',2025]]},
+ {id:'pf',name:'Most points, full season',unit:'points',dec:1,scale:2200,award:'Scoring title',rows:[
+  ['Kade',2104.6,'14–3, champion',2025],['Helaman',2061.2,'13–4, champion',2023],['Jace',1994.8,'12–5, runner-up',2021],
+  ['Tyrell',1952.3,'11–6, champion',2024],['Dax',1918.7,'10–7, third',2025],['Brock',1887.5,'12–5, champion',2019],
+  ['Gentry',1854.9,'11–6, runner-up',2020],['Ammon',1822.4,'10–7, fourth',2022]]},
+ {id:'bench',name:'Points left on the bench',unit:'points',dec:1,scale:100,award:'Wrong lineup award',rows:[
+  ['Cory',86.4,'Wk 8, lost by 3.2',2024],['Ruben',79.1,'Wk 12, lost by 11.6',2025],['Lehi',74.6,'Wk 4, won by 24.0',2022],
+  ['Wes',70.2,'Wk 9, lost by 1.4',2021],['Ammon',66.8,'Wk 6, lost by 18.3',2023],['Brock',63.5,'Wk 2, won by 30.7',2019],
+  ['Gentry',59.9,'Wk 11, lost by 7.8',2020],['Jace',57.1,'Wk 5, lost by 2.9',2025]]},
+ {id:'faab',name:'Most FAAB on one player',unit:'dollars',dec:0,pre:'$',scale:200,off:true,award:'Overpay award',rows:[
+  ['Dax',188,'Puka Nacua, Wk 3',2023],['Jace',164,'Bucky Irving, Wk 9',2024],['Helaman',151,'Kimani Vidal, Wk 5',2025],
+  ['Kade',139,'Jaylen Warren, Wk 4',2022],['Tyrell',122,'C. Patterson, Wk 6',2021],['Wes',110,'Gus Edwards, Wk 12',2025],
+  ['Brock',97,'Kyle Rudolph, Wk 7',2019],['Ruben',84,'Mike Davis, Wk 2',2020]]},
+ {id:'trades',name:'Trades in a season',unit:'trades',dec:0,scale:20,off:true,award:'Wheeler dealer',rows:[
+  ['Ruben',17,'traded with 9 of 11',2025],['Kade',13,'six in-season flips',2024],['Helaman',11,'four pick swaps',2023],
+  ['Dax',10,'three-team deal, Wk 7',2025],['Jace',8,'two blockbusters',2022],['Lehi',7,'all before Wk 9',2021],
+  ['Gentry',5,'one at the deadline',2020],['Brock',4,'quiet year',2019]]}
+];
+const NAMES=['Kade','Helaman','Jace','Dax','Tyrell','Brock','Gentry','Ammon','Wes','Lehi','Ruben','Cory'];
+const TITLES={2019:'Brock',2020:'Wes',2021:'Dax',2022:'Lehi',2023:'Helaman',2024:'Tyrell',2025:'Kade'};
+const SEASONS=['ALL',2025,2024,2023,2022,2021,2020,2019];
+const GP=10; // meetings between any two managers, 2019–2025
+
+/* head-to-head built from a seeded generator so every total reconciles */
+const rng=(s=>()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;})(20190826);
+const H2H={};
+NAMES.forEach(a=>H2H[a]={});
+for(let i=0;i<NAMES.length;i++)for(let j=i+1;j<NAMES.length;j++){
+  const wi=2+Math.floor(rng()*7);            // 2..8 of GP
+  H2H[NAMES[i]][NAMES[j]]=wi;
+  H2H[NAMES[j]][NAMES[i]]=GP-wi;
+}
+const MGR=NAMES.map(n=>{
+  const w=NAMES.filter(o=>o!==n).reduce((t,o)=>t+H2H[n][o],0);
+  const g=(NAMES.length-1)*GP;
+  const titles=Object.entries(TITLES).filter(([,who])=>who===n).map(([y])=>+y);
+  const recs=STATS.filter(s=>best(s,'ALL')&&best(s,'ALL')[0]===n).length;
+  return{name:n,w,l:g-w,g,ppg:+(112+ (w/g-0.5)*46 + (n.length%3)*1.4).toFixed(1),titles,recs};
+}).sort((a,b)=>b.w-a.w||b.recs-a.recs);
+
+/* ═══ helpers ═══ */
+const $=id=>document.getElementById(id);
+const fmt=(s,v)=>(s.pre||'')+v.toFixed(s.dec).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+function entries(s,yr){return s.rows.filter(r=>yr==='ALL'||r[3]===yr).sort((a,b)=>s.asc?a[1]-b[1]:b[1]-a[1]);}
+function best(s,yr){return entries(s,yr)[0];}
+const pct=(s,v)=>{const p=s.invert?1-v/s.scale:v/s.scale;return Math.max(.04,Math.min(1,p));};
+const initial=n=>n[0];
+function fitNumber(el,cap){
+  const box=el.parentElement.getBoundingClientRect().width;if(!box)return;
+  const avail=box*0.94;el.style.fontSize=cap+'px';
+  const w=el.scrollWidth;if(w>avail)el.style.fontSize=Math.max(30,Math.floor(cap*avail/w))+'px';
+}
+const ringSVG=(p,val,gold)=>`<svg viewBox="0 0 56 56" aria-hidden="true">
+  <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(0,0,0,.72)" stroke-width="6"/>
+  <circle cx="28" cy="28" r="22" fill="none" stroke="url(#gg)" stroke-width="5" stroke-linecap="round"
+    stroke-dasharray="${(138*p).toFixed(0)} 139" transform="rotate(-90 28 28)"
+    style="filter:drop-shadow(0 0 4px rgba(0,232,160,.8))"/>
+  <text class="dialv" x="28" y="33" text-anchor="middle">${val}</text></svg>`;
+const rowHTML=(s,r,i,ghost)=>`<div class="row${i===0&&!ghost?' top':''}"${ghost?' style="background:linear-gradient(160deg,rgba(255,255,255,.04),rgba(255,255,255,.014));box-shadow:none"':''}>
+  <span class="rk">${i+1}</span>
+  <span class="rn">${r[0]}<span class="rc">${r[2]} · ${r[3]}</span></span>
+  <span class="rv"><b>${fmt(s,r[1])}</b></span>
+  <span class="rwell"><i style="width:${(pct(s,r[1])*100).toFixed(1)}%"></i></span></div>`;
+
+/* ═══ state ═══ */
+let page='home', sel=STATS[0].id, season='ALL', pA='Kade', pB='Helaman';
+const tracked=new Set(STATS.filter(s=>!s.off).map(s=>s.id));
+
+/* ═══ OVERVIEW ═══ */
+function renderHome(){
+  const pfs=STATS.find(s=>s.id==='pf'), champRow=pfs.rows.find(r=>r[0]==='Kade');
+  const p=pct(pfs,champRow[1]);
+  $('hgarc').setAttribute('stroke-dasharray',(650*p).toFixed(0)+' 867');
+  $('hgval').textContent=fmt(pfs,champRow[1]);fitNumber($('hgval'),86);
+  const k=MGR.find(m=>m.name==='Kade');
+  $('hline').textContent=`Kade went 14–3 and won the title, setting the league's single-season scoring mark along the way. `+
+    `All-time he is ${k.w}–${k.l} across ${k.g} games and holds ${k.recs} of the ${STATS.length} records on the books.`;
+  $('htiles').innerHTML=[
+    ['Seasons',7,1],['Managers',NAMES.length,1],
+    ['Records',STATS.reduce((n,s)=>n+s.rows.length,0),1],
+    ['Tracked',tracked.size+'/'+STATS.length,tracked.size/STATS.length]
+  ].map(([lab,v,f])=>`<div class="tile"><b>${v}</b><span>${lab}</span><div class="tb" style="width:${(f*100).toFixed(0)}%"></div></div>`).join('');
+  $('htl').innerHTML=Object.entries(TITLES).map(([y,who])=>
+    `<div class="tlx${y==='2025'?' now':''}"><div class="dot"></div><b>${who}</b><span>${y}</span></div>`).join('');
+  const held={};NAMES.forEach(n=>held[n]=0);
+  STATS.forEach(s=>{const b=best(s,'ALL');if(b)held[b[0]]++;});
+  const rank=MGR.map(m=>({...m,held:held[m.name]})).sort((a,b)=>b.held-a.held||b.titles.length-a.titles.length||b.w-a.w);
+  const owners=rank.filter(m=>m.held>0).length;
+  $('hbarNote').textContent=owners+' of '+NAMES.length+' managers hold one';
+  $('hbars').innerHTML=rank.slice(0,8).map((m,i)=>`
+    <div class="hb${i===0?' lead':''}">
+      <span class="hav${m.titles.length?'':' none'}">${initial(m.name)}</span>
+      <span><span class="hn">${m.name}</span><span class="hs">${m.w}–${m.l} · ${m.titles.length} ${m.titles.length===1?'title':'titles'}</span></span>
+      <span class="hv">${m.held}</span>
+      <span class="hw"><i style="width:${(m.held/Math.max(1,rank[0].held)*100).toFixed(0)}%"></i></span></div>`).join('');
+  const standing=STATS.map(s=>{const b=best(s,'ALL');return{s,b};}).filter(x=>x.b)
+    .sort((a,b)=>b.b[3]-a.b[3]).slice(0,6);
+  $('hrecNote').textContent='newest first';
+  $('hrecs').innerHTML=standing.map(({s,b})=>`
+    <div class="ring"><div>${ringSVG(pct(s,b[1]),s.dec>1?b[1].toFixed(2):Math.round(b[1]))}</div>
+    <div><div class="rlab">${s.name}</div><div class="rman">${b[0]}</div>
+    <span class="rsub">${fmt(s,b[1])} ${s.unit} · ${b[2]} · ${b[3]}</span></div></div>`).join('');
+}
+
+/* ═══ RECORDS ═══ */
+function renderStats(){
+  $('statlist').innerHTML=STATS.map(s=>`
+   <div class="stat" role="button" tabindex="0" data-id="${s.id}" data-sel="${s.id===sel?1:0}" data-off="${tracked.has(s.id)?0:1}">
+     <span class="sname">${s.name}<span class="sunit">${s.unit}</span></span>
+     <button class="sw" type="button" data-sw="${s.id}" aria-pressed="${tracked.has(s.id)}"
+       aria-label="Count ${s.name} toward awards"><i></i></button></div>`).join('');
+  $('trackCount').textContent=tracked.size;
+  $('recCount').textContent=STATS.reduce((n,s)=>n+s.rows.length,0);
+}
+function setCap(p){
+  const a=(135+270*p)*Math.PI/180;
+  $('gcap').setAttribute('transform',`translate(${(170+138*Math.cos(a)-170).toFixed(1)} ${(170+138*Math.sin(a)-32).toFixed(1)})`);
+}
+function renderBoard(){
+  const s=STATS.find(x=>x.id===sel), list=entries(s,season);
+  $('statTitle').textContent=s.name;$('gunit').textContent=s.unit;
+  $('kicker').textContent=season==='ALL'?'All-time leader':season+' leader';
+  $('boardLabel').textContent=season==='ALL'?'All-time board':season+' board';
+  $('boardCount').textContent=list.length+(list.length===1?' record':' records');
+  if(list.length){
+    const t=list[0],p=pct(s,t[1]);
+    $('gval').textContent=fmt(s,t[1]);fitNumber($('gval'),96);
+    $('garc').setAttribute('stroke-dasharray',(650*p).toFixed(0)+' 867');
+    $('gcap').style.opacity='1';setCap(p);
+    $('avi').textContent=initial(t[0]);$('hname').textContent=t[0];$('hctx').textContent=t[2]+' · '+t[3];
+  }else{
+    $('gval').textContent='—';fitNumber($('gval'),96);
+    $('garc').setAttribute('stroke-dasharray','0 867');$('gcap').style.opacity='0';
+    $('avi').textContent='–';$('hname').textContent='No record yet';$('hctx').textContent=season+' season';
+  }
+  $('rows').innerHTML=list.length?list.map((r,i)=>rowHTML(s,r,i)).join('')
+    :`<div class="empty">Nobody set a ${s.name.toLowerCase()} mark in ${season}.</div>`;
+  $('ghostWrap').hidden=season==='ALL';
+  if(season!=='ALL')$('ghostRows').innerHTML=entries(s,'ALL').slice(0,5).map((r,i)=>rowHTML(s,r,i,true)).join('');
+}
+
+/* ═══ MANAGERS ═══ */
+function renderMgrs(){
+  const maxW=MGR[0].w;
+  $('mgrid').innerHTML=MGR.map(m=>`
+    <button class="mcard" data-m="${m.name}">
+      <div class="mtop">
+        <div class="mav${m.titles.length?'':' none'}">${initial(m.name)}</div>
+        <div><div class="mname">${m.name}</div>
+          <span class="mrec">${m.w}–${m.l} · ${(m.w/m.g*100).toFixed(0)}%</span></div>
+      </div>
+      <div class="mstats">
+        <div class="ms"><b>${m.titles.length}</b><span>titles</span></div>
+        <div class="ms"><b>${m.recs}</b><span>records</span></div>
+      </div>
+      <div class="mbar"><i style="width:${(m.w/maxW*100).toFixed(0)}%"></i></div>
+    </button>`).join('');
+}
+function openMgr(name){
+  const m=MGR.find(x=>x.name===name);
+  const held=STATS.map(s=>{const b=best(s,'ALL');return b&&b[0]===name?{s,b}:null;}).filter(Boolean);
+  const rivals=NAMES.filter(o=>o!==name).map(o=>({o,w:H2H[name][o]})).sort((a,b)=>b.w-a.w);
+  $('mdlgBody').innerHTML=`
+    <div class="mtop" style="margin-bottom:13px">
+      <div class="mav${m.titles.length?'':' none'}" style="width:48px;height:48px;font-size:17px">${initial(m.name)}</div>
+      <div><div class="mname" style="font-size:20px">${m.name}</div>
+        <span class="mrec">${m.w}–${m.l} all-time · ${m.ppg} points per game</span></div>
+    </div>
+    <div class="mstats" style="grid-template-columns:repeat(3,1fr)">
+      <div class="ms"><b>${m.titles.length}</b><span>titles</span></div>
+      <div class="ms"><b>${m.recs}</b><span>records</span></div>
+      <div class="ms"><b>${(m.w/m.g*100).toFixed(0)}%</b><span>win rate</span></div>
+    </div>
+    ${m.titles.length?`<p class="hint" style="margin:12px 0 0">Champion in ${m.titles.join(', ')}.</p>`
+      :`<p class="hint" style="margin:12px 0 0">Still chasing a first title.</p>`}
+    <div class="sechead" style="margin-top:13px"><h4>Records held</h4><em>${held.length} of ${STATS.length}</em></div>
+    ${held.length?`<div class="rows">${held.map(({s,b})=>`
+      <div class="row"><span class="rk">★</span>
+      <span class="rn">${s.name}<span class="rc">${b[2]} · ${b[3]}</span></span>
+      <span class="rv"><b>${fmt(s,b[1])}</b></span>
+      <span class="rwell"><i style="width:${(pct(s,b[1])*100).toFixed(1)}%"></i></span></div>`).join('')}</div>`
+      :`<div class="empty">Holds no league record yet.</div>`}
+    <div class="sechead" style="margin-top:13px"><h4>Best and worst matchups</h4><em>of ${GP} meetings</em></div>
+    <div class="rows">
+      <div class="row"><span class="rk">W</span><span class="rn">${rivals[0].o}<span class="rc">owns this matchup</span></span>
+        <span class="rv"><b>${rivals[0].w}–${GP-rivals[0].w}</b></span>
+        <span class="rwell"><i style="width:${rivals[0].w/GP*100}%"></i></span></div>
+      <div class="row"><span class="rk">L</span><span class="rn">${rivals[rivals.length-1].o}<span class="rc">can't beat them</span></span>
+        <span class="rv"><b>${rivals[rivals.length-1].w}–${GP-rivals[rivals.length-1].w}</b></span>
+        <span class="rwell"><i style="width:${rivals[rivals.length-1].w/GP*100}%"></i></span></div>
+    </div>
+    <button class="ghostbtn" id="mdlgClose" style="margin-top:14px;width:100%">Close</button>`;
+  $('mdlg').showModal();
+  $('mdlgClose').onclick=()=>$('mdlg').close();
+}
+
+/* ═══ MATCHUPS ═══ */
+function renderPickers(){
+  const mk=(id,cur,other)=>$(id).innerHTML=MGR.map(m=>`
+    <button class="pk" data-pick="${id}" data-name="${m.name}" data-sel="${m.name===cur?1:0}"
+      ${m.name===other?'disabled style="opacity:.35;cursor:not-allowed"':''}>
+      <span class="pav">${initial(m.name)}</span><span>${m.name}</span><em>${m.w}–${m.l}</em></button>`).join('');
+  mk('pickA',pA,pB);mk('pickB',pB,pA);
+}
+function renderH2H(){
+  const wA=H2H[pA][pB], wB=GP-wA;
+  $('avA').textContent=initial(pA);$('avB').textContent=initial(pB);
+  $('nmA').textContent=pA;$('nmB').textContent=pB;
+  const mA=MGR.find(m=>m.name===pA),mB=MGR.find(m=>m.name===pB);
+  const tl=n=>n+(n===1?' title':' titles');
+  $('sbA').textContent=`${mA.w}–${mA.l} all-time · ${tl(mA.titles.length)}`;
+  $('sbB').textContent=`${mB.w}–${mB.l} all-time · ${tl(mB.titles.length)}`;
+  $('wA').textContent=wA;$('wB').textContent=wB;
+  $('spA').style.width=(wA/GP*100)+'%';$('spB').style.width=(wB/GP*100)+'%';
+  $('lbA').textContent=pA+' '+wA;
+  $('lbMid').textContent=GP+' meetings since 2019';
+  $('lbB').textContent=wB+' '+pB;
+  const mine=[];
+  STATS.forEach(s=>entries(s,'ALL').forEach((r,i)=>{
+    if(r[0]===pA||r[0]===pB)mine.push({s,r,i});}));
+  mine.sort((a,b)=>a.i-b.i||b.r[3]-a.r[3]);
+  $('h2hNote').textContent=mine.length+' entries on the books';
+  $('h2hRows').innerHTML=mine.length?mine.slice(0,7).map(({s,r,i})=>`
+    <div class="row${i===0?' top':''}"><span class="rk">${i+1}</span>
+    <span class="rn">${r[0]} · ${s.name}<span class="rc">${r[2]} · ${r[3]}</span></span>
+    <span class="rv"><b>${fmt(s,r[1])}</b></span>
+    <span class="rwell"><i style="width:${(pct(s,r[1])*100).toFixed(1)}%"></i></span></div>`).join('')
+    :`<div class="empty">Neither one has cracked a leaderboard.</div>`;
+}
+
+/* ═══ AWARDS ═══ */
+function renderAwards(){
+  $('awCount').textContent=tracked.size+(tracked.size===1?' trophy':' trophies');
+  $('agrid').innerHTML=STATS.map(s=>{
+    const list=entries(s,2025),on=tracked.has(s.id);
+    if(!list.length)return '';
+    const w=list[0],p=pct(s,w[1]);
+    return `<div class="acard${on?'':' off'}">
+      <div>${ringSVG(p,s.dec>1?w[1].toFixed(2):Math.round(w[1]))}</div>
+      <div><div class="ahead"><div class="rlab">${s.award}</div>
+        <button class="sw" type="button" data-sw="${s.id}" aria-pressed="${on}"
+          aria-label="Count ${s.name} toward awards"><i></i></button></div>
+        <div class="rman">${w[0]}</div><span class="rsub">${fmt(s,w[1])} ${s.unit} · ${w[2]}</span></div></div>`;
+  }).join('');
+}
+
+/* ═══ routing ═══ */
+const CRUMB={home:'Overview',records:'Record book',mgrs:'Managers',h2h:'Head to head',awards:'Awards'};
+function go(p){
+  page=p;
+  document.querySelectorAll('.page').forEach(el=>el.dataset.on=el.id==='p-'+p?'1':'0');
+  document.querySelectorAll('.nav').forEach(b=>{
+    if(b.dataset.go===p)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
+  $('crumb').textContent=CRUMB[p];
+  $('seasons').hidden=p!=='records';
+  if(p==='home'){renderHome();}
+  if(p==='records'){renderStats();renderBoard();}
+  if(p==='mgrs')renderMgrs();
+  if(p==='h2h'){renderPickers();renderH2H();}
+  if(p==='awards')renderAwards();
+}
+$('seasons').innerHTML=SEASONS.map(y=>
+  `<button type="button" data-y="${y}" aria-pressed="${y==='ALL'}">${y==='ALL'?'All-time':y}</button>`).join('');
+
+document.addEventListener('click',e=>{
+  const nav=e.target.closest('.nav');if(nav){go(nav.dataset.go);return;}
+  const yb=e.target.closest('#seasons button');if(yb){
+    season=yb.dataset.y==='ALL'?'ALL':+yb.dataset.y;
+    $('seasons').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b===yb));
+    renderBoard();return;}
+  const sw=e.target.closest('.sw');if(sw){
+    const id=sw.dataset.sw;tracked.has(id)?tracked.delete(id):tracked.add(id);
+    if(page==='records')renderStats();
+    if(page==='awards')renderAwards();
+    if(page==='home')renderHome();
+    return;}
+  const st=e.target.closest('.stat');if(st){sel=st.dataset.id;renderStats();renderBoard();return;}
+  const mc=e.target.closest('.mcard');if(mc){openMgr(mc.dataset.m);return;}
+  const pk=e.target.closest('.pk');if(pk&&!pk.disabled){
+    if(pk.dataset.pick==='pickA')pA=pk.dataset.name;else pB=pk.dataset.name;
+    renderPickers();renderH2H();return;}
+});
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter'&&e.key!==' ')return;
+  const st=e.target.closest('.stat');
+  if(st&&!e.target.closest('.sw')){e.preventDefault();sel=st.dataset.id;renderStats();renderBoard();}
+});
+addEventListener('resize',()=>{
+  if(page==='records')fitNumber($('gval'),96);
+  if(page==='home')fitNumber($('hgval'),86);
+});
+go('home');
+</script>
+
+</body>
+</html>

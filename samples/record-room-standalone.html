@@ -469,6 +469,37 @@ button{font:inherit;color:inherit}
 /* ═══ dialog ═══ */
 dialog{border:none;padding:0;background:transparent;max-width:min(440px,92vw);width:100%}
 dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
+.installbar{position:fixed;z-index:45;left:50%;transform:translateX(-50%);
+  bottom:calc(18px + env(safe-area-inset-bottom,0px));width:min(460px,calc(100vw - 28px));
+  display:flex;align-items:flex-start;gap:13px;padding:14px 15px;border-radius:var(--r);
+  background:linear-gradient(158deg,rgba(32,42,52,.98),rgba(22,30,38,.97));
+  backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);
+  border:1px solid rgba(0,232,160,.3);
+  box-shadow:0 18px 44px -18px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,255,255,.12);
+  animation:ibrise .45s cubic-bezier(.2,.8,.2,1) both}
+@keyframes ibrise{from{opacity:0;transform:translateX(-50%) translateY(14px)}}
+.ib-icon{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(150deg,#6BFFCF,var(--accent));
+  box-shadow:0 5px 15px rgba(0,232,160,.4),inset 0 1px 0 rgba(255,255,255,.65)}
+.ib-icon svg{width:19px;height:19px;fill:none;stroke:var(--on-accent);stroke-width:2.1;
+  stroke-linecap:round;stroke-linejoin:round}
+.ib-text{flex:1;min-width:0}
+.ib-text b{display:block;font-size:15px;font-weight:700;letter-spacing:-.01em;line-height:1.3}
+.ib-text span{display:block;font-size:13px;color:var(--ink-3);margin-top:5px;line-height:1.5}
+.ib-actions{display:flex;flex-direction:column;gap:7px;flex:none}
+.installbar .ib-go{min-height:40px;white-space:nowrap;border:1px solid rgba(0,232,160,.5);
+  background:linear-gradient(150deg,#6BFFCF,var(--accent));color:var(--on-accent);font-weight:700;
+  box-shadow:0 5px 15px rgba(0,232,160,.4),inset 0 1px 0 rgba(255,255,255,.6)}
+.installbar .ib-go:hover{filter:brightness(1.06)}
+.ib-no{min-height:36px;border:none;background:transparent;cursor:pointer;color:var(--ink-3);
+  font-family:var(--mono);font-size:12px;letter-spacing:.07em;text-transform:uppercase}
+.ib-no:hover{color:var(--ink)}
+@media(max-width:699px){
+  .installbar{bottom:calc(96px + env(safe-area-inset-bottom,0px));flex-wrap:wrap}
+  .ib-actions{flex-direction:row;width:100%;gap:9px}
+  .installbar .ib-go{flex:1;min-height:46px}
+  .ib-no{min-height:46px;padding:0 14px}
+}
 .dlg{padding:17px;position:relative}
 #mdlgBody .rc,#mdlgBody .rsub{white-space:normal}
 .dlghead{position:sticky;top:0;z-index:2;display:flex;align-items:flex-start;gap:13px;
@@ -710,6 +741,20 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
         <div class="agrid" id="agrid"></div>
       </div>
     </section>
+  </div>
+</div>
+
+<div class="installbar" id="installBar" hidden role="region" aria-label="Install Record Room">
+  <div class="ib-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24"><path d="M12 3v11"/><path d="M8 11l4 4 4-4"/><path d="M5 20h14"/></svg>
+  </div>
+  <div class="ib-text">
+    <b id="ibTitle">Add Record Room to your phone</b>
+    <span id="ibBody">Install it and it opens full screen from your home screen, like an app.</span>
+  </div>
+  <div class="ib-actions">
+    <button class="ghostbtn ib-go" type="button" id="ibGo">Install</button>
+    <button class="ib-no" type="button" id="ibNo" aria-label="Dismiss">Not now</button>
   </div>
 </div>
 
@@ -1323,6 +1368,50 @@ try{
 paintAll();
 setLive(stamp?'ok':'busy',stamp?('Saved · '+clock(stamp)):'Loading');
 $('refreshBtn').addEventListener('click',refresh);
+
+/* Install prompt. Chrome hands us an event we can fire on demand; iOS has no
+   such API, so there the banner explains the two taps instead of pretending
+   to do it. Neither shows once the app is already installed. */
+const INSTALL_SEEN='recordroom.install.dismissed';
+let deferredInstall=null;
+const installed=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const dismissed=()=>{try{return localStorage.getItem(INSTALL_SEEN)==='1';}catch(e){return false;}};
+const dismiss=()=>{try{localStorage.setItem(INSTALL_SEEN,'1');}catch(e){}
+  $('installBar').hidden=true;};
+/* The dock is fixed on a phone and its height moves with the safe area, so
+   the banner is placed above whatever the dock actually measures. */
+function placeInstall(){
+  const bar=$('installBar');if(bar.hidden)return;
+  const dock=document.querySelector('.dock');
+  if(!dock||getComputedStyle(dock).position!=='fixed'){bar.style.bottom='';return;}
+  bar.style.bottom=Math.round(innerHeight-dock.getBoundingClientRect().top+14)+'px';
+}
+addEventListener('resize',placeInstall);
+function showInstall(kind){
+  if(installed()||dismissed())return;
+  const bar=$('installBar');
+  if(kind==='ios'){
+    $('ibTitle').textContent='Add Record Room to your home screen';
+    $('ibBody').innerHTML='Tap Share, then <b style="color:var(--ink-2)">Add to Home Screen</b> '+
+      '&mdash; it opens full screen, like an app.';
+    $('ibGo').textContent='Got it';
+  }
+  bar.hidden=false;
+  placeInstall();
+}
+$('ibNo').addEventListener('click',dismiss);
+$('ibGo').addEventListener('click',async()=>{
+  if(!deferredInstall){dismiss();return;}          // iOS: the button just acknowledges
+  deferredInstall.prompt();
+  try{await deferredInstall.userChoice;}catch(e){}
+  deferredInstall=null;dismiss();
+});
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;showInstall('prompt');});
+addEventListener('appinstalled',()=>dismiss());
+// iOS never fires that event, so offer the instructions there after a beat
+if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!/crios|fxios|edgios/i.test(navigator.userAgent)){
+  setTimeout(()=>showInstall('ios'),1400);
+}
 refresh();
 setInterval(refresh,10*60*1000);
 </script>

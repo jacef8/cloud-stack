@@ -231,6 +231,19 @@ button{font:inherit;color:inherit}
 
 /* ═══ RECORDS ═══ */
 #p-records{grid-template-columns:minmax(0,262px) minmax(0,1fr)}
+.filterhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.filterbtns{display:flex;padding:3px;gap:2px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh)}
+.minibtn{border:none;background:transparent;color:var(--ink-3);cursor:pointer;border-radius:999px;
+  padding:4px 10px;font-family:var(--mono);font-size:12px;letter-spacing:.05em;transition:.15s}
+.minibtn:hover{color:var(--ink);background:rgba(255,255,255,.07)}
+.chk{flex:none;width:22px;height:22px;border-radius:50%;border:none;cursor:pointer;padding:0;
+  display:grid;place-items:center;background:var(--recess);box-shadow:var(--well-sh);transition:.16s}
+.chk svg{width:14px;height:14px;fill:none;stroke:rgba(255,255,255,.2);stroke-width:2.4;
+  stroke-linecap:round;stroke-linejoin:round;transition:stroke .16s}
+.chk[aria-pressed="true"]{background:linear-gradient(150deg,#6BFFCF,var(--accent));
+  box-shadow:0 3px 10px rgba(0,232,160,.5),inset 0 1px 0 rgba(255,255,255,.7)}
+.chk[aria-pressed="true"] svg{stroke:var(--on-accent)}
+.sname[role="button"]{cursor:pointer}
 .statlist{display:flex;flex-direction:column;gap:6px}
 .stat{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:9px 10px;position:relative;
   border:1px solid transparent;border-radius:var(--r-s);cursor:pointer;color:var(--ink-2);
@@ -243,7 +256,8 @@ button{font:inherit;color:inherit}
   box-shadow:inset 0 1px 0 rgba(255,255,255,.17),0 9px 19px -11px rgba(0,0,0,.97)}
 .stat[data-sel="1"]::after{content:"";position:absolute;left:0;top:14%;bottom:14%;width:3px;border-radius:99px;
   background:linear-gradient(180deg,var(--accent),var(--accent-lo));box-shadow:0 0 8px rgba(0,232,160,.85)}
-.stat[data-off="1"] .sname{color:rgba(255,255,255,.42)}
+.stat[data-off="1"] .sname{color:rgba(255,255,255,.44)}
+.stat[data-off="1"]{opacity:.78}
 .sname{flex:1;min-width:0;font-size:14px;font-weight:700;line-height:1.25;letter-spacing:-.01em}
 .sunit{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);font-weight:400;margin-top:2px}
 .sw{flex:none;width:36px;height:19px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);
@@ -284,6 +298,15 @@ button{font:inherit;color:inherit}
 .mav.none{background:linear-gradient(150deg,#5E6E6A,#38443F);color:rgba(255,255,255,.75);box-shadow:none}
 .mname{font-size:16px;font-weight:700;letter-spacing:-.015em;line-height:1.1}
 .mrec{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:3px}
+.mteam{display:block;font-size:13px;color:var(--ink-3);margin-top:3px;line-height:1.25;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tname{display:block;font-size:13px;color:var(--ink-3);margin-top:3px}
+.seasonlist{display:flex;flex-direction:column;gap:5px}
+.sl{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;align-items:center;padding:8px 11px;
+  border-radius:11px;background:var(--recess);box-shadow:var(--well-sh)}
+.sl b{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:600}
+.sl span{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sl i{font-style:normal;color:var(--ink-3);font-weight:400}
 .mstats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:11px}
 .ms{padding:8px 9px;border-radius:11px;background:var(--recess);box-shadow:var(--well-sh)}
 .ms b{display:block;font-family:var(--disp);font-size:17px;font-weight:700;letter-spacing:-.03em;
@@ -307,6 +330,8 @@ button{font:inherit;color:inherit}
   background:linear-gradient(150deg,#8BFFDA,var(--accent))}
 .pk span{flex:1;min-width:0;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pk em{font-family:var(--mono);font-style:normal;font-size:12px;color:var(--ink-3)}
+.pk .pteam{display:block;font-family:var(--text);font-size:12px;color:var(--ink-3);
+  font-weight:400;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .h2hwrap{display:flex;flex-direction:column;gap:15px}
 .vs{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:16px;align-items:center}
 .side{text-align:center}
@@ -463,10 +488,16 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
     <!-- ══ RECORDS ══ -->
     <section class="page" id="p-records">
       <aside class="panel glass pad scroll rec-rail">
-        <p class="eyebrow">Tracked stats</p>
-        <p class="hint">Tap a stat to open its board. The switch decides whether it earns a trophy at the end of the year.</p>
+        <div class="filterhead">
+          <p class="eyebrow" style="margin:0">Stat filter</p>
+          <div class="filterbtns">
+            <button class="minibtn" id="selAll">All</button>
+            <button class="minibtn" id="selNone">None</button>
+          </div>
+        </div>
+        <p class="hint">Check the stats you want on the board, the overview and the ballot. Tap a name to open it.</p>
         <div class="statlist" id="statlist"></div>
-        <div class="railfoot"><p>Tracking <b id="trackCount">7</b> of <b>9</b> · <b id="recCount">72</b> records on file</p></div>
+        <div class="railfoot"><p>Showing <b id="trackCount">9</b> of <b>9</b> stats · <b id="recCount">72</b> entries</p></div>
       </aside>
       <main class="panel glass pad scroll rec-main">
         <section class="anchor">
@@ -557,7 +588,7 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
 
 <script>
 /* ═══ data — all fabricated, labeled sample data in the UI ═══ */
-const DATA={"league":"The 12 Tribes of Gridiron","prevName":"May the Best Player Win","seasons":[2023,2024,2025,2026],"current":2026,"currentWeek":3,"stats":[{"id":"hi","name":"Highest single game","unit":"points","dec":2,"scale":240,"rows":[["CO1096",226.14,"Wk 5",2023],["swagmuffin06",204.28,"Wk 16",2023],["swagmuffin06",203.56,"Wk 18",2023],["goodmojo",198.86,"Wk 13",2023],["SourJr02",198.38,"Wk 8",2023],["Nyewing",196.96,"Wk 8",2025],["goodmojo",195.2,"Wk 16",2025],["SourJr02",193.96,"Wk 10",2023]],"award":"Biggest game"},{"id":"blow","name":"Biggest blowout","unit":"margin","dec":2,"scale":110,"rows":[["TSantana",99.36,"Wk 14 over PapiChuloo0",2025],["TFragr",94.8,"Wk 10 over EvanS52",2023],["goodmojo",92.16,"Wk 7 over TSantana",2025],["swagmuffin06",91.16,"Wk 16 over TFragr",2023],["CO1096",89.0,"Wk 5 over SourJr02",2023],["TSantana",80.54,"Wk 1 over EvanS52",2023],["CO1096",80.4,"Wk 4 over Nyewing",2024],["SourJr02",78.16,"Wk 8 over TFragr",2023]],"award":"Woodshed award"},{"id":"thin","name":"Narrowest win","unit":"margin","dec":2,"scale":3,"invert":true,"asc":true,"rows":[["TSantana",0.24,"Wk 3 over SourJr02",2023],["StraightGas2025",0.44,"Wk 10 over Jonnys720",2025],["StraightGas2025",0.48,"Wk 13 over ToadBrother",2024],["CO1096",0.68,"Wk 8 over SourJr02",2024],["bucsrok99",1.32,"Wk 2 over redruss91",2026],["goodmojo",1.34,"Wk 7 over TFragr",2023],["Jonnys720",1.42,"Wk 8 over goodmojo",2025],["ToadBrother",1.68,"Wk 17 over TFragr",2024]],"award":"Heart attack award"},{"id":"loss","name":"Most points in a loss","unit":"points","dec":2,"scale":200,"rows":[["PapiChuloo0",188.96,"Wk 8 lost to Nyewing",2025],["Nyewing",177.66,"Wk 15 lost to swagmuffin06",2025],["Nyewing",166.64,"Wk 7 lost to swagmuffin06",2025],["TSantana",163.28,"Wk 12 lost to goodmojo",2023],["ToadBrother",158.72,"Wk 14 lost to EvanS52",2024],["swagmuffin06",155.3,"Wk 4 lost to TSantana",2023],["CO1096",153.94,"Wk 6 lost to goodmojo",2024],["TSantana",153.46,"Wk 11 lost to swagmuffin06",2023]],"award":"Hard luck award"},{"id":"streak","name":"Longest win streak","unit":"games","dec":0,"scale":12,"rows":[["goodmojo",10,"Wk 5\u201314",2024],["swagmuffin06",8,"Wk 6\u201313",2023],["SourJr02",7,"Wk 1\u20137",2024],["StraightGas2025",6,"Wk 7\u201312",2025],["SourJr02",5,"Wk 8\u201312",2023],["mailu",5,"Wk 3\u20137",2024],["goodmojo",5,"Wk 9\u201313",2025],["mailu",5,"Wk 10\u201314",2025]],"award":"Hot hand award"},{"id":"pf","name":"Most points, regular season","unit":"points","dec":2,"scale":2200,"rows":[["goodmojo",2109.16,"14 games",2024],["goodmojo",2094.52,"14 games",2025],["swagmuffin06",2059.14,"14 games",2023],["SourJr02",2048.82,"14 games",2023],["Nyewing",1990.92,"14 games",2025],["goodmojo",1990.0,"14 games",2023],["TFragr",1963.66,"14 games",2023],["SourJr02",1957.0,"14 games",2024]],"award":"Scoring title"},{"id":"bench","name":"Most points left on the bench","unit":"points","dec":2,"scale":130,"rows":[["SourJr02",123.9,"Wk 9, scored 122.42",2025],["StraightGas2025",120.16,"Wk 3, scored 120.36",2024],["SourJr02",105.32,"Wk 11, scored 113.56",2023],["Nyewing",98.08,"Wk 4, scored 99.36",2023],["mailu",95.78,"Wk 13, scored 146.18",2025],["EvanS52",94.72,"Wk 8, scored 131.68",2023],["ToadBrother",92.38,"Wk 4, scored 92.82",2024],["Nyewing",91.92,"Wk 15, scored 177.66",2025]],"award":"Wrong lineup award"},{"id":"waiv","name":"Most waiver claims, one season","unit":"claims","dec":0,"scale":40,"off":true,"rows":[["goodmojo",30,"won on waivers",2023],["TSantana",30,"won on waivers",2025],["TFragr",23,"won on waivers",2023],["PapiChuloo0",23,"won on waivers",2025],["TSantana",20,"won on waivers",2024],["TSantana",17,"won on waivers",2023],["EvanS52",16,"won on waivers",2023],["goodmojo",16,"won on waivers",2024]],"award":"Waiver wire award"},{"id":"trades","name":"Most trades, one season","unit":"trades","dec":0,"scale":12,"off":true,"rows":[["goodmojo",9,"completed",2023],["PapiChuloo0",9,"completed",2025],["goodmojo",9,"completed",2025],["Jonnys720",8,"completed",2025],["PapiChuloo0",8,"completed",2026],["goodmojo",7,"completed",2024],["goodmojo",7,"completed",2026],["TSantana",6,"completed",2023]],"award":"Wheeler dealer"}],"mgr":[{"name":"goodmojo","w":39,"l":12,"g":51,"ppg":145.2,"titles":[2024,2025],"recs":4,"seasons":[2023,2024,2025,2026]},{"name":"SourJr02","w":30,"l":22,"g":52,"ppg":133.9,"titles":[],"recs":1,"seasons":[2023,2024,2025,2026]},{"name":"swagmuffin06","w":30,"l":20,"g":50,"ppg":136.8,"titles":[2023],"recs":0,"seasons":[2023,2024,2025]},{"name":"TSantana","w":23,"l":25,"g":48,"ppg":124.7,"titles":[],"recs":2,"seasons":[2023,2024,2025]},{"name":"Nyewing","w":22,"l":26,"g":48,"ppg":131.1,"titles":[],"recs":0,"seasons":[2023,2024,2025]},{"name":"TFragr","w":22,"l":28,"g":50,"ppg":124.3,"titles":[],"recs":0,"seasons":[2023,2024,2025]},{"name":"CO1096","w":18,"l":29,"g":47,"ppg":118.5,"titles":[],"recs":1,"seasons":[2023,2024,2025]},{"name":"EvanS52","w":18,"l":33,"g":51,"ppg":115.5,"titles":[],"recs":0,"seasons":[2023,2024,2025,2026]},{"name":"StraightGas2025","w":18,"l":15,"g":33,"ppg":117.7,"titles":[],"recs":0,"seasons":[2024,2025]},{"name":"mailu","w":18,"l":15,"g":33,"ppg":129.1,"titles":[],"recs":0,"seasons":[2024,2025]},{"name":"Jonnys720","w":12,"l":23,"g":35,"ppg":126.0,"titles":[],"recs":0,"seasons":[2024,2025,2026]},{"name":"PapiChuloo0","w":8,"l":12,"g":20,"ppg":118.8,"titles":[],"recs":1,"seasons":[2025,2026]},{"name":"ToadBrother","w":7,"l":10,"g":17,"ppg":125.2,"titles":[],"recs":0,"seasons":[2024]},{"name":"BlueCreekRedneck","w":3,"l":0,"g":3,"ppg":150.2,"titles":[],"recs":0,"seasons":[2026]},{"name":"bucsrok99","w":3,"l":0,"g":3,"ppg":125.9,"titles":[],"recs":0,"seasons":[2026]},{"name":"Cnannon","w":2,"l":1,"g":3,"ppg":121.3,"titles":[],"recs":0,"seasons":[2026]},{"name":"LuketheNuke14","w":2,"l":1,"g":3,"ppg":141.8,"titles":[],"recs":0,"seasons":[2026]},{"name":"redruss91","w":2,"l":1,"g":3,"ppg":141.4,"titles":[],"recs":0,"seasons":[2026]},{"name":"ElijahSpikes","w":1,"l":2,"g":3,"ppg":120.1,"titles":[],"recs":0,"seasons":[2026]},{"name":"hietokolob","w":0,"l":3,"g":3,"ppg":114.7,"titles":[],"recs":0,"seasons":[2026]}],"titles":{"2023":"swagmuffin06","2024":"goodmojo","2025":"goodmojo"},"h2h":{"TFragr":{"SourJr02":3,"TSantana":3,"EvanS52":3,"CO1096":3,"Nyewing":2,"swagmuffin06":2,"goodmojo":2,"Jonnys720":2,"StraightGas2025":0,"ToadBrother":0,"mailu":1,"PapiChuloo0":1},"SourJr02":{"TFragr":4,"EvanS52":5,"TSantana":4,"Nyewing":4,"CO1096":1,"goodmojo":1,"swagmuffin06":2,"Jonnys720":3,"StraightGas2025":1,"ToadBrother":1,"mailu":2,"PapiChuloo0":2,"ElijahSpikes":0},"goodmojo":{"swagmuffin06":5,"Nyewing":4,"CO1096":3,"EvanS52":3,"TSantana":5,"SourJr02":6,"TFragr":3,"Jonnys720":3,"mailu":2,"StraightGas2025":2,"ToadBrother":1,"PapiChuloo0":1,"LuketheNuke14":0,"ElijahSpikes":1},"swagmuffin06":{"goodmojo":2,"CO1096":5,"Nyewing":5,"TSantana":3,"EvanS52":2,"TFragr":4,"SourJr02":3,"mailu":1,"ToadBrother":1,"Jonnys720":2,"StraightGas2025":1,"PapiChuloo0":1},"Nyewing":{"CO1096":2,"goodmojo":1,"swagmuffin06":0,"SourJr02":1,"TFragr":3,"EvanS52":4,"TSantana":2,"ToadBrother":1,"StraightGas2025":3,"mailu":3,"Jonnys720":1,"PapiChuloo0":1},"CO1096":{"Nyewing":3,"swagmuffin06":2,"goodmojo":1,"TFragr":3,"SourJr02":3,"TSantana":1,"EvanS52":2,"mailu":1,"ToadBrother":0,"Jonnys720":1,"StraightGas2025":1,"PapiChuloo0":0},"TSantana":{"EvanS52":4,"TFragr":1,"SourJr02":1,"swagmuffin06":2,"goodmojo":0,"CO1096":4,"Nyewing":3,"mailu":1,"Jonnys720":2,"StraightGas2025":2,"ToadBrother":1,"PapiChuloo0":2},"EvanS52":{"TSantana":2,"SourJr02":0,"TFragr":2,"goodmojo":1,"swagmuffin06":2,"Nyewing":1,"CO1096":4,"StraightGas2025":1,"ToadBrother":2,"mailu":1,"Jonnys720":1,"PapiChuloo0":1,"bucsrok99":0},"Jonnys720":{"goodmojo":1,"TFragr":2,"SourJr02":1,"TSantana":0,"mailu":0,"swagmuffin06":1,"CO1096":2,"StraightGas2025":0,"EvanS52":1,"ToadBrother":1,"Nyewing":1,"PapiChuloo0":2,"BlueCreekRedneck":0,"Cnannon":0},"ToadBrother":{"Nyewing":1,"StraightGas2025":0,"EvanS52":0,"swagmuffin06":0,"CO1096":1,"TFragr":2,"SourJr02":0,"TSantana":1,"mailu":1,"Jonnys720":1,"goodmojo":0},"StraightGas2025":{"EvanS52":4,"ToadBrother":2,"Nyewing":0,"TFragr":2,"SourJr02":1,"TSantana":2,"mailu":1,"Jonnys720":3,"goodmojo":0,"swagmuffin06":2,"CO1096":1,"PapiChuloo0":0},"mailu":{"TSantana":2,"CO1096":2,"swagmuffin06":2,"goodmojo":2,"Jonnys720":2,"EvanS52":1,"StraightGas2025":2,"Nyewing":2,"ToadBrother":0,"SourJr02":2,"TFragr":1,"PapiChuloo0":0},"PapiChuloo0":{"EvanS52":3,"StraightGas2025":2,"TSantana":0,"Jonnys720":0,"swagmuffin06":0,"TFragr":1,"CO1096":1,"Nyewing":0,"mailu":1,"goodmojo":0,"SourJr02":0,"redruss91":0},"bucsrok99":{"EvanS52":1,"redruss91":1,"hietokolob":1},"BlueCreekRedneck":{"hietokolob":1,"Jonnys720":1,"LuketheNuke14":1},"hietokolob":{"BlueCreekRedneck":0,"Cnannon":0,"bucsrok99":0},"LuketheNuke14":{"ElijahSpikes":1,"goodmojo":1,"BlueCreekRedneck":0},"ElijahSpikes":{"LuketheNuke14":0,"SourJr02":1,"goodmojo":0},"redruss91":{"Cnannon":1,"bucsrok99":0,"PapiChuloo0":1},"Cnannon":{"redruss91":0,"hietokolob":1,"Jonnys720":1}},"meet":{"TFragr":{"SourJr02":7,"TSantana":4,"EvanS52":5,"CO1096":6,"Nyewing":5,"swagmuffin06":6,"goodmojo":5,"Jonnys720":4,"StraightGas2025":2,"ToadBrother":2,"mailu":2,"PapiChuloo0":2},"SourJr02":{"TFragr":7,"EvanS52":5,"TSantana":5,"Nyewing":5,"CO1096":4,"goodmojo":7,"swagmuffin06":5,"Jonnys720":4,"StraightGas2025":2,"ToadBrother":1,"mailu":4,"PapiChuloo0":2,"ElijahSpikes":1},"goodmojo":{"swagmuffin06":7,"Nyewing":5,"CO1096":4,"EvanS52":4,"TSantana":5,"SourJr02":7,"TFragr":5,"Jonnys720":4,"mailu":4,"StraightGas2025":2,"ToadBrother":1,"PapiChuloo0":1,"LuketheNuke14":1,"ElijahSpikes":1},"swagmuffin06":{"goodmojo":7,"CO1096":7,"Nyewing":5,"TSantana":5,"EvanS52":4,"TFragr":6,"SourJr02":5,"mailu":3,"ToadBrother":1,"Jonnys720":3,"StraightGas2025":3,"PapiChuloo0":1},"Nyewing":{"CO1096":5,"goodmojo":5,"swagmuffin06":5,"SourJr02":5,"TFragr":5,"EvanS52":5,"TSantana":5,"ToadBrother":2,"StraightGas2025":3,"mailu":5,"Jonnys720":2,"PapiChuloo0":1},"CO1096":{"Nyewing":5,"swagmuffin06":7,"goodmojo":4,"TFragr":6,"SourJr02":4,"TSantana":5,"EvanS52":6,"mailu":3,"ToadBrother":1,"Jonnys720":3,"StraightGas2025":2,"PapiChuloo0":1},"TSantana":{"EvanS52":6,"TFragr":4,"SourJr02":5,"swagmuffin06":5,"goodmojo":5,"CO1096":5,"Nyewing":5,"mailu":3,"Jonnys720":2,"StraightGas2025":4,"ToadBrother":2,"PapiChuloo0":2},"EvanS52":{"TSantana":6,"SourJr02":5,"TFragr":5,"goodmojo":4,"swagmuffin06":4,"Nyewing":5,"CO1096":6,"StraightGas2025":5,"ToadBrother":2,"mailu":2,"Jonnys720":2,"PapiChuloo0":4,"bucsrok99":1},"Jonnys720":{"goodmojo":4,"TFragr":4,"SourJr02":4,"TSantana":2,"mailu":2,"swagmuffin06":3,"CO1096":3,"StraightGas2025":3,"EvanS52":2,"ToadBrother":2,"Nyewing":2,"PapiChuloo0":2,"BlueCreekRedneck":1,"Cnannon":1},"ToadBrother":{"Nyewing":2,"StraightGas2025":2,"EvanS52":2,"swagmuffin06":1,"CO1096":1,"TFragr":2,"SourJr02":1,"TSantana":2,"mailu":1,"Jonnys720":2,"goodmojo":1},"StraightGas2025":{"EvanS52":5,"ToadBrother":2,"Nyewing":3,"TFragr":2,"SourJr02":2,"TSantana":4,"mailu":3,"Jonnys720":3,"goodmojo":2,"swagmuffin06":3,"CO1096":2,"PapiChuloo0":2},"mailu":{"TSantana":3,"CO1096":3,"swagmuffin06":3,"goodmojo":4,"Jonnys720":2,"EvanS52":2,"StraightGas2025":3,"Nyewing":5,"ToadBrother":1,"SourJr02":4,"TFragr":2,"PapiChuloo0":1},"PapiChuloo0":{"EvanS52":4,"StraightGas2025":2,"TSantana":2,"Jonnys720":2,"swagmuffin06":1,"TFragr":2,"CO1096":1,"Nyewing":1,"mailu":1,"goodmojo":1,"SourJr02":2,"redruss91":1},"bucsrok99":{"EvanS52":1,"redruss91":1,"hietokolob":1},"BlueCreekRedneck":{"hietokolob":1,"Jonnys720":1,"LuketheNuke14":1},"hietokolob":{"BlueCreekRedneck":1,"Cnannon":1,"bucsrok99":1},"LuketheNuke14":{"ElijahSpikes":1,"goodmojo":1,"BlueCreekRedneck":1},"ElijahSpikes":{"LuketheNuke14":1,"SourJr02":1,"goodmojo":1},"redruss91":{"Cnannon":1,"bucsrok99":1,"PapiChuloo0":1},"Cnannon":{"redruss91":1,"hietokolob":1,"Jonnys720":1}},"totalRecords":72};
+const DATA={"league":"The 12 Tribes of Gridiron","prevName":"May the Best Player Win","seasons":[2023,2024,2025,2026],"current":2026,"currentWeek":3,"stats":[{"id":"hi","name":"Highest single game","unit":"points","dec":2,"scale":240,"rows":[["CO1096",226.14,"Wk 5",2023],["swagmuffin06",204.28,"Wk 16",2023],["swagmuffin06",203.56,"Wk 18",2023],["goodmojo",198.86,"Wk 13",2023],["SourJr02",198.38,"Wk 8",2023],["Nyewing",196.96,"Wk 8",2025],["goodmojo",195.2,"Wk 16",2025],["SourJr02",193.96,"Wk 10",2023]],"award":"Biggest game"},{"id":"blow","name":"Biggest blowout","unit":"margin","dec":2,"scale":110,"rows":[["TSantana",99.36,"Wk 14 over PapiChuloo0",2025],["TFragr",94.8,"Wk 10 over EvanS52",2023],["goodmojo",92.16,"Wk 7 over TSantana",2025],["swagmuffin06",91.16,"Wk 16 over TFragr",2023],["CO1096",89.0,"Wk 5 over SourJr02",2023],["TSantana",80.54,"Wk 1 over EvanS52",2023],["CO1096",80.4,"Wk 4 over Nyewing",2024],["SourJr02",78.16,"Wk 8 over TFragr",2023]],"award":"Woodshed award"},{"id":"thin","name":"Narrowest win","unit":"margin","dec":2,"scale":3,"invert":true,"asc":true,"rows":[["TSantana",0.24,"Wk 3 over SourJr02",2023],["StraightGas2025",0.44,"Wk 10 over Jonnys720",2025],["StraightGas2025",0.48,"Wk 13 over ToadBrother",2024],["CO1096",0.68,"Wk 8 over SourJr02",2024],["bucsrok99",1.32,"Wk 2 over redruss91",2026],["goodmojo",1.34,"Wk 7 over TFragr",2023],["Jonnys720",1.42,"Wk 8 over goodmojo",2025],["ToadBrother",1.68,"Wk 17 over TFragr",2024]],"award":"Heart attack award"},{"id":"loss","name":"Most points in a loss","unit":"points","dec":2,"scale":200,"rows":[["PapiChuloo0",188.96,"Wk 8 lost to Nyewing",2025],["Nyewing",177.66,"Wk 15 lost to swagmuffin06",2025],["Nyewing",166.64,"Wk 7 lost to swagmuffin06",2025],["TSantana",163.28,"Wk 12 lost to goodmojo",2023],["ToadBrother",158.72,"Wk 14 lost to EvanS52",2024],["swagmuffin06",155.3,"Wk 4 lost to TSantana",2023],["CO1096",153.94,"Wk 6 lost to goodmojo",2024],["TSantana",153.46,"Wk 11 lost to swagmuffin06",2023]],"award":"Hard luck award"},{"id":"streak","name":"Longest win streak","unit":"games","dec":0,"scale":12,"rows":[["goodmojo",10,"Wk 5\u201314",2024],["swagmuffin06",8,"Wk 6\u201313",2023],["SourJr02",7,"Wk 1\u20137",2024],["StraightGas2025",6,"Wk 7\u201312",2025],["SourJr02",5,"Wk 8\u201312",2023],["mailu",5,"Wk 3\u20137",2024],["goodmojo",5,"Wk 9\u201313",2025],["mailu",5,"Wk 10\u201314",2025]],"award":"Hot hand award"},{"id":"pf","name":"Most points, regular season","unit":"points","dec":2,"scale":2200,"rows":[["goodmojo",2109.16,"14 games",2024],["goodmojo",2094.52,"14 games",2025],["swagmuffin06",2059.14,"14 games",2023],["SourJr02",2048.82,"14 games",2023],["Nyewing",1990.92,"14 games",2025],["goodmojo",1990.0,"14 games",2023],["TFragr",1963.66,"14 games",2023],["SourJr02",1957.0,"14 games",2024]],"award":"Scoring title"},{"id":"bench","name":"Most points left on the bench","unit":"points","dec":2,"scale":130,"rows":[["SourJr02",123.9,"Wk 9, scored 122.42",2025],["StraightGas2025",120.16,"Wk 3, scored 120.36",2024],["SourJr02",105.32,"Wk 11, scored 113.56",2023],["Nyewing",98.08,"Wk 4, scored 99.36",2023],["mailu",95.78,"Wk 13, scored 146.18",2025],["EvanS52",94.72,"Wk 8, scored 131.68",2023],["ToadBrother",92.38,"Wk 4, scored 92.82",2024],["Nyewing",91.92,"Wk 15, scored 177.66",2025]],"award":"Wrong lineup award"},{"id":"waiv","name":"Most waiver claims, one season","unit":"claims","dec":0,"scale":40,"off":true,"rows":[["goodmojo",30,"won on waivers",2023],["TSantana",30,"won on waivers",2025],["TFragr",23,"won on waivers",2023],["PapiChuloo0",23,"won on waivers",2025],["TSantana",20,"won on waivers",2024],["TSantana",17,"won on waivers",2023],["EvanS52",16,"won on waivers",2023],["goodmojo",16,"won on waivers",2024]],"award":"Waiver wire award"},{"id":"trades","name":"Most trades, one season","unit":"trades","dec":0,"scale":12,"off":true,"rows":[["goodmojo",9,"completed",2023],["PapiChuloo0",9,"completed",2025],["goodmojo",9,"completed",2025],["Jonnys720",8,"completed",2025],["PapiChuloo0",8,"completed",2026],["goodmojo",7,"completed",2024],["goodmojo",7,"completed",2026],["TSantana",6,"completed",2023]],"award":"Wheeler dealer"}],"mgr":[{"name":"goodmojo","w":39,"l":12,"g":51,"ppg":145.2,"titles":[2024,2025],"recs":4,"seasons":[2023,2024,2025,2026]},{"name":"SourJr02","w":30,"l":22,"g":52,"ppg":133.9,"titles":[],"recs":1,"seasons":[2023,2024,2025,2026]},{"name":"swagmuffin06","w":30,"l":20,"g":50,"ppg":136.8,"titles":[2023],"recs":0,"seasons":[2023,2024,2025]},{"name":"TSantana","w":23,"l":25,"g":48,"ppg":124.7,"titles":[],"recs":2,"seasons":[2023,2024,2025]},{"name":"Nyewing","w":22,"l":26,"g":48,"ppg":131.1,"titles":[],"recs":0,"seasons":[2023,2024,2025]},{"name":"TFragr","w":22,"l":28,"g":50,"ppg":124.3,"titles":[],"recs":0,"seasons":[2023,2024,2025]},{"name":"CO1096","w":18,"l":29,"g":47,"ppg":118.5,"titles":[],"recs":1,"seasons":[2023,2024,2025]},{"name":"EvanS52","w":18,"l":33,"g":51,"ppg":115.5,"titles":[],"recs":0,"seasons":[2023,2024,2025,2026]},{"name":"StraightGas2025","w":18,"l":15,"g":33,"ppg":117.7,"titles":[],"recs":0,"seasons":[2024,2025]},{"name":"mailu","w":18,"l":15,"g":33,"ppg":129.1,"titles":[],"recs":0,"seasons":[2024,2025]},{"name":"Jonnys720","w":12,"l":23,"g":35,"ppg":126.0,"titles":[],"recs":0,"seasons":[2024,2025,2026]},{"name":"PapiChuloo0","w":8,"l":12,"g":20,"ppg":118.8,"titles":[],"recs":1,"seasons":[2025,2026]},{"name":"ToadBrother","w":7,"l":10,"g":17,"ppg":125.2,"titles":[],"recs":0,"seasons":[2024]},{"name":"BlueCreekRedneck","w":3,"l":0,"g":3,"ppg":150.2,"titles":[],"recs":0,"seasons":[2026]},{"name":"bucsrok99","w":3,"l":0,"g":3,"ppg":125.9,"titles":[],"recs":0,"seasons":[2026]},{"name":"Cnannon","w":2,"l":1,"g":3,"ppg":121.3,"titles":[],"recs":0,"seasons":[2026]},{"name":"LuketheNuke14","w":2,"l":1,"g":3,"ppg":141.8,"titles":[],"recs":0,"seasons":[2026]},{"name":"redruss91","w":2,"l":1,"g":3,"ppg":141.4,"titles":[],"recs":0,"seasons":[2026]},{"name":"ElijahSpikes","w":1,"l":2,"g":3,"ppg":120.1,"titles":[],"recs":0,"seasons":[2026]},{"name":"hietokolob","w":0,"l":3,"g":3,"ppg":114.7,"titles":[],"recs":0,"seasons":[2026]}],"titles":{"2023":"swagmuffin06","2024":"goodmojo","2025":"goodmojo"},"h2h":{"TFragr":{"SourJr02":3,"TSantana":3,"EvanS52":3,"CO1096":3,"Nyewing":2,"swagmuffin06":2,"goodmojo":2,"Jonnys720":2,"StraightGas2025":0,"ToadBrother":0,"mailu":1,"PapiChuloo0":1},"SourJr02":{"TFragr":4,"EvanS52":5,"TSantana":4,"Nyewing":4,"CO1096":1,"goodmojo":1,"swagmuffin06":2,"Jonnys720":3,"StraightGas2025":1,"ToadBrother":1,"mailu":2,"PapiChuloo0":2,"ElijahSpikes":0},"goodmojo":{"swagmuffin06":5,"Nyewing":4,"CO1096":3,"EvanS52":3,"TSantana":5,"SourJr02":6,"TFragr":3,"Jonnys720":3,"mailu":2,"StraightGas2025":2,"ToadBrother":1,"PapiChuloo0":1,"LuketheNuke14":0,"ElijahSpikes":1},"swagmuffin06":{"goodmojo":2,"CO1096":5,"Nyewing":5,"TSantana":3,"EvanS52":2,"TFragr":4,"SourJr02":3,"mailu":1,"ToadBrother":1,"Jonnys720":2,"StraightGas2025":1,"PapiChuloo0":1},"Nyewing":{"CO1096":2,"goodmojo":1,"swagmuffin06":0,"SourJr02":1,"TFragr":3,"EvanS52":4,"TSantana":2,"ToadBrother":1,"StraightGas2025":3,"mailu":3,"Jonnys720":1,"PapiChuloo0":1},"CO1096":{"Nyewing":3,"swagmuffin06":2,"goodmojo":1,"TFragr":3,"SourJr02":3,"TSantana":1,"EvanS52":2,"mailu":1,"ToadBrother":0,"Jonnys720":1,"StraightGas2025":1,"PapiChuloo0":0},"TSantana":{"EvanS52":4,"TFragr":1,"SourJr02":1,"swagmuffin06":2,"goodmojo":0,"CO1096":4,"Nyewing":3,"mailu":1,"Jonnys720":2,"StraightGas2025":2,"ToadBrother":1,"PapiChuloo0":2},"EvanS52":{"TSantana":2,"SourJr02":0,"TFragr":2,"goodmojo":1,"swagmuffin06":2,"Nyewing":1,"CO1096":4,"StraightGas2025":1,"ToadBrother":2,"mailu":1,"Jonnys720":1,"PapiChuloo0":1,"bucsrok99":0},"Jonnys720":{"goodmojo":1,"TFragr":2,"SourJr02":1,"TSantana":0,"mailu":0,"swagmuffin06":1,"CO1096":2,"StraightGas2025":0,"EvanS52":1,"ToadBrother":1,"Nyewing":1,"PapiChuloo0":2,"BlueCreekRedneck":0,"Cnannon":0},"ToadBrother":{"Nyewing":1,"StraightGas2025":0,"EvanS52":0,"swagmuffin06":0,"CO1096":1,"TFragr":2,"SourJr02":0,"TSantana":1,"mailu":1,"Jonnys720":1,"goodmojo":0},"StraightGas2025":{"EvanS52":4,"ToadBrother":2,"Nyewing":0,"TFragr":2,"SourJr02":1,"TSantana":2,"mailu":1,"Jonnys720":3,"goodmojo":0,"swagmuffin06":2,"CO1096":1,"PapiChuloo0":0},"mailu":{"TSantana":2,"CO1096":2,"swagmuffin06":2,"goodmojo":2,"Jonnys720":2,"EvanS52":1,"StraightGas2025":2,"Nyewing":2,"ToadBrother":0,"SourJr02":2,"TFragr":1,"PapiChuloo0":0},"PapiChuloo0":{"EvanS52":3,"StraightGas2025":2,"TSantana":0,"Jonnys720":0,"swagmuffin06":0,"TFragr":1,"CO1096":1,"Nyewing":0,"mailu":1,"goodmojo":0,"SourJr02":0,"redruss91":0},"bucsrok99":{"EvanS52":1,"redruss91":1,"hietokolob":1},"BlueCreekRedneck":{"hietokolob":1,"Jonnys720":1,"LuketheNuke14":1},"hietokolob":{"BlueCreekRedneck":0,"Cnannon":0,"bucsrok99":0},"LuketheNuke14":{"ElijahSpikes":1,"goodmojo":1,"BlueCreekRedneck":0},"ElijahSpikes":{"LuketheNuke14":0,"SourJr02":1,"goodmojo":0},"redruss91":{"Cnannon":1,"bucsrok99":0,"PapiChuloo0":1},"Cnannon":{"redruss91":0,"hietokolob":1,"Jonnys720":1}},"meet":{"TFragr":{"SourJr02":7,"TSantana":4,"EvanS52":5,"CO1096":6,"Nyewing":5,"swagmuffin06":6,"goodmojo":5,"Jonnys720":4,"StraightGas2025":2,"ToadBrother":2,"mailu":2,"PapiChuloo0":2},"SourJr02":{"TFragr":7,"EvanS52":5,"TSantana":5,"Nyewing":5,"CO1096":4,"goodmojo":7,"swagmuffin06":5,"Jonnys720":4,"StraightGas2025":2,"ToadBrother":1,"mailu":4,"PapiChuloo0":2,"ElijahSpikes":1},"goodmojo":{"swagmuffin06":7,"Nyewing":5,"CO1096":4,"EvanS52":4,"TSantana":5,"SourJr02":7,"TFragr":5,"Jonnys720":4,"mailu":4,"StraightGas2025":2,"ToadBrother":1,"PapiChuloo0":1,"LuketheNuke14":1,"ElijahSpikes":1},"swagmuffin06":{"goodmojo":7,"CO1096":7,"Nyewing":5,"TSantana":5,"EvanS52":4,"TFragr":6,"SourJr02":5,"mailu":3,"ToadBrother":1,"Jonnys720":3,"StraightGas2025":3,"PapiChuloo0":1},"Nyewing":{"CO1096":5,"goodmojo":5,"swagmuffin06":5,"SourJr02":5,"TFragr":5,"EvanS52":5,"TSantana":5,"ToadBrother":2,"StraightGas2025":3,"mailu":5,"Jonnys720":2,"PapiChuloo0":1},"CO1096":{"Nyewing":5,"swagmuffin06":7,"goodmojo":4,"TFragr":6,"SourJr02":4,"TSantana":5,"EvanS52":6,"mailu":3,"ToadBrother":1,"Jonnys720":3,"StraightGas2025":2,"PapiChuloo0":1},"TSantana":{"EvanS52":6,"TFragr":4,"SourJr02":5,"swagmuffin06":5,"goodmojo":5,"CO1096":5,"Nyewing":5,"mailu":3,"Jonnys720":2,"StraightGas2025":4,"ToadBrother":2,"PapiChuloo0":2},"EvanS52":{"TSantana":6,"SourJr02":5,"TFragr":5,"goodmojo":4,"swagmuffin06":4,"Nyewing":5,"CO1096":6,"StraightGas2025":5,"ToadBrother":2,"mailu":2,"Jonnys720":2,"PapiChuloo0":4,"bucsrok99":1},"Jonnys720":{"goodmojo":4,"TFragr":4,"SourJr02":4,"TSantana":2,"mailu":2,"swagmuffin06":3,"CO1096":3,"StraightGas2025":3,"EvanS52":2,"ToadBrother":2,"Nyewing":2,"PapiChuloo0":2,"BlueCreekRedneck":1,"Cnannon":1},"ToadBrother":{"Nyewing":2,"StraightGas2025":2,"EvanS52":2,"swagmuffin06":1,"CO1096":1,"TFragr":2,"SourJr02":1,"TSantana":2,"mailu":1,"Jonnys720":2,"goodmojo":1},"StraightGas2025":{"EvanS52":5,"ToadBrother":2,"Nyewing":3,"TFragr":2,"SourJr02":2,"TSantana":4,"mailu":3,"Jonnys720":3,"goodmojo":2,"swagmuffin06":3,"CO1096":2,"PapiChuloo0":2},"mailu":{"TSantana":3,"CO1096":3,"swagmuffin06":3,"goodmojo":4,"Jonnys720":2,"EvanS52":2,"StraightGas2025":3,"Nyewing":5,"ToadBrother":1,"SourJr02":4,"TFragr":2,"PapiChuloo0":1},"PapiChuloo0":{"EvanS52":4,"StraightGas2025":2,"TSantana":2,"Jonnys720":2,"swagmuffin06":1,"TFragr":2,"CO1096":1,"Nyewing":1,"mailu":1,"goodmojo":1,"SourJr02":2,"redruss91":1},"bucsrok99":{"EvanS52":1,"redruss91":1,"hietokolob":1},"BlueCreekRedneck":{"hietokolob":1,"Jonnys720":1,"LuketheNuke14":1},"hietokolob":{"BlueCreekRedneck":1,"Cnannon":1,"bucsrok99":1},"LuketheNuke14":{"ElijahSpikes":1,"goodmojo":1,"BlueCreekRedneck":1},"ElijahSpikes":{"LuketheNuke14":1,"SourJr02":1,"goodmojo":1},"redruss91":{"Cnannon":1,"bucsrok99":1,"PapiChuloo0":1},"Cnannon":{"redruss91":1,"hietokolob":1,"Jonnys720":1}},"totalRecords":72,"teams":{"TFragr":{"2023":"Consolidated FB Team","2024":"Consolidated FB Team","2025":"Consolidated FB Team"},"goodmojo":{"2023":"Jalen Rams Me","2024":"Murray me & be my Mcbride","2025":"I think I pulled McCaff","2026":"Daniels In The Lions Den"},"CO1096":{"2023":"Chase Down Ass Up","2024":"Taylor Swift Fan Club \u2764\ufe0f","2025":"The Sea Jeanty's"},"SourJr02":{"2023":"CeeDeezNutz","2024":"Henry Stickmin","2025":"The Only St. of Detroit","2026":"Onward, Christian Watson"},"Nyewing":{"2023":null,"2024":"Malik\u2019s Naber-hood","2025":"My lil Homie the QB Pony"},"EvanS52":{"2023":"Lamar Jackson Me Off","2024":"Ja'Marr Chased Off","2025":"Bateman and Dobbins","2026":null},"TSantana":{"2023":"Hill to the Promise Land","2024":"The Starvin Marvin's","2025":"Straight Outta Hampton"},"swagmuffin06":{"2023":"TFragr's sister","2024":"Nick Chubb squats 600","2025":"Najee Harris squats 600"},"mailu":{"2024":"Right on the Mooney","2025":"Easy Pickens"},"StraightGas2025":{"2024":"Super DeMario Bro\u2019s","2025":"Hailee steinfelds manslut"},"ToadBrother":{"2024":"HU-lu has live spo-RTS"},"Jonnys720":{"2024":null,"2025":"Skattered-brains","2026":"Stafford of David"},"PapiChuloo0":{"2025":"Jalen Hurts Me","2026":"JSN+K9 and sum gays"},"redruss91":{"2026":null},"ElijahSpikes":{"2026":null},"hietokolob":{"2026":null},"BlueCreekRedneck":{"2026":null},"bucsrok99":{"2026":"BB\u2019s Jahmyracle Makers"},"Cnannon":{"2026":"I Believe In Rice"},"LuketheNuke14":{"2026":"Lambs of God"}}};
 const STATS=DATA.stats, MGR=DATA.mgr, TITLES=DATA.titles;
 const NAMES=MGR.map(m=>m.name);
 const SEASONS=['ALL',2026,2025,2024,2023];
@@ -565,6 +596,10 @@ const wins=(a,b)=>((DATA.h2h[a]||{})[b])||0;
 const meetings=(a,b)=>((DATA.meet[a]||{})[b])||0;
 const CHAMP_YEAR=Math.max(...Object.keys(TITLES).map(Number));
 const CHAMP=TITLES[CHAMP_YEAR];
+const team=(n,s)=>((DATA.teams[n]||{})[String(s)])||'';
+const teamNow=n=>{const t=DATA.teams[n]||{};
+  for(const y of DATA.seasons.slice().reverse())if(t[String(y)])return t[String(y)];return'';};
+const sub=(n,s)=>{const t=team(n,s);return t?t+' · ':'';};
 
 /* ═══ helpers ═══ */
 const $=id=>document.getElementById(id);
@@ -586,13 +621,15 @@ const ringSVG=(p,val,gold)=>`<svg viewBox="0 0 56 56" aria-hidden="true">
   <text class="dialv" x="28" y="33" text-anchor="middle">${val}</text></svg>`;
 const rowHTML=(s,r,i,ghost)=>`<div class="row${i===0&&!ghost?' top':''}"${ghost?' style="background:linear-gradient(160deg,rgba(255,255,255,.04),rgba(255,255,255,.014));box-shadow:none"':''}>
   <span class="rk">${i+1}</span>
-  <span class="rn">${r[0]}<span class="rc">${r[2]} · ${r[3]}</span></span>
+  <span class="rn">${r[0]}<span class="rc">${sub(r[0],r[3])}${r[2]} · ${r[3]}</span></span>
   <span class="rv"><b>${fmt(s,r[1])}</b></span>
   <span class="rwell"><i style="width:${(pct(s,r[1])*100).toFixed(1)}%"></i></span></div>`;
 
 /* ═══ state ═══ */
 let page='home', sel=STATS[0].id, season='ALL', pA=MGR[0].name, pB=MGR[1].name;
 const tracked=new Set(STATS.filter(s=>!s.off).map(s=>s.id));
+const shown=new Set(STATS.map(s=>s.id));
+const visible=()=>STATS.filter(s=>shown.has(s.id));
 
 /* ═══ OVERVIEW ═══ */
 function renderHome(){
@@ -611,8 +648,8 @@ function renderHome(){
     ` ${DATA.current} is ${DATA.currentWeek} weeks old and still open.`;
   $('htiles').innerHTML=[
     ['Seasons',DATA.seasons.length,1],['Managers',NAMES.length,1],
-    ['Entries',DATA.totalRecords,1],
-    ['Tracked',tracked.size+'/'+STATS.length,tracked.size/STATS.length]
+    ['Entries',visible().reduce((n,s)=>n+s.rows.length,0),1],
+    ['Showing',shown.size+'/'+STATS.length,shown.size/STATS.length]
   ].map(([lab,v,f])=>`<div class="tile"><b>${v}</b><span>${lab}</span><div class="tb" style="width:${(f*100).toFixed(0)}%"></div></div>`).join('');
   const yrs=Object.keys(TITLES).map(Number).sort((a,b)=>a-b);
   $('champNote').textContent=yrs.length+(yrs.length===1?' title decided':' titles decided');
@@ -620,41 +657,53 @@ function renderHome(){
     `<div class="tlx${y===CHAMP_YEAR?' now':''}"><div class="dot"></div><b>${TITLES[y]}</b><span>${y}</span></div>`)
     .concat([`<div class="tlx"><div class="dot"></div><b>—</b><span>${DATA.current}</span></div>`]).join('');
   const held={};NAMES.forEach(n=>held[n]=0);
-  STATS.forEach(s=>{const b=best(s,'ALL');if(b)held[b[0]]++;});
+  visible().forEach(s=>{const b=best(s,'ALL');if(b)held[b[0]]++;});
   const rank=MGR.map(m=>({...m,held:held[m.name]})).sort((a,b)=>b.held-a.held||b.titles.length-a.titles.length||b.w-a.w);
   const owners=rank.filter(m=>m.held>0).length;
   $('hbarNote').textContent=owners+' of '+NAMES.length+' managers hold one';
   $('hbars').innerHTML=rank.slice(0,8).map((m,i)=>`
     <div class="hb${i===0?' lead':''}">
       <span class="hav${m.titles.length?'':' none'}">${initial(m.name)}</span>
-      <span><span class="hn">${m.name}</span><span class="hs">${m.w}–${m.l} · ${m.titles.length} ${m.titles.length===1?'title':'titles'}</span></span>
+      <span><span class="hn">${m.name}</span><span class="hs">${teamNow(m.name)||'no team name set'}</span></span>
       <span class="hv">${m.held}</span>
       <span class="hw"><i style="width:${(m.held/Math.max(1,rank[0].held)*100).toFixed(0)}%"></i></span></div>`).join('');
-  const standing=STATS.map(s=>{const b=best(s,'ALL');return{s,b};}).filter(x=>x.b)
+  const standing=visible().map(s=>{const b=best(s,'ALL');return{s,b};}).filter(x=>x.b)
     .sort((a,b)=>b.b[3]-a.b[3]).slice(0,6);
   $('hrecNote').textContent='newest first';
   $('hrecs').innerHTML=standing.map(({s,b})=>`
     <div class="ring"><div>${ringSVG(pct(s,b[1]),s.dec>1?b[1].toFixed(2):Math.round(b[1]))}</div>
     <div><div class="rlab">${s.name}</div><div class="rman">${b[0]}</div>
-    <span class="rsub">${fmt(s,b[1])} ${s.unit} · ${b[2]} · ${b[3]}</span></div></div>`).join('');
+    <span class="rsub">${sub(b[0],b[3])}${fmt(s,b[1])} ${s.unit} · ${b[2]} · ${b[3]}</span></div></div>`).join('')
+    ||`<div class="empty">No stats showing. Turn some on in the stat filter.</div>`;
 }
 
 /* ═══ RECORDS ═══ */
 function renderStats(){
   $('statlist').innerHTML=STATS.map(s=>`
-   <div class="stat" role="button" tabindex="0" data-id="${s.id}" data-sel="${s.id===sel?1:0}" data-off="${tracked.has(s.id)?0:1}">
-     <span class="sname">${s.name}<span class="sunit">${s.unit}</span></span>
-     <button class="sw" type="button" data-sw="${s.id}" aria-pressed="${tracked.has(s.id)}"
-       aria-label="Count ${s.name} toward awards"><i></i></button></div>`).join('');
-  $('trackCount').textContent=tracked.size;
-  $('recCount').textContent=STATS.reduce((n,s)=>n+s.rows.length,0);
+   <div class="stat" data-id="${s.id}" data-sel="${s.id===sel?1:0}" data-off="${shown.has(s.id)?0:1}">
+     <button class="chk" type="button" data-chk="${s.id}" aria-pressed="${shown.has(s.id)}"
+       aria-label="Show ${s.name}"><svg viewBox="0 0 20 20"><path d="M5 10.4l3.4 3.4L15 7.1"/></svg></button>
+     <span class="sname" role="button" tabindex="0" data-open="${s.id}">${s.name}<span class="sunit">${s.unit}</span></span>
+   </div>`).join('');
+  $('trackCount').textContent=shown.size;
+  $('recCount').textContent=visible().reduce((n,s)=>n+s.rows.length,0);
 }
 function setCap(p){
   const a=(135+270*p)*Math.PI/180;
   $('gcap').setAttribute('transform',`translate(${(170+138*Math.cos(a)-170).toFixed(1)} ${(170+138*Math.sin(a)-32).toFixed(1)})`);
 }
 function renderBoard(){
-  const s=STATS.find(x=>x.id===sel), list=entries(s,season);
+  const s=STATS.find(x=>x.id===sel);
+  if(!s||!shown.has(sel)){
+    $('statTitle').textContent='Nothing selected';$('kicker').textContent='Stat filter';
+    $('gval').textContent='—';fitNumber($('gval'),96);$('gunit').textContent='';
+    $('garc').setAttribute('stroke-dasharray','0 867');$('gcap').style.opacity='0';
+    $('avi').textContent='–';$('hname').textContent='No stat showing';
+    $('hctx').textContent='Check one in the filter';
+    $('boardLabel').textContent='Board';$('boardCount').textContent='';
+    $('rows').innerHTML='<div class="empty">Every stat is filtered out. Check one on the left to see its board.</div>';
+    $('ghostWrap').hidden=true;return;}
+  const list=entries(s,season);
   $('statTitle').textContent=s.name;$('gunit').textContent=s.unit;
   $('kicker').textContent=season==='ALL'?'All-time leader':season+' leader';
   $('boardLabel').textContent=season==='ALL'?'All-time board':season+' board';
@@ -664,7 +713,8 @@ function renderBoard(){
     $('gval').textContent=fmt(s,t[1]);fitNumber($('gval'),96);
     $('garc').setAttribute('stroke-dasharray',(650*p).toFixed(0)+' 867');
     $('gcap').style.opacity='1';setCap(p);
-    $('avi').textContent=initial(t[0]);$('hname').textContent=t[0];$('hctx').textContent=t[2]+' · '+t[3];
+    $('avi').textContent=initial(t[0]);$('hname').textContent=t[0];
+    $('hctx').textContent=sub(t[0],t[3])+t[2]+' · '+t[3];
   }else{
     $('gval').textContent='—';fitNumber($('gval'),96);
     $('garc').setAttribute('stroke-dasharray','0 867');$('gcap').style.opacity='0';
@@ -683,10 +733,11 @@ function renderMgrs(){
     <button class="mcard" data-m="${m.name}">
       <div class="mtop">
         <div class="mav${m.titles.length?'':' none'}">${initial(m.name)}</div>
-        <div><div class="mname">${m.name}</div>
-          <span class="mrec">${m.w}–${m.l} · ${(m.w/m.g*100).toFixed(0)}%</span></div>
+        <div style="min-width:0"><div class="mname">${m.name}</div>
+          <span class="mteam">${teamNow(m.name)||'no team name set'}</span></div>
       </div>
-      <div class="mstats">
+      <div class="mstats" style="grid-template-columns:repeat(3,1fr)">
+        <div class="ms"><b>${m.w}–${m.l}</b><span>record</span></div>
         <div class="ms"><b>${m.titles.length}</b><span>titles</span></div>
         <div class="ms"><b>${m.recs}</b><span>records</span></div>
       </div>
@@ -702,8 +753,9 @@ function openMgr(name){
   $('mdlgBody').innerHTML=`
     <div class="mtop" style="margin-bottom:13px">
       <div class="mav${m.titles.length?'':' none'}" style="width:48px;height:48px;font-size:17px">${initial(m.name)}</div>
-      <div><div class="mname" style="font-size:20px">${m.name}</div>
-        <span class="mrec">${m.w}–${m.l} all-time · ${m.ppg} points per game</span></div>
+      <div style="min-width:0"><div class="mname" style="font-size:20px">${m.name}</div>
+        <span class="mrec">${m.w}–${m.l} all-time · ${m.ppg} points per game</span>
+        <span class="tname">${teamNow(m.name)||'no team name set'}</span></div>
     </div>
     <div class="mstats" style="grid-template-columns:repeat(3,1fr)">
       <div class="ms"><b>${m.titles.length}</b><span>titles</span></div>
@@ -712,6 +764,9 @@ function openMgr(name){
     </div>
     ${m.titles.length?`<p class="hint" style="margin:12px 0 0">Champion in ${m.titles.join(', ')}.</p>`
       :`<p class="hint" style="margin:12px 0 0">Still chasing a first title.</p>`}
+    <div class="sechead" style="margin-top:13px"><h4>Team names by season</h4><em>${m.seasons.length} ${m.seasons.length===1?'season':'seasons'}</em></div>
+    <div class="seasonlist">${m.seasons.map(y=>
+      `<div class="sl"><b>${y}</b><span>${team(m.name,y)||'<i>no team name set</i>'}</span></div>`).join('')}</div>
     <div class="sechead" style="margin-top:13px"><h4>Records held</h4><em>${held.length} of ${STATS.length}</em></div>
     ${held.length?`<div class="rows">${held.map(({s,b})=>`
       <div class="row"><span class="rk">★</span>
@@ -742,7 +797,9 @@ function renderPickers(){
   const mk=(id,cur,other)=>$(id).innerHTML=MGR.map(m=>`
     <button class="pk" data-pick="${id}" data-name="${m.name}" data-sel="${m.name===cur?1:0}"
       ${m.name===other?'disabled style="opacity:.35;cursor:not-allowed"':''}>
-      <span class="pav">${initial(m.name)}</span><span>${m.name}</span><em>${m.w}–${m.l}</em></button>`).join('');
+      <span class="pav">${initial(m.name)}</span>
+      <span>${m.name}<em class="pteam">${teamNow(m.name)||'no team name set'}</em></span>
+      <em>${m.w}–${m.l}</em></button>`).join('');
   mk('pickA',pA,pB);mk('pickB',pB,pA);
 }
 function renderH2H(){
@@ -751,8 +808,8 @@ function renderH2H(){
   $('nmA').textContent=pA;$('nmB').textContent=pB;
   const mA=MGR.find(m=>m.name===pA),mB=MGR.find(m=>m.name===pB);
   const tl=n=>n+(n===1?' title':' titles');
-  $('sbA').textContent=`${mA.w}–${mA.l} all-time · ${tl(mA.titles.length)}`;
-  $('sbB').textContent=`${mB.w}–${mB.l} all-time · ${tl(mB.titles.length)}`;
+  $('sbA').innerHTML=`${teamNow(pA)||'no team name set'}<br>${mA.w}–${mA.l} all-time · ${tl(mA.titles.length)}`;
+  $('sbB').innerHTML=`${teamNow(pB)||'no team name set'}<br>${mB.w}–${mB.l} all-time · ${tl(mB.titles.length)}`;
   $('wA').textContent=wA;$('wB').textContent=wB;
   const den=GP||1;
   $('spA').style.width=(wA/den*100)+'%';$('spB').style.width=(wB/den*100)+'%';
@@ -774,9 +831,10 @@ function renderH2H(){
 
 /* ═══ AWARDS ═══ */
 function renderAwards(){
-  $('awCount').textContent=tracked.size+(tracked.size===1?' trophy':' trophies');
+  const nAw=visible().filter(s=>tracked.has(s.id)).length;
+  $('awCount').textContent=nAw+(nAw===1?' trophy':' trophies');
   $('awTitle').textContent=DATA.current+' award ballot';
-  $('agrid').innerHTML=STATS.map(s=>{
+  $('agrid').innerHTML=visible().map(s=>{
     const list=entries(s,DATA.current).length?entries(s,DATA.current):entries(s,CHAMP_YEAR);
     const on=tracked.has(s.id);
     if(!list.length)return '';
@@ -786,8 +844,9 @@ function renderAwards(){
       <div><div class="ahead"><div class="rlab">${s.award}</div>
         <button class="sw" type="button" data-sw="${s.id}" aria-pressed="${on}"
           aria-label="Count ${s.name} toward awards"><i></i></button></div>
-        <div class="rman">${w[0]}</div><span class="rsub">${fmt(s,w[1])} ${s.unit} · ${w[2]}</span></div></div>`;
-  }).join('');
+        <div class="rman">${w[0]}</div>
+        <span class="rsub">${sub(w[0],w[3])}${fmt(s,w[1])} ${s.unit}</span></div></div>`;
+  }).join('')||`<div class="empty" style="grid-column:1/-1">No stats showing. Turn some on in the stat filter, on the Book page.</div>`;
 }
 
 /* ═══ routing ═══ */
@@ -816,11 +875,15 @@ document.addEventListener('click',e=>{
     renderBoard();return;}
   const sw=e.target.closest('.sw');if(sw){
     const id=sw.dataset.sw;tracked.has(id)?tracked.delete(id):tracked.add(id);
-    if(page==='records')renderStats();
-    if(page==='awards')renderAwards();
-    if(page==='home')renderHome();
-    return;}
-  const st=e.target.closest('.stat');if(st){sel=st.dataset.id;renderStats();renderBoard();return;}
+    renderAwards();return;}
+  const chk=e.target.closest('.chk');if(chk){
+    const id=chk.dataset.chk;shown.has(id)?shown.delete(id):shown.add(id);
+    if(!shown.has(sel)&&visible().length)sel=visible()[0].id;
+    renderStats();renderBoard();return;}
+  if(e.target.closest('#selAll')){STATS.forEach(s=>shown.add(s.id));renderStats();renderBoard();return;}
+  if(e.target.closest('#selNone')){shown.clear();renderStats();renderBoard();return;}
+  const nmOpen=e.target.closest('[data-open]');if(nmOpen){
+    sel=nmOpen.dataset.open;shown.add(sel);renderStats();renderBoard();return;}
   const mc=e.target.closest('.mcard');if(mc){openMgr(mc.dataset.m);return;}
   const pk=e.target.closest('.pk');if(pk&&!pk.disabled){
     if(pk.dataset.pick==='pickA')pA=pk.dataset.name;else pB=pk.dataset.name;
@@ -828,8 +891,8 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('keydown',e=>{
   if(e.key!=='Enter'&&e.key!==' ')return;
-  const st=e.target.closest('.stat');
-  if(st&&!e.target.closest('.sw')){e.preventDefault();sel=st.dataset.id;renderStats();renderBoard();}
+  const nmOpen=e.target.closest('[data-open]');
+  if(nmOpen){e.preventDefault();sel=nmOpen.dataset.open;shown.add(sel);renderStats();renderBoard();}
 });
 addEventListener('resize',()=>{
   if(page==='records')fitNumber($('gval'),96);

@@ -193,8 +193,16 @@ button{font:inherit;color:inherit}
 .tile .tb{height:4px;border-radius:999px;margin-top:8px;
   background:linear-gradient(90deg,var(--accent-2),var(--accent));box-shadow:0 0 8px rgba(0,232,160,.55)}
 .rtop{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
-.rnext{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:6px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rvwrap{flex:none;white-space:nowrap}
+.rmeta{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:12px 16px;align-items:start;
+  margin-top:11px;padding-top:11px;border-top:1px solid rgba(255,255,255,.1)}
+.rf{min-width:0}
+.rfk{display:block;font-family:var(--mono);font-size:12px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3)}
+.rfv{display:block;font-size:14px;font-weight:600;margin-top:4px;line-height:1.3;
+  white-space:normal;overflow-wrap:break-word}
+.rfs{display:block;font-size:13px;color:var(--ink-3);margin-top:3px;line-height:1.3;
+  white-space:normal;overflow-wrap:break-word}
 .ring{display:block;padding:12px 13px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.08);
   background:linear-gradient(160deg,var(--e2-hi),var(--e2));
   box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 8px 17px -12px rgba(0,0,0,.97);
@@ -224,7 +232,8 @@ button{font:inherit;color:inherit}
 .hb{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:11px;align-items:center;
   padding:8px 11px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.05);
   background:linear-gradient(160deg,rgba(255,255,255,.048),rgba(255,255,255,.016));transition:transform .15s}
-.hb:hover{transform:translateY(-1px)}
+.hb{cursor:pointer}
+.hb:hover{transform:translateY(-1px);border-color:rgba(0,232,160,.4)}
 .hb.lead{border-color:rgba(0,232,160,.4);background:linear-gradient(160deg,var(--e2-hi),var(--e2));
   box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 8px 17px -12px rgba(0,0,0,.97)}
 .hb .hav{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:var(--disp);
@@ -477,10 +486,9 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
 
   <div class="col">
     <header class="panel glass bar">
-      <h1>Record Room<span id="crumb">Overview</span></h1>
-      <span class="chip"><i></i><span id="champChip"></span></span>
-      <button class="chip live" id="refreshBtn" type="button" title="Refresh from Sleeper"><i></i><span id="liveMsg">Loading</span></button>
+      <h1>Record Room<span id="crumb"></span></h1>
       <div class="barspace"></div>
+      <button class="chip live" id="refreshBtn" type="button" title="Refresh from Sleeper"><i></i><span id="liveMsg">Loading</span></button>
       <div class="pills" id="seasons" role="group" aria-label="Season" hidden></div>
     </header>
 
@@ -837,9 +845,10 @@ function renderHome(){
   visible().forEach(s=>{const b=best(s,'ALL');if(b)held[b[0]]++;});
   const rank=MGR.map(m=>({...m,held:held[m.name]})).sort((a,b)=>b.held-a.held||b.titles.length-a.titles.length||b.w-a.w);
   const owners=rank.filter(m=>m.held>0).length;
-  $('hbarNote').textContent='league records each';
+  $('hbarNote').textContent='tap a name to see theirs';
   $('hbars').innerHTML=rank.slice(0,8).map((m,i)=>`
-    <div class="hb${i===0?' lead':''}">
+    <div class="hb${i===0?' lead':''}" role="button" tabindex="0" data-m="${m.name}"
+      aria-label="Open ${m.name}">
       <span class="hav${m.titles.length?'':' none'}">${initial(m.name)}</span>
       <span><span class="hn">${m.name}</span><span class="hs">${teamNow(m.name)||'no team name set'}</span></span>
       <span class="hv">${m.held}<em>${m.held===1?'record':'records'}</em></span>
@@ -849,15 +858,20 @@ function renderHome(){
   $('hrecNote').textContent='newest first';
   $('hrecs').innerHTML=standing.map(({s,b})=>{
     const all=entries(s,'ALL'), second=all[1];
-    const gap=second?Math.abs(b[1]-second[1]):0;
+    const gap=second?Math.abs(b[1]-second[1]).toFixed(s.dec):null;
+    const f=(k,v,sub)=>`<div class="rf"><span class="rfk">${k}</span>
+      <span class="rfv">${v}</span>${sub?`<span class="rfs">${sub}</span>`:''}</div>`;
     return `<div class="ring">
       <div class="rtop">
         <div class="rlab">${s.name}</div>
-        <div><span class="rval">${fmt(s,b[1])}</span><span class="rvalu">${s.unit}</span></div>
+        <div class="rvwrap"><span class="rval">${fmt(s,b[1])}</span><span class="rvalu">${s.unit}</span></div>
       </div>
-      <div class="rhold"><span class="rman">${b[0]}</span><span class="rteam">${team(b[0],b[3])||''}</span></div>
-      <span class="rsub">${b[2]} · ${b[3]}</span>
-      ${second?`<span class="rnext">next best ${fmt(s,second[1])} by ${second[0]}, ${gap.toFixed(s.dec)} back</span>`:''}
+      <div class="rmeta">
+        ${f('Holder',b[0],team(b[0],b[3])||'no team name')}
+        ${f('Set',b[2],'Season '+b[3])}
+        ${second?f('Next best',fmt(s,second[1]),second[0]):f('Next best','—','only entry')}
+        ${gap?f('Clear by',gap,s.unit):''}
+      </div>
     </div>`;}).join('')
     ||`<div class="empty">No stats showing. Turn some on in the stat filter.</div>`;
 }
@@ -1054,7 +1068,7 @@ function go(p){
   document.querySelectorAll('.page').forEach(el=>el.dataset.on=el.id==='p-'+p?'1':'0');
   document.querySelectorAll('.nav').forEach(b=>{
     if(b.dataset.go===p)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
-  $('crumb').textContent=(DATA.league?DATA.league+' · ':'')+CRUMB[p];
+  $('crumb').textContent=DATA.league||'';
   $('seasons').hidden=p!=='records';
   if(p==='home'){renderHome();}
   if(p==='records'){renderStats();renderBoard();}
@@ -1085,7 +1099,7 @@ document.addEventListener('click',e=>{
   if(e.target.closest('#selNone')){shown.clear();renderStats();renderBoard();return;}
   const nmOpen=e.target.closest('[data-open]');if(nmOpen){
     sel=nmOpen.dataset.open;shown.add(sel);renderStats();renderBoard();return;}
-  const mc=e.target.closest('.mcard');if(mc){openMgr(mc.dataset.m);return;}
+  const mc=e.target.closest('.mcard,.hb');if(mc&&mc.dataset.m){openMgr(mc.dataset.m);return;}
   const pk=e.target.closest('.pk');if(pk&&!pk.disabled){
     if(pk.dataset.pick==='pickA')pA=pk.dataset.name;else pB=pk.dataset.name;
     renderPickers();renderH2H();return;}
@@ -1093,12 +1107,11 @@ document.addEventListener('click',e=>{
 document.addEventListener('keydown',e=>{
   if(e.key!=='Enter'&&e.key!==' ')return;
   const nmOpen=e.target.closest('[data-open]');
-  if(nmOpen){e.preventDefault();sel=nmOpen.dataset.open;shown.add(sel);renderStats();renderBoard();}
+  if(nmOpen){e.preventDefault();sel=nmOpen.dataset.open;shown.add(sel);renderStats();renderBoard();return;}
+  const hb=e.target.closest('.hb');
+  if(hb&&hb.dataset.m){e.preventDefault();openMgr(hb.dataset.m);}
 });
-function paintAll(){
-  $('champChip').textContent=CHAMP_YEAR+' champion · '+CHAMP;
-  paintSeasons();go(page);
-}
+function paintAll(){paintSeasons();go(page);}
 const CACHE='recordroom.v1.'+LEAGUE_ID;
 const clock=t=>new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
 function setLive(state,msg){

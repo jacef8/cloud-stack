@@ -225,7 +225,7 @@ button{font:inherit;color:inherit}
 .sbends{display:flex;justify-content:space-between;margin-top:5px;font-family:var(--mono);
   font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
 .rval{font-family:var(--disp);font-size:22px;font-weight:700;letter-spacing:-.035em;
-  font-variant-numeric:tabular-nums;line-height:1}
+  font-variant-numeric:tabular-nums;line-height:1;white-space:nowrap}
 .rvalu{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-left:6px}
 /* champions timeline */
 .hbars{display:flex;flex-direction:column;gap:6px}
@@ -242,7 +242,7 @@ button{font:inherit;color:inherit}
 .hb .hn{font-size:14px;font-weight:700;letter-spacing:-.01em}
 .hb .hs{display:block;font-family:var(--mono);font-size:13px;color:var(--ink-3);margin-top:5px;line-height:1.45}
 .hb .hv{font-family:var(--disp);font-size:19px;font-weight:700;letter-spacing:-.03em;
-  font-variant-numeric:tabular-nums;text-align:right;line-height:1}
+  font-variant-numeric:tabular-nums;text-align:right;line-height:1;white-space:nowrap}
 .hb .hv em{display:block;font-family:var(--mono);font-style:normal;font-size:12px;font-weight:400;
   color:var(--ink-3);letter-spacing:.04em;margin-top:4px}
 .hb .hw{grid-column:1/-1;height:5px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);overflow:hidden}
@@ -325,9 +325,9 @@ button{font:inherit;color:inherit}
 .stn{min-width:0;font-size:15px;font-weight:700;letter-spacing:-.01em;line-height:1.3}
 .stt{display:block;font-size:13px;font-weight:400;color:var(--ink-3);margin-top:4px;line-height:1.4;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.stw{font-family:var(--mono);font-size:14px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.stw{font-family:var(--mono);font-size:14px;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
 .stp{font-family:var(--disp);font-size:17px;font-weight:700;letter-spacing:-.03em;text-align:right;
-  font-variant-numeric:tabular-nums;line-height:1}
+  font-variant-numeric:tabular-nums;line-height:1;white-space:nowrap}
 .stp em{display:block;font-family:var(--mono);font-style:normal;font-size:12px;font-weight:400;
   color:var(--ink-3);margin-top:4px}
 .stbar{grid-column:1/-1;height:5px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);
@@ -359,8 +359,8 @@ button{font:inherit;color:inherit}
 
 /* ═══ MANAGERS ═══ */
 #p-mgrs{grid-template-rows:minmax(0,1fr)}
-.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:9px}
-.mcard{text-align:left;padding:12px;border-radius:var(--r-s);cursor:pointer;
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:10px}
+.mcard{text-align:left;padding:13px;border-radius:var(--r-s);cursor:pointer;
   border:1px solid rgba(255,255,255,.055);
   background:linear-gradient(160deg,var(--e2-hi),var(--e2));
   box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 9px 19px -12px rgba(0,0,0,.97);
@@ -383,11 +383,11 @@ button{font:inherit;color:inherit}
 .sl b{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:600}
 .sl span{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sl i{font-style:normal;color:var(--ink-3);font-weight:400}
-.mstats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:11px}
-.ms{padding:8px 9px;border-radius:11px;background:var(--recess);box-shadow:var(--well-sh)}
+.mstats{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:11px}
+.ms{padding:9px 10px;border-radius:11px;background:var(--recess);box-shadow:var(--well-sh);min-width:0}
 .ms b{display:block;font-family:var(--disp);font-size:17px;font-weight:700;letter-spacing:-.03em;
-  font-variant-numeric:tabular-nums;line-height:1}
-.ms span{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:4px}
+  font-variant-numeric:tabular-nums;line-height:1;white-space:nowrap}
+.ms span{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mbar{height:5px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);margin-top:10px;overflow:hidden}
 .mbar i{display:block;height:100%;border-radius:999px;
   background:linear-gradient(90deg,var(--accent-2),var(--accent));box-shadow:0 0 9px rgba(0,232,160,.6)}
@@ -613,7 +613,7 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
     <!-- ══ MANAGERS ══ -->
     <section class="page" id="p-mgrs">
       <div class="panel glass pad scroll">
-        <div class="sechead"><h4>Managers</h4><em>all-time, 2019–2025 · tap a card</em></div>
+        <div class="sechead"><h4>Managers</h4><em id="mgrNote"></em></div>
         <div class="mgrid" id="mgrid"></div>
       </div>
     </section>
@@ -1007,6 +1007,8 @@ function renderBoard(){
 
 /* ═══ MANAGERS ═══ */
 function renderMgrs(){
+  const ys=DATA.seasons;
+  $('mgrNote').textContent='all-time, '+ys[0]+'–'+ys[ys.length-1]+' · tap a card';
   const maxW=MGR[0].w;
   $('mgrid').innerHTML=MGR.map(m=>`
     <button class="mcard" data-m="${m.name}">

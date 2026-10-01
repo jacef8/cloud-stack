@@ -870,8 +870,23 @@ const rowHTML=(s,r,i,ghost)=>`<div class="row${i===0&&!ghost?' top':''}"${ghost?
 
 /* ═══ state ═══ */
 let page='home', sel=STATS[0].id, season='ALL', pA=MGR[0].name, pB=MGR[1].name;
-const tracked=new Set(STATS.filter(s=>!s.off).map(s=>s.id));
-const shown=new Set(STATS.map(s=>s.id));
+/* Filter choices are per person and per league, kept in the browser so a
+   refresh does not undo them. Hidden stats are stored rather than shown ones,
+   so a stat added later shows up by default instead of silently missing. */
+const PREFS='recordroom.prefs.'+LEAGUE_ID;
+const savedPrefs=(()=>{try{return JSON.parse(localStorage.getItem(PREFS)||'null')||{};}
+  catch(e){return {};}})();
+const ALL_IDS=STATS.map(s=>s.id);
+const hidden=new Set((savedPrefs.hidden||[]).filter(id=>ALL_IDS.includes(id)));
+const shown=new Set(ALL_IDS.filter(id=>!hidden.has(id)));
+const tracked=new Set(Array.isArray(savedPrefs.tracked)
+  ? savedPrefs.tracked.filter(id=>ALL_IDS.includes(id))
+  : STATS.filter(s=>!s.off).map(s=>s.id));
+function savePrefs(){
+  try{localStorage.setItem(PREFS,JSON.stringify({
+    hidden:ALL_IDS.filter(id=>!shown.has(id)),
+    tracked:[...tracked]}));}catch(e){}
+}
 const visible=()=>STATS.filter(s=>shown.has(s.id));
 
 /* ═══ OVERVIEW ═══ */
@@ -1173,15 +1188,15 @@ document.addEventListener('click',e=>{
     renderBoard();return;}
   const sw=e.target.closest('.sw');if(sw){
     const id=sw.dataset.sw;tracked.has(id)?tracked.delete(id):tracked.add(id);
-    renderAwards();return;}
+    savePrefs();renderAwards();return;}
   const chk=e.target.closest('.chk');if(chk){
     const id=chk.dataset.chk;shown.has(id)?shown.delete(id):shown.add(id);
     if(!shown.has(sel)&&visible().length)sel=visible()[0].id;
-    renderStats();renderBoard();return;}
-  if(e.target.closest('#selAll')){STATS.forEach(s=>shown.add(s.id));renderStats();renderBoard();return;}
-  if(e.target.closest('#selNone')){shown.clear();renderStats();renderBoard();return;}
+    savePrefs();renderStats();renderBoard();return;}
+  if(e.target.closest('#selAll')){STATS.forEach(s=>shown.add(s.id));savePrefs();renderStats();renderBoard();return;}
+  if(e.target.closest('#selNone')){shown.clear();savePrefs();renderStats();renderBoard();return;}
   const nmOpen=e.target.closest('[data-open]');if(nmOpen){
-    sel=nmOpen.dataset.open;shown.add(sel);renderStats();renderBoard();return;}
+    sel=nmOpen.dataset.open;shown.add(sel);savePrefs();renderStats();renderBoard();return;}
   const mc=e.target.closest('.mcard,.hb,.st');if(mc&&mc.dataset.m){openMgr(mc.dataset.m);return;}
   const pk=e.target.closest('.pk');if(pk&&!pk.disabled){
     if(pk.dataset.pick==='pickA')pA=pk.dataset.name;else pB=pk.dataset.name;

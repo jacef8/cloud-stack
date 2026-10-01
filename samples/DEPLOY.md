@@ -18,9 +18,11 @@ this repo can only ever touch the record book.
 
 ## First time
 
-    npm install -g firebase-tools     # once per computer
-    firebase login                    # once, opens a browser
-    npm run site:create               # claims record-room.web.app
+    npm install -g firebase-tools        # once per computer
+    firebase login                       # once, opens a browser
+    firebase projects:create record-room-app   # its own project, once
+    firebase use record-room-app
+    npm run site:create                  # claims record-room.web.app
     npm run deploy
 
 The site is then at:
@@ -38,19 +40,11 @@ across all of Firebase. These were unclaimed as of this writing:
     record-room   the-record-room   trophy-case
     the-ledger    etched
 
-### Keeping it out of the existing project entirely
+Record Room has its own Firebase project, named in `.firebaserc`. It shares
+nothing with the allstars project. Create it once:
 
-The steps above add a second site inside the Firebase project the repo already
-points at (`allstars-live` in `.firebaserc`). That is only a container: the two
-sites have separate URLs and separate contents, and deploying one never touches
-the other.
-
-For a completely separate project instead:
-
-    firebase projects:create record-room
-    firebase use record-room
-    npm run site:create
-    npm run deploy
+    firebase projects:create record-room-app
+    firebase use record-room-app
 
 ## Publishing a change
 

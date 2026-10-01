@@ -45,7 +45,10 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS: /home/runner/key.json
         run: |
           npm install -g firebase-tools@13
-          PROJECT=$(node -p "JSON.parse(require('fs').readFileSync('.firebaserc','utf8')).projects.default")
+          PROJECT=$(node -p "JSON.parse(require('fs').readFileSync(process.env.HOME+'/key.json','utf8')).project_id || ''")
+          if [ -z "$PROJECT" ]; then
+            PROJECT=$(node -p "JSON.parse(require('fs').readFileSync('.firebaserc','utf8')).projects.default")
+          fi
           SITE=$(node -p "JSON.parse(require('fs').readFileSync('firebase.json','utf8')).hosting.site")
           echo "Deploying $SITE to project $PROJECT"
           # Claim the site on the first run; harmless once it exists.

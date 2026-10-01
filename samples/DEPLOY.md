@@ -1,5 +1,11 @@
 # Record Room — putting it online
 
+**Easiest path: [SETUP.md](SETUP.md).** Two steps in a browser, then GitHub
+deploys it for you on every change. No terminal, nothing to install.
+
+The rest of this file is the manual route, for deploying from your own
+computer.
+
 One self-contained HTML file. It pulls the current season from Sleeper in the
 browser on every load, so once it is online it keeps itself up to date with no
 server, no database and no scheduled job.

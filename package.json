@@ -8,7 +8,8 @@
     "build:site": "node samples/tools/build-site.js",
     "deploy": "npm run build:site && firebase deploy --only hosting",
     "serve": "firebase serve --only hosting",
-    "site:create": "firebase hosting:sites:create record-room"
+    "site:create": "firebase hosting:sites:create record-room",
+    "build:icons": "node --experimental-default-type=commonjs samples/tools/make-icons.js"
   },
   "keywords": [
     "railway",

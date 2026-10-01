@@ -46,8 +46,22 @@ jobs:
                       ['viewport','name="viewport"'],['league id','LEAGUE_ID'],['history','HIST='],
                       ['manifest','manifest.webmanifest'],['service worker','/sw.js']];
           for(const f of ['manifest.webmanifest','sw.js','icon-192.png','icon-512.png',
-                          'icon-maskable-512.png','apple-touch-icon.png']){
+                          'apple-touch-icon.png']){
             if(!fs.existsSync('public/'+f)){console.error('::error::Missing public/'+f);process.exit(1);}
+          }
+          // An icon with transparent or white corners gets a black fill on iOS
+          // and a white plate on Android, so the deploy refuses one.
+          const zlib=require('zlib');
+          for(const f of ['icon-192.png','icon-512.png','apple-touch-icon.png']){
+            const d=fs.readFileSync('public/'+f);let pos=8,idat=[],ct=null;
+            while(pos<d.length){const ln=d.readUInt32BE(pos),t=d.toString('ascii',pos+4,pos+8);
+              if(t==='IHDR')ct=d[pos+8+9];
+              if(t==='IDAT')idat.push(d.subarray(pos+8,pos+8+ln));
+              pos+=12+ln;}
+            if(ct===6){
+              const raw=zlib.inflateSync(Buffer.concat(idat));
+              if(raw[4]!==255){console.error('::error::'+f+' has a transparent corner');process.exit(1);}
+            }
           }
           const missing=must.filter(([,n])=>!html.includes(n)).map(([name])=>name);
           if(missing.length){console.error('::error::Build is missing: '+missing.join(', '));process.exit(1);}

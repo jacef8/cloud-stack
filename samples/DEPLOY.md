@@ -1,25 +1,25 @@
-# Putting the record book online
+# Record Room — putting it online
 
 One self-contained HTML file. It pulls the current season from Sleeper in the
 browser on every load, so once it is online it keeps itself up to date with no
 server, no database and no scheduled job.
 
-The record book gets its **own site**, separate from anything else in the
+Record Room gets its **own site**, separate from anything else in the
 Firebase account. `firebase.json` names that site explicitly, so a deploy from
 this repo can only ever touch the record book.
 
-    "hosting": { "site": "tribes-of-gridiron", "public": "public" }
+    "hosting": { "site": "record-room", "public": "public" }
 
 ## First time
 
     npm install -g firebase-tools     # once per computer
     firebase login                    # once, opens a browser
-    npm run site:create               # claims tribes-of-gridiron.web.app
+    npm run site:create               # claims record-room.web.app
     npm run deploy
 
 The site is then at:
 
-    https://tribes-of-gridiron.web.app
+    https://record-room.web.app
 
 Anyone with the link can open it. No account, no sign-in.
 
@@ -29,8 +29,8 @@ Change `site` in `firebase.json` and the name in the `site:create` script in
 `package.json` to match, then run both commands. The name has to be unused
 across all of Firebase. These were unclaimed as of this writing:
 
-    tribes-of-gridiron   12-tribes-gridiron   tribes-gridiron
-    gridiron-record-book tribes-record-book
+    record-room   the-record-room   trophy-case
+    the-ledger    etched
 
 ### Keeping it out of the existing project entirely
 
@@ -41,8 +41,8 @@ the other.
 
 For a completely separate project instead:
 
-    firebase projects:create tribes-of-gridiron
-    firebase use tribes-of-gridiron
+    firebase projects:create record-room
+    firebase use record-room
     npm run site:create
     npm run deploy
 
@@ -52,6 +52,22 @@ For a completely separate project instead:
 
 `index.html` is served with `Cache-Control: no-cache`, so the next refresh
 picks up the new build rather than a stale copy.
+
+## Pointing it at a different league
+
+Everything tying the build to one league is at the top of the script in
+`samples/record-room.html`:
+
+    const APP_NAME='Record Room';
+    const LEAGUE_ID='1325921258503667712';
+
+Change `LEAGUE_ID`, regenerate the baked history with the scripts in
+`samples/tools/`, and rebuild. Nothing else in the file assumes a league, so
+letting people enter their own ID later means reading `LEAGUE_ID` from the
+page instead of that constant.
+
+The league's display name is not hardcoded: it comes from Sleeper on each
+load, so renaming the league in Sleeper renames it here too.
 
 ## How the data stays current
 
@@ -72,6 +88,6 @@ At the end of this season, bake the finished year into permanent history:
 
 ## A custom domain
 
-Firebase console, Hosting, pick the **tribes-of-gridiron** site, Add custom
+Firebase console, Hosting, pick the **record-room** site, Add custom
 domain. Firebase issues the certificate. Point the domain's A records at the
 addresses it shows.

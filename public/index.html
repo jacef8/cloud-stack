@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#080B0A">
+<meta name="description" content="The record book for The 12 Tribes of Gridiron.">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Record Room">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Record Room</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
@@ -159,7 +168,9 @@ button{font:inherit;color:inherit}
   background:linear-gradient(160deg,var(--e2-hi),var(--e2));
   box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 -1px 0 rgba(0,0,0,.52),0 8px 17px -12px rgba(0,0,0,.97);
   transition:transform .15s}
-.row:hover{transform:translateY(-1px)}
+.row{cursor:pointer}
+.row:hover{transform:translateY(-1px);border-color:rgba(0,232,160,.35)}
+.row:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .row.top{border-color:rgba(0,232,160,.42)}
 .rk{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-family:var(--mono);
   font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums;background:var(--recess);box-shadow:var(--well-sh)}
@@ -293,6 +304,7 @@ button{font:inherit;color:inherit}
   transition:background .16s,color .16s,border-color .16s,transform .16s}
 .stat:hover{background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.03));
   color:var(--ink);transform:translateX(2px)}
+.sname[role="button"]:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .stat[data-sel="1"]{color:var(--ink);border-color:rgba(0,232,160,.45);
   background:linear-gradient(160deg,var(--e2-hi),var(--e2));
   box-shadow:inset 0 1px 0 rgba(255,255,255,.17),0 9px 19px -11px rgba(0,0,0,.97)}
@@ -444,9 +456,11 @@ button{font:inherit;color:inherit}
 /* ═══ AWARDS ═══ */
 #p-awards{grid-template-rows:minmax(0,1fr)}
 .agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
-.acard{padding:13px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.07);
+.acard{cursor:pointer;padding:13px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.07);
   background:linear-gradient(160deg,var(--e2-hi),var(--e2));
   box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 9px 19px -12px rgba(0,0,0,.97);display:block}
+.acard:hover{border-color:rgba(0,232,160,.4)}
+.acard:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .acard.off{background:linear-gradient(160deg,rgba(255,255,255,.035),rgba(255,255,255,.012));box-shadow:none}
 .acard.off .rman{color:var(--ink-3)}
 
@@ -486,6 +500,16 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
   .vsmid{text-align:center}
 }
 @media(max-width:699px){
+  /* nothing tappable smaller than a fingertip */
+  .nav{width:50px;height:50px}
+  .chk{width:26px;height:26px}
+  .sw{width:44px;height:26px}
+  .sw i{width:20px;height:20px;left:13px}
+  .sw[aria-pressed="true"] i{left:31px}
+  .xbtn{width:40px;height:40px}
+  .minibtn{padding:8px 14px}
+  .pills button{padding:9px 14px}
+  .row,.ring,.st,.hb,.acard,.tlx,.mcard,.pk,.stat{min-height:48px}
   .sechead{flex-direction:column;align-items:flex-start;gap:4px}
   /* room is scarce, so let the detail wrap rather than cut it off */
   .rc,.rsub,.stt{white-space:normal}
@@ -888,7 +912,8 @@ const initial=n=>n[0];
 const scaleBar=(s,v,capLabel)=>`<div class="sbar">
   <div class="sbtrack"><i style="width:${(share(s,v)*100).toFixed(1)}%"></i></div>
   <div class="sbends"><span>0</span><span>${capLabel}</span></div></div>`;
-const rowHTML=(s,r,i,ghost)=>`<div class="row${i===0&&!ghost?' top':''}"${ghost?' style="background:linear-gradient(160deg,rgba(255,255,255,.04),rgba(255,255,255,.014));box-shadow:none"':''}>
+const rowHTML=(s,r,i,ghost)=>`<div class="row${i===0&&!ghost?' top':''}" role="button" tabindex="0"
+  data-m="${r[0]}" aria-label="Open ${r[0]}"${ghost?' style="background:linear-gradient(160deg,rgba(255,255,255,.04),rgba(255,255,255,.014));box-shadow:none"':''}>
   <span class="rk">${i+1}</span>
   <span class="rn">${r[0]}<span class="rc">${sub(r[0],r[3])}${r[2]} · ${r[3]}</span></span>
   <span class="rv"><b>${fmt(s,r[1])}</b></span>
@@ -1204,7 +1229,8 @@ function renderAwards(){
     const on=tracked.has(s.id);
     if(!list.length)return '';
     const w=list[0],p=pct(s,w[1]);
-    return `<div class="acard${on?'':' off'}">
+    return `<div class="acard${on?'':' off'}" role="button" tabindex="0" data-stat="${s.id}"
+      aria-label="Open ${s.name}">
       <div><div class="ahead"><div class="rlab">${s.award}</div>
         <button class="sw" type="button" data-sw="${s.id}" aria-pressed="${on}"
           aria-label="Count ${s.name} toward awards"><i></i></button></div>
@@ -1255,8 +1281,8 @@ document.addEventListener('click',e=>{
   if(e.target.closest('#selNone')){shown.clear();savePrefs();renderStats();renderBoard();return;}
   const nmOpen=e.target.closest('[data-open]');if(nmOpen){
     sel=nmOpen.dataset.open;shown.add(sel);savePrefs();renderStats();renderBoard();return;}
-  const mc=e.target.closest('.mcard,.hb,.st,.tlx');if(mc&&mc.dataset.m){openMgr(mc.dataset.m);return;}
-  const rc=e.target.closest('.ring');if(rc&&rc.dataset.stat){openRecord(rc.dataset.stat);return;}
+  const mc=e.target.closest('.mcard,.hb,.st,.tlx,.row');if(mc&&mc.dataset.m){openMgr(mc.dataset.m);return;}
+  const rc=e.target.closest('.ring,.acard');if(rc&&rc.dataset.stat){openRecord(rc.dataset.stat);return;}
   const pk=e.target.closest('.pk');if(pk&&!pk.disabled){
     if(pk.dataset.pick==='pickA')pA=pk.dataset.name;else pB=pk.dataset.name;
     renderPickers();renderH2H();return;}
@@ -1265,9 +1291,9 @@ document.addEventListener('keydown',e=>{
   if(e.key!=='Enter'&&e.key!==' ')return;
   const nmOpen=e.target.closest('[data-open]');
   if(nmOpen){e.preventDefault();sel=nmOpen.dataset.open;shown.add(sel);renderStats();renderBoard();return;}
-  const hb=e.target.closest('.hb,.st,.tlx,.mcard');
+  const hb=e.target.closest('.hb,.st,.tlx,.mcard,.row');
   if(hb&&hb.dataset.m){e.preventDefault();openMgr(hb.dataset.m);return;}
-  const rc=e.target.closest('.ring');
+  const rc=e.target.closest('.ring,.acard');
   if(rc&&rc.dataset.stat){e.preventDefault();openRecord(rc.dataset.stat);}
 });
 function paintAll(){paintSeasons();go(page);}
@@ -1299,6 +1325,15 @@ setLive(stamp?'ok':'busy',stamp?('Saved · '+clock(stamp)):'Loading');
 $('refreshBtn').addEventListener('click',refresh);
 refresh();
 setInterval(refresh,10*60*1000);
+</script>
+
+<script>
+/* Installability, and a shell that still opens with no signal. The service
+   worker never touches the Sleeper API: that is a different origin and is
+   left to the network every time. */
+if('serviceWorker' in navigator){
+  addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+}
 </script>
 
 </body>

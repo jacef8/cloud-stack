@@ -9,7 +9,8 @@ on:
       - master
       - 'claude/**'
     paths:
-      - 'samples/record-room-standalone.html'
+      - 'samples/record-room.html'
+      - 'samples/tools/build-site.js'
       - 'public/**'
       - 'firebase.json'
       - '.firebaserc'
@@ -33,8 +34,7 @@ jobs:
 
       - name: Build the site
         run: |
-          mkdir -p public
-          cp samples/record-room-standalone.html public/index.html
+          npm run build:site
           ls -l public/
 
       - name: Check the build before shipping it
@@ -43,7 +43,12 @@ jobs:
           const fs=require('fs');
           const html=fs.readFileSync('public/index.html','utf8');
           const must=[['doctype','<!doctype html>'],['title','<title>Record Room</title>'],
-                      ['viewport','name="viewport"'],['league id','LEAGUE_ID'],['history','HIST=']];
+                      ['viewport','name="viewport"'],['league id','LEAGUE_ID'],['history','HIST='],
+                      ['manifest','manifest.webmanifest'],['service worker','/sw.js']];
+          for(const f of ['manifest.webmanifest','sw.js','icon-192.png','icon-512.png',
+                          'icon-maskable-512.png','apple-touch-icon.png']){
+            if(!fs.existsSync('public/'+f)){console.error('::error::Missing public/'+f);process.exit(1);}
+          }
           const missing=must.filter(([,n])=>!html.includes(n)).map(([name])=>name);
           if(missing.length){console.error('::error::Build is missing: '+missing.join(', '));process.exit(1);}
           if(html.length<50000){console.error('::error::Build looks truncated: '+html.length+' bytes');process.exit(1);}

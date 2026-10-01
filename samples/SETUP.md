@@ -81,3 +81,23 @@ step. The deploy does not need it: whatever branch was pushed is what ships.
 | Which Firebase site | `site` in `firebase.json` |
 | Which Firebase project | the key in the GitHub secret |
 | The league it reads | `LEAGUE_ID` near the top of the script |
+
+## Installing it on a phone
+
+The site is a progressive web app, so it installs to the home screen and opens
+without browser chrome.
+
+**iPhone** — open it in Safari, tap the Share button, then **Add to Home
+Screen**. Safari does not offer this in Chrome or any other iOS browser.
+
+**Android** — Chrome shows an **Install app** prompt, or use the menu and
+**Add to Home screen**.
+
+Once installed it launches full screen with its own icon. Finished seasons are
+cached in the app, so it opens with the book already there and no signal; the
+current season still needs a connection, and the status chip says when the
+data was last pulled.
+
+A deploy replaces the cached page on the next launch. The service worker is
+served no-cache and its cache name carries a hash of the page, so an update
+cannot be held back by an old copy.

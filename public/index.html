@@ -209,11 +209,12 @@ button{font:inherit;color:inherit}
   white-space:normal;overflow-wrap:break-word}
 .rfs{display:block;font-size:13px;color:var(--ink-3);margin-top:4px;line-height:1.35;
   white-space:normal;overflow-wrap:break-word}
-.ring{display:block;padding:14px 15px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.08);
+.ring{display:block;cursor:pointer;padding:14px 15px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.08);
   background:linear-gradient(160deg,var(--e2-hi),var(--e2));
   box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 8px 17px -12px rgba(0,0,0,.97);
   transition:transform .15s}
-.ring:hover{transform:translateY(-1px)}
+.ring:hover{transform:translateY(-1px);border-color:rgba(0,232,160,.4)}
+.ring:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .ring svg{width:50px;height:50px;display:block}
 .rlab{font-family:var(--disp);font-size:16px;font-weight:700;letter-spacing:-.015em;
   color:var(--ink);line-height:1.15;text-transform:none}
@@ -254,13 +255,18 @@ button{font:inherit;color:inherit}
 .hb .hw{grid-column:1/-1;height:5px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);overflow:hidden}
 .hb .hw i{display:block;height:100%;border-radius:999px;
   background:linear-gradient(90deg,var(--accent-2),var(--accent));box-shadow:0 0 9px rgba(0,232,160,.6)}
-.tl{display:flex;gap:7px;overflow:visible}
-.tlx{flex:1;min-width:0;padding:10px 6px;border-radius:var(--r-s);text-align:center;
-  background:linear-gradient(160deg,var(--e2-hi),var(--e2));border:1px solid rgba(255,255,255,.05);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 8px 17px -12px rgba(0,0,0,.97)}
+.tl{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px}
+.tlx{min-width:0;padding:11px 9px;border-radius:var(--r-s);text-align:center;cursor:pointer;
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));border:1px solid rgba(255,255,255,.06);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 8px 17px -12px rgba(0,0,0,.97);
+  transition:transform .15s,border-color .15s}
+.tlx:hover{transform:translateY(-1px);border-color:rgba(0,232,160,.4)}
+.tlx:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tlx.pending{cursor:default;opacity:.72}
+.tlx.pending:hover{transform:none;border-color:rgba(255,255,255,.06)}
 .tlx.now{border-color:rgba(0,232,160,.45)}
-.tlx b{display:block;font-size:14px;font-weight:700;letter-spacing:-.01em;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tlx b{display:block;font-size:14px;font-weight:700;letter-spacing:-.015em;line-height:1.25;
+  white-space:normal;overflow-wrap:anywhere}
 .tlx span{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:4px}
 .tlx .dot{width:8px;height:8px;border-radius:50%;margin:0 auto 7px;background:rgba(255,255,255,.22)}
 .tlx.now .dot{background:var(--accent);box-shadow:0 0 8px rgba(0,232,160,.9)}
@@ -450,6 +456,7 @@ button{font:inherit;color:inherit}
 dialog{border:none;padding:0;background:transparent;max-width:min(440px,92vw);width:100%}
 dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
 .dlg{padding:17px;position:relative}
+#mdlgBody .rc,#mdlgBody .rsub{white-space:normal}
 .dlghead{position:sticky;top:0;z-index:2;display:flex;align-items:flex-start;gap:13px;
   margin:-17px -17px 15px;padding:17px 17px 14px;border-radius:var(--r) var(--r) 0 0;
   background:linear-gradient(180deg,rgba(27,36,45,.99),rgba(24,32,40,.97));
@@ -480,6 +487,8 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
 }
 @media(max-width:699px){
   .sechead{flex-direction:column;align-items:flex-start;gap:4px}
+  /* room is scarce, so let the detail wrap rather than cut it off */
+  .rc,.rsub,.stt{white-space:normal}
   .sechead h4{font-size:16px}
   .block{padding-bottom:22px}
   .hero{padding-bottom:22px}
@@ -941,8 +950,11 @@ function renderHome(){
   const yrs=Object.keys(TITLES).map(Number).sort((a,b)=>a-b);
   $('champNote').textContent=DATA.current+' still playing';
   $('htl').innerHTML=yrs.map(y=>
-    `<div class="tlx${y===CHAMP_YEAR?' now':''}"><div class="dot"></div><b>${TITLES[y]}</b><span>${y}</span></div>`)
-    .concat([`<div class="tlx"><div class="dot"></div><b>—</b><span>${DATA.current}</span></div>`]).join('');
+    `<div class="tlx${y===CHAMP_YEAR?' now':''}" role="button" tabindex="0" data-m="${TITLES[y]}"
+       aria-label="Open ${TITLES[y]}, champion in ${y}"><div class="dot"></div>
+       <b>${TITLES[y]}</b><span>${y}</span></div>`)
+    .concat(TITLES[DATA.current]?[]:[`<div class="tlx pending"><div class="dot"></div>
+       <b>undecided</b><span>${DATA.current}</span></div>`]).join('');
   const held={};NAMES.forEach(n=>held[n]=0);
   visible().forEach(s=>{const b=best(s,'ALL');if(b)held[b[0]]++;});
   const rank=MGR.map(m=>({...m,held:held[m.name]})).sort((a,b)=>b.held-a.held||b.titles.length-a.titles.length||b.w-a.w);
@@ -963,7 +975,8 @@ function renderHome(){
     const gap=second?Math.abs(b[1]-second[1]).toFixed(s.dec):null;
     const f=(k,v,sub)=>`<div class="rf"><span class="rfk">${k}</span>
       <span class="rfv">${v}</span>${sub?`<span class="rfs">${sub}</span>`:''}</div>`;
-    return `<div class="ring">
+    return `<div class="ring" role="button" tabindex="0" data-stat="${s.id}"
+      aria-label="Open ${s.name}">
       <div class="rtop">
         <div class="rlab">${s.name}</div>
         <div class="rvwrap"><span class="rval">${fmt(s,b[1])}</span><span class="rvalu">${s.unit}</span></div>
@@ -1099,12 +1112,40 @@ function openMgr(name){
         <span class="rwell"><i style="width:${(rivals[rivals.length-1].w/rivals[rivals.length-1].g*100).toFixed(0)}%"></i></span></div>
     </div>`:`<div class="empty">No games played yet.</div>`}
     <button class="ghostbtn" id="mdlgClose" style="margin-top:14px;width:100%">Close</button>`;
+  showDialog();
+}
+function showDialog(){
   const d=$('mdlg');
   if(typeof d.showModal==='function')d.showModal();
   else{d.setAttribute('open','');d.style.cssText='display:block;position:fixed;z-index:50;'+
     'top:50%;left:50%;transform:translate(-50%,-50%);max-height:88vh;overflow:auto';}
-  $('mdlgClose').onclick=closeMgr;
-  $('mdlgX').onclick=closeMgr;
+  const x=$('mdlgX'),c=$('mdlgClose');
+  if(x)x.onclick=closeMgr;
+  if(c)c.onclick=closeMgr;
+  d.scrollTop=0;
+}
+/* Tapping a record opens its whole board, which is the detail there was no
+   way to reach before. */
+function openRecord(id){
+  const s=STATS.find(x=>x.id===id); if(!s)return;
+  const list=entries(s,'ALL');
+  const best=list[0];
+  $('mdlgBody').innerHTML=`
+    <div class="dlghead">
+      <div style="min-width:0;flex:1">
+        <div class="mname" style="font-size:21px">${s.name}</div>
+        <span class="mrec">${list.length} ${list.length===1?'entry':'entries'} · all seasons · measured in ${s.unit}</span>
+        ${best?`<span class="tname">Record ${fmt(s,best[1])} by ${best[0]}, ${best[2]} in ${best[3]}</span>`:''}
+      </div>
+      <button class="xbtn" type="button" id="mdlgX" aria-label="Close">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="sechead"><h4>Every entry</h4><em>${s.asc?'lowest first':'highest first'}</em></div>
+    ${list.length?`<div class="rows">${list.map((r,i)=>rowHTML(s,r,i)).join('')}</div>`
+      :`<div class="empty">Nothing on the books yet.</div>`}
+    <p class="scalenote" style="margin-top:11px">Bars run from zero to the record, ${best?fmt(s,best[1]):'—'} ${s.unit}.</p>
+    <button class="ghostbtn" id="mdlgClose" style="margin-top:16px;width:100%">Close</button>`;
+  showDialog();
 }
 function closeMgr(){
   const d=$('mdlg');
@@ -1214,7 +1255,8 @@ document.addEventListener('click',e=>{
   if(e.target.closest('#selNone')){shown.clear();savePrefs();renderStats();renderBoard();return;}
   const nmOpen=e.target.closest('[data-open]');if(nmOpen){
     sel=nmOpen.dataset.open;shown.add(sel);savePrefs();renderStats();renderBoard();return;}
-  const mc=e.target.closest('.mcard,.hb,.st');if(mc&&mc.dataset.m){openMgr(mc.dataset.m);return;}
+  const mc=e.target.closest('.mcard,.hb,.st,.tlx');if(mc&&mc.dataset.m){openMgr(mc.dataset.m);return;}
+  const rc=e.target.closest('.ring');if(rc&&rc.dataset.stat){openRecord(rc.dataset.stat);return;}
   const pk=e.target.closest('.pk');if(pk&&!pk.disabled){
     if(pk.dataset.pick==='pickA')pA=pk.dataset.name;else pB=pk.dataset.name;
     renderPickers();renderH2H();return;}
@@ -1223,8 +1265,10 @@ document.addEventListener('keydown',e=>{
   if(e.key!=='Enter'&&e.key!==' ')return;
   const nmOpen=e.target.closest('[data-open]');
   if(nmOpen){e.preventDefault();sel=nmOpen.dataset.open;shown.add(sel);renderStats();renderBoard();return;}
-  const hb=e.target.closest('.hb');
-  if(hb&&hb.dataset.m){e.preventDefault();openMgr(hb.dataset.m);}
+  const hb=e.target.closest('.hb,.st,.tlx,.mcard');
+  if(hb&&hb.dataset.m){e.preventDefault();openMgr(hb.dataset.m);return;}
+  const rc=e.target.closest('.ring');
+  if(rc&&rc.dataset.stat){e.preventDefault();openRecord(rc.dataset.stat);}
 });
 function paintAll(){paintSeasons();go(page);}
 const CACHE='recordroom.v1.'+LEAGUE_ID;

@@ -182,7 +182,15 @@ button{font:inherit;color:inherit}
   background:linear-gradient(90deg,var(--accent-2),var(--accent));box-shadow:0 0 9px rgba(0,232,160,.6)}
 
 /* ═══ OVERVIEW: bento ═══ */
-#p-home{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);grid-template-rows:minmax(0,auto) minmax(0,1fr)}
+#p-home{grid-template-columns:minmax(0,1fr)}
+.home-a{display:flex;flex-direction:column;gap:15px;overflow:auto;min-height:0}
+.home-b{overflow:auto;min-height:0}
+@media(min-width:1100px){
+  #p-home{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);grid-template-rows:minmax(0,auto) minmax(0,1fr)}
+  .home-a{grid-column:1;grid-row:1/-1}
+  .home-b{grid-column:2;grid-row:1}
+  .home-c{grid-column:2;grid-row:2}
+}
 .hero{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:20px;align-items:center}
 .hero h2{margin:0;font-family:var(--disp);font-size:clamp(26px,3vw,36px);font-weight:700;
   letter-spacing:-.035em;line-height:1.04;text-wrap:balance}
@@ -384,7 +392,10 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
 
 /* ═══ breakpoints ═══ */
 @media(max-width:1099px){
-  #p-home{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
+  /* one scrolling column: flex flow cannot overlap the way grid rows can */
+  #p-home[data-on="1"]{display:flex;flex-direction:column;gap:13px;overflow:auto;min-height:0}
+  #p-home > .panel{flex:0 0 auto}
+  .home-a,.home-b{overflow:visible}
   .hero{grid-template-columns:minmax(0,1fr);gap:10px}
   .gwrap{max-width:240px}
   .gcenter b{font-size:70px}
@@ -461,7 +472,7 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
 
     <!-- ══ OVERVIEW ══ -->
     <section class="page" id="p-home" data-on="1">
-      <div class="panel glass pad" style="grid-column:1;grid-row:1/-1;display:flex;flex-direction:column;gap:15px;overflow:auto" >
+      <div class="panel glass pad home-a">
         <div class="hero">
           <div class="gwrap">
             <svg viewBox="0 0 340 340" role="img" aria-label="Champion season points against the league record">
@@ -483,11 +494,11 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
           <div class="hbars" id="hbars"></div>
         </section>
       </div>
-      <div class="panel glass pad" style="grid-column:2;grid-row:1;overflow:auto">
+      <div class="panel glass pad home-b">
         <div class="sechead"><h4>Champions</h4><em id="champNote"></em></div>
         <div class="tl" id="htl"></div>
       </div>
-      <div class="panel glass pad scroll" style="grid-column:2;grid-row:2">
+      <div class="panel glass pad scroll home-c">
         <div class="sechead"><h4>Standing records</h4><em id="hrecNote"></em></div>
         <div class="rows" id="hrecs" style="gap:6px"></div>
       </div>

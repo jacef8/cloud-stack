@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>League Record Book</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chivo:wght@600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --e0:#05070D;
+  --e1:rgba(18,25,40,.74);
+  --e1-hi:rgba(28,38,58,.84);
+  --e2:rgba(40,54,80,.92);
+  --e2-hi:rgba(55,72,104,.95);
+  --recess:#020308;
+  --ink:#FFFFFF;
+  --ink-2:rgba(255,255,255,.86);
+  --ink-3:rgba(255,255,255,.68);
+  --accent:#4FD8FF;
+  --accent-lo:#1B9BD8;
+  --gold:#FFC861;
+  --gold-lo:#D99328;
+  --on-accent:#03151F;
+  --on-gold:#20140A;
+  --r:24px; --r-s:14px;
+  --disp:'Chivo',system-ui,sans-serif;
+  --text:'Manrope',system-ui,sans-serif;
+  --mono:'Geist Mono',ui-monospace,monospace;
+  --raise:
+    inset 0 1px 0 rgba(255,255,255,.13),
+    inset 0 -1px 0 rgba(0,0,0,.6),
+    0 1px 2px rgba(0,0,0,.7),
+    0 10px 24px -12px rgba(0,0,0,.98);
+  --well-sh:
+    inset 0 3px 9px rgba(0,0,0,.94),
+    inset 0 -1px 0 rgba(255,255,255,.06);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--e0);color:var(--ink);font-family:var(--text);font-size:15px;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+button{font:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* ══ environment: night stadium ══ */
+.amb{position:fixed;z-index:0;pointer-events:none;border-radius:50%;filter:blur(100px)}
+.a1{width:min(1100px,112vw);height:min(720px,76vw);left:50%;top:30%;transform:translate(-50%,-50%);
+  background:radial-gradient(circle,rgba(79,216,255,.22),rgba(27,155,216,.10) 45%,transparent 72%);
+  animation:br 24s ease-in-out infinite alternate}
+.a2{width:min(620px,80vw);height:min(620px,80vw);right:-14vw;bottom:-22vh;
+  background:radial-gradient(circle,rgba(255,200,97,.14),transparent 66%);
+  animation:br2 30s ease-in-out infinite alternate}
+.a3{width:min(500px,64vw);height:min(500px,64vw);left:-10vw;top:52%;
+  background:radial-gradient(circle,rgba(79,216,255,.13),transparent 68%)}
+@keyframes br{to{transform:translate(-50%,-25%) scale(1.09)}}
+@keyframes br2{to{transform:translate(-4%,-6%) scale(1.12)}}
+/* stadium light shafts */
+.shafts{position:fixed;inset:-10% -20%;z-index:0;pointer-events:none;opacity:.5;
+  background:
+   linear-gradient(103deg,transparent 40%,rgba(180,225,255,.055) 46%,transparent 52%),
+   linear-gradient(77deg,transparent 52%,rgba(255,225,180,.04) 58%,transparent 64%);
+  mask-image:linear-gradient(180deg,#000,rgba(0,0,0,.25) 70%,transparent)}
+/* yard hashes */
+.field{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.55;
+  background-image:
+   repeating-linear-gradient(90deg,rgba(180,220,255,.06) 0 1px,transparent 1px 96px),
+   repeating-linear-gradient(90deg,rgba(180,220,255,.025) 0 1px,transparent 1px 24px);
+  mask-image:radial-gradient(ellipse 80% 62% at 50% 44%,#000 20%,transparent 78%)}
+.vign{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 96% 78% at 50% 34%,transparent 44%,rgba(2,4,10,.78))}
+.grain{position:fixed;inset:0;z-index:30;pointer-events:none;opacity:.042;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ══ shell ══ */
+.dash{position:relative;z-index:1;height:100dvh;padding-block:13px;
+  padding-inline:clamp(16px,1.5vw,24px);display:grid;gap:13px;
+  grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
+.dash>*{min-height:0}
+.rail,.main,.detail{overflow:auto;scrollbar-width:thin}
+.rail::-webkit-scrollbar,.main::-webkit-scrollbar,.detail::-webkit-scrollbar{width:8px}
+.rail::-webkit-scrollbar-thumb,.main::-webkit-scrollbar-thumb,.detail::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,.12);border-radius:99px}
+@media(min-width:1100px){.dash{grid-template-columns:minmax(0,256px) minmax(0,1fr) minmax(0,306px)}.bar{grid-column:1/-1}}
+@media(min-width:700px) and (max-width:1099px){.dash{grid-template-columns:minmax(0,238px) minmax(0,1fr)}.bar{grid-column:1/-1}}
+@media(max-width:1099px){.dash>.detail{display:none}}
+
+.panel{position:relative;border-radius:var(--r);animation:rise .62s cubic-bezier(.2,.8,.2,1) both}
+/* glass sheen across the top of every panel */
+.panel::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(168deg,rgba(255,255,255,.085),rgba(255,255,255,.012) 34%,transparent 62%)}
+.back{background:linear-gradient(172deg,rgba(16,23,38,.6),rgba(8,12,22,.7));
+  backdrop-filter:blur(15px) saturate(135%);-webkit-backdrop-filter:blur(15px) saturate(135%);
+  border:1px solid rgba(255,255,255,.05);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055),0 3px 10px rgba(0,0,0,.55)}
+.front{background:linear-gradient(158deg,var(--e1-hi),var(--e1) 74%);
+  backdrop-filter:blur(20px) saturate(165%);-webkit-backdrop-filter:blur(20px) saturate(165%);
+  border:1px solid rgba(255,255,255,.11);box-shadow:var(--raise)}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}}
+.main{animation-delay:.05s}.detail{animation-delay:.1s}
+
+/* ══ top bar ══ */
+.bar{display:flex;align-items:center;gap:13px;flex-wrap:wrap;padding:11px 16px}
+.crest{width:44px;height:44px;border-radius:50%;flex:none;display:grid;place-items:center;position:relative;
+  background:linear-gradient(155deg,var(--accent),var(--accent-lo) 62%,#0E5E86);color:var(--on-accent);
+  font-family:var(--disp);font-weight:900;font-size:15px;letter-spacing:-.02em;
+  box-shadow:0 5px 18px rgba(79,216,255,.4),inset 0 1px 0 rgba(255,255,255,.7),inset 0 -2px 4px rgba(0,0,0,.35)}
+.crest::after{content:"";position:absolute;inset:-4px;border-radius:50%;
+  border:1px solid rgba(79,216,255,.28)}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand h1{margin:0;font-family:var(--disp);font-weight:800;font-size:19px;letter-spacing:-.025em;line-height:1.1}
+.brand span{display:block;font-family:var(--mono);font-size:12px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);margin-top:3px}
+.chip{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;
+  letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2);padding:6px 11px;border-radius:999px;
+  background:var(--recess);box-shadow:var(--well-sh)}
+.chip i{width:7px;height:7px;border-radius:50%;background:var(--gold);
+  box-shadow:0 0 7px rgba(255,200,97,.9)}
+.chip.mute i{background:rgba(255,255,255,.35);box-shadow:none}
+.pills{display:flex;flex-wrap:wrap;padding:3px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);gap:2px}
+.pills button{padding:6px 12px;border:none;border-radius:999px;background:transparent;
+  color:var(--ink-3);cursor:pointer;transition:.18s;font-family:var(--mono);font-size:12px;letter-spacing:.05em}
+.pills button:hover{color:var(--ink)}
+.pills button[aria-pressed="true"]{color:var(--on-accent);font-weight:600;
+  background:linear-gradient(150deg,#A7ECFF,var(--accent));
+  box-shadow:0 4px 13px rgba(79,216,255,.5),inset 0 1px 0 rgba(255,255,255,.75)}
+.barspace{flex:1 1 16px}
+
+/* ══ left rail ══ */
+.rail{padding:14px}
+.eyebrow{margin:0 0 4px;font-family:var(--mono);font-size:12px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.hint{margin:0 0 12px;font-size:13px;color:var(--ink-3);line-height:1.5}
+.statlist{display:flex;flex-direction:column;gap:6px}
+.stat{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:9px 10px;
+  border:1px solid transparent;border-radius:var(--r-s);cursor:pointer;color:var(--ink-2);position:relative;
+  background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.016));
+  transition:background .16s,color .16s,border-color .16s,transform .16s}
+.stat:hover{background:linear-gradient(160deg,rgba(255,255,255,.095),rgba(255,255,255,.03));
+  color:var(--ink);transform:translateX(2px)}
+.stat[data-sel="1"]{color:var(--ink);border-color:rgba(79,216,255,.45);
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 0 0 1px rgba(79,216,255,.12),0 9px 20px -11px rgba(0,0,0,.98)}
+.stat[data-sel="1"]::after{content:"";position:absolute;left:0;top:14%;bottom:14%;width:3px;border-radius:99px;
+  background:linear-gradient(180deg,var(--accent),var(--accent-lo));box-shadow:0 0 8px rgba(79,216,255,.85)}
+.stat[data-off="1"] .sname{color:rgba(255,255,255,.42)}
+.sname{flex:1;min-width:0;font-size:14px;font-weight:700;line-height:1.25;letter-spacing:-.01em}
+.sunit{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);font-weight:400;
+  margin-top:2px;letter-spacing:.03em}
+.sw{flex:none;width:36px;height:19px;border-radius:999px;background:var(--recess);
+  box-shadow:var(--well-sh);border:none;position:relative;cursor:pointer;padding:0}
+.sw i{position:absolute;top:50%;left:10.5px;width:14px;height:14px;border-radius:50%;
+  transform:translate(-50%,-50%);transition:left .2s cubic-bezier(.3,1.4,.5,1),background .2s;
+  background:radial-gradient(circle at 34% 28%,#8FA0B8,#4A5568);
+  box-shadow:0 3px 8px rgba(0,0,0,.9),inset 0 -2px 3px rgba(0,0,0,.32)}
+.sw[aria-pressed="true"] i{left:25.5px;background:radial-gradient(circle at 34% 28%,#DFF6FF,var(--accent));
+  box-shadow:0 0 10px rgba(79,216,255,.85),0 3px 8px rgba(0,0,0,.9)}
+.railfoot{margin-top:13px;padding:11px 12px;border-radius:var(--r-s);background:var(--recess);box-shadow:var(--well-sh)}
+.railfoot p{margin:0;font-family:var(--mono);font-size:12px;letter-spacing:.03em;color:var(--ink-3);line-height:1.6}
+.railfoot b{color:var(--accent);font-weight:600}
+
+/* ══ main ══ */
+.main{padding:17px 19px;display:flex;flex-direction:column;gap:16px}
+.anchor{display:grid;grid-template-columns:minmax(0,322px) minmax(0,1fr);gap:24px;align-items:center}
+@media(max-width:880px){.anchor{grid-template-columns:minmax(0,1fr);gap:10px}}
+.gwrap{position:relative;width:100%;max-width:322px;margin-inline:auto;aspect-ratio:1}
+.gwrap::before{content:"";position:absolute;inset:11%;border-radius:50%;
+  background:radial-gradient(circle,rgba(79,216,255,.16),transparent 66%)}
+.gwrap svg{position:relative;width:100%;height:auto;display:block;overflow:visible}
+.spin{transform-origin:170px 170px;animation:sp 56s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.gcenter{position:absolute;inset:17%;display:grid;place-content:center;text-align:center;pointer-events:none}
+.gcenter b{display:block;font-family:var(--disp);font-weight:900;line-height:.86;
+  letter-spacing:-.055em;font-variant-numeric:tabular-nums;color:#fff;font-size:96px}
+.gcenter em{display:block;font-family:var(--mono);font-style:normal;font-size:12px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-3);margin-top:12px}
+.akicker{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin:0 0 9px;font-weight:500}
+.akicker::before{content:"";width:16px;height:1px;background:linear-gradient(90deg,transparent,var(--gold))}
+.ahead h3{margin:0;font-family:var(--disp);font-size:clamp(26px,3.2vw,38px);font-weight:800;
+  letter-spacing:-.035em;line-height:1.03;text-wrap:balance}
+.aholder{margin:16px 0 0;display:flex;align-items:center;gap:13px}
+.av{width:46px;height:46px;border-radius:50%;flex:none;display:grid;place-items:center;position:relative;
+  font-family:var(--disp);font-weight:800;font-size:17px;color:var(--on-gold);
+  background:linear-gradient(150deg,#FFE3AC,var(--gold) 55%,var(--gold-lo));
+  box-shadow:0 5px 15px rgba(255,200,97,.42),inset 0 1px 0 rgba(255,255,255,.75),inset 0 -2px 4px rgba(0,0,0,.28)}
+.aholder p{margin:0;font-size:18px;font-weight:800;letter-spacing:-.02em}
+.aholder span{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+
+.sechead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:8px}
+.sechead h4{margin:0;font-family:var(--mono);font-size:12px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.sechead em{font-family:var(--mono);font-style:normal;font-size:12px;color:var(--ink-3)}
+.rows{display:flex;flex-direction:column;gap:6px}
+.row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:center;
+  padding:9px 13px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.055);
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.13),inset 0 -1px 0 rgba(0,0,0,.55),0 9px 18px -12px rgba(0,0,0,.98);
+  transition:transform .16s}
+.row:hover{transform:translateY(-1px)}
+.row.top{border-color:rgba(255,200,97,.45)}
+.rk{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--mono);font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums;
+  background:var(--recess);box-shadow:var(--well-sh)}
+.row.top .rk{color:var(--on-gold);font-weight:600;background:linear-gradient(150deg,#FFE3AC,var(--gold));
+  box-shadow:0 3px 9px rgba(255,200,97,.45),inset 0 1px 0 rgba(255,255,255,.7)}
+.row.r2 .rk{color:#14202B;font-weight:600;background:linear-gradient(150deg,#E8F2FA,#A9BCCC);
+  box-shadow:0 3px 8px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.7)}
+.row.r3 .rk{color:#241708;font-weight:600;background:linear-gradient(150deg,#E0B183,#B27B44);
+  box-shadow:0 3px 8px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.55)}
+.rn{font-size:15px;font-weight:700;line-height:1.2;letter-spacing:-.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:400}
+.rv b{font-family:var(--disp);font-size:19px;font-weight:800;letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums}
+.rwell{grid-column:1/-1;height:5px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);overflow:hidden}
+.rwell i{display:block;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--accent-lo),var(--accent));
+  box-shadow:0 0 10px rgba(79,216,255,.6)}
+.row.top .rwell i{background:linear-gradient(90deg,var(--gold-lo),var(--gold));
+  box-shadow:0 0 10px rgba(255,200,97,.65)}
+.rows.ghost .row{background:linear-gradient(160deg,rgba(255,255,255,.042),rgba(255,255,255,.014));
+  box-shadow:none;border-color:rgba(255,255,255,.05)}
+.rows.ghost .rn,.rows.ghost .rv b{color:var(--ink-3);font-weight:700}
+.rows.ghost .rk{background:rgba(255,255,255,.07);box-shadow:none;color:var(--ink-3)}
+.rows.ghost .rwell i{background:rgba(255,255,255,.2);box-shadow:none}
+
+.holders{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px}
+.hold{padding:10px 8px;border-radius:var(--r-s);text-align:center;background:var(--recess);box-shadow:var(--well-sh)}
+.hold b{display:block;font-family:var(--disp);font-size:22px;font-weight:800;letter-spacing:-.04em;
+  font-variant-numeric:tabular-nums;line-height:1}
+.hold span{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:6px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hold .hbar{height:4px;border-radius:999px;margin:8px auto 0;
+  background:linear-gradient(90deg,var(--accent-lo),var(--accent));box-shadow:0 0 8px rgba(79,216,255,.55)}
+.empty{padding:22px 14px;text-align:center;font-size:14px;color:var(--ink-3);
+  border-radius:var(--r-s);background:var(--recess);box-shadow:var(--well-sh)}
+
+/* ══ right rail ══ */
+.detail{padding:14px}
+.awards{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.award{display:grid;grid-template-columns:56px minmax(0,1fr);gap:11px;align-items:center;padding:8px 10px;
+  border-radius:var(--r-s);background:linear-gradient(160deg,rgba(255,255,255,.052),rgba(255,255,255,.018));
+  border:1px solid rgba(255,255,255,.05);transition:transform .16s}
+.award:hover{transform:translateY(-1px)}
+.award:first-child{background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  border-color:rgba(255,200,97,.38);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 9px 20px -12px rgba(0,0,0,.98)}
+.award svg{width:56px;height:56px;display:block}
+.dialv{font-family:var(--disp);font-size:14px;font-weight:800;fill:#fff;
+  font-variant-numeric:tabular-nums;letter-spacing:-.04em}
+.award h5{margin:0;font-size:12px;font-family:var(--mono);letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:400;line-height:1.3}
+.award:first-child h5{color:var(--gold)}
+.award p{margin:4px 0 0;font-size:15px;font-weight:800;line-height:1.15;letter-spacing:-.015em}
+.award span{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ══ drawer / dialog ══ */
+.drawer-only{display:none}
+.ghostbtn{border:1px solid rgba(255,255,255,.13);border-radius:999px;padding:7px 14px;cursor:pointer;
+  color:var(--ink);background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 6px 15px -9px rgba(0,0,0,.95);
+  font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.scrim{position:fixed;inset:0;z-index:39;background:rgba(2,4,10,.78);backdrop-filter:blur(3px)}
+dialog{border:none;padding:0;background:transparent;max-width:min(400px,92vw);width:100%}
+dialog::backdrop{background:rgba(2,4,10,.78)}
+.dlg{padding:14px}
+@media(min-width:1100px){.ddet{display:none}}
+.closebar{display:none}
+@media(max-width:699px){
+  .drawer-only{display:inline-block}
+  .closebar{display:block}
+  .dash{height:auto;min-height:100dvh;grid-template-rows:none}
+  .dash>.rail{position:fixed;z-index:40;top:0;right:0;bottom:0;width:min(350px,88vw);
+    border-radius:var(--r) 0 0 var(--r);transform:translateX(105%);transition:transform .24s ease;max-height:100dvh}
+  .dash>.rail.open{transform:none}
+  .rail .closebar{position:sticky;bottom:-14px;margin:12px -14px -14px;padding:12px 14px;
+    background:linear-gradient(0deg,rgba(10,14,24,.98),rgba(10,14,24,.84))}
+  .rail .closebar button{width:100%}
+  .main{padding:15px}
+  .gwrap{max-width:252px}
+}
+@media (prefers-reduced-motion:reduce){.panel,.a1,.a2,.spin,.row,.stat,.award{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+
+<div class="amb a1"></div><div class="amb a2"></div><div class="amb a3"></div>
+<div class="shafts"></div><div class="field"></div><div class="vign"></div><div class="grain"></div>
+
+<div class="dash">
+  <header class="panel front bar">
+    <div class="brand">
+      <div class="crest">ADL</div>
+      <div>
+        <h1>Apalachee Dynasty League</h1>
+        <span>Record book · 12 teams · est. 2019</span>
+      </div>
+    </div>
+    <span class="chip"><i></i>2025 champion · Kade</span>
+    <span class="chip mute"><i></i>Sample data</span>
+    <div class="barspace"></div>
+    <div class="pills" id="seasons" role="group" aria-label="Season"></div>
+    <button class="ghostbtn drawer-only" id="openRail">Stats</button>
+    <button class="ghostbtn ddet" id="openDet">Awards</button>
+  </header>
+
+  <aside class="panel back rail" id="rail">
+    <p class="eyebrow">Tracked stats</p>
+    <p class="hint">Tap a stat to open its board. The switch decides whether it earns a trophy at the end of the year.</p>
+    <div class="statlist" id="statlist"></div>
+    <div class="railfoot"><p>Tracking <b id="trackCount">7</b> of <b>9</b> · <b id="recCount">72</b> records on file</p></div>
+    <div class="closebar"><button class="ghostbtn" id="closeRail">Show the board</button></div>
+  </aside>
+
+  <main class="panel front main">
+    <section class="anchor">
+      <div class="gwrap">
+        <svg viewBox="0 0 340 340" role="img" id="gsvg" aria-label="Record leader gauge">
+          <defs>
+            <linearGradient id="gg" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0%" stop-color="#1B9BD8"/><stop offset="52%" stop-color="#4FD8FF"/>
+              <stop offset="100%" stop-color="#C9F4FF"/>
+            </linearGradient>
+            <linearGradient id="gold" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0%" stop-color="#D99328"/><stop offset="60%" stop-color="#FFC861"/>
+              <stop offset="100%" stop-color="#FFE9C2"/>
+            </linearGradient>
+            <filter id="gglow" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="4" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <circle class="spin" cx="170" cy="170" r="166" fill="none" stroke="rgba(255,255,255,.16)"
+                  stroke-width="1" stroke-dasharray="1.5 15"/>
+          <circle cx="170" cy="170" r="157" fill="none" stroke="rgba(255,255,255,.13)"
+                  stroke-width="7" stroke-dasharray="1.5 33.3" transform="rotate(135 170 170)"
+                  stroke-linecap="round" pathLength="100"/>
+          <circle cx="170" cy="170" r="138" fill="none" stroke="rgba(0,0,0,.72)" stroke-width="21"
+                  stroke-linecap="round" stroke-dasharray="650 867" transform="rotate(135 170 170)"/>
+          <circle id="garc" cx="170" cy="170" r="138" fill="none" stroke="url(#gg)" stroke-width="19"
+                  stroke-linecap="round" stroke-dasharray="0 867" transform="rotate(135 170 170)"
+                  filter="url(#gglow)" style="transition:stroke-dasharray .55s cubic-bezier(.2,.8,.2,1)"/>
+          <circle id="gcap" cx="170" cy="32" r="6.5" fill="#fff"
+                  style="filter:drop-shadow(0 2px 5px rgba(0,0,0,.9));transition:transform .55s cubic-bezier(.2,.8,.2,1)"/>
+        </svg>
+        <div class="gcenter"><b id="gval">—</b><em id="gunit">points</em></div>
+      </div>
+      <div class="ahead">
+        <p class="akicker" id="kicker">All-time leader</p>
+        <h3 id="statTitle">Highest single game</h3>
+        <div class="aholder">
+          <div class="av" id="avi">H</div>
+          <div>
+            <p id="hname">Helaman</p>
+            <span id="hctx">Wk 11 vs Dax · 2023</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sechead"><h4 id="boardLabel">All-time board</h4><em id="boardCount"></em></div>
+      <div class="rows" id="rows"></div>
+      <div id="ghostWrap" hidden>
+        <div class="sechead" style="margin-top:14px"><h4>All-time, for comparison</h4><em id="ghostNote"></em></div>
+        <div class="rows ghost" id="ghostRows"></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sechead"><h4>Records held, tracked stats</h4><em id="holdNote"></em></div>
+      <div class="holders" id="holders"></div>
+    </section>
+  </main>
+
+  <aside class="panel back detail" id="detail">
+    <p class="eyebrow">2025 award ballot</p>
+    <p class="hint">One trophy per tracked stat, from this season only.</p>
+    <div class="awards" id="awards"></div>
+  </aside>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<dialog id="detDlg"><div class="panel front dlg">
+  <p class="eyebrow">2025 award ballot</p>
+  <p class="hint">One trophy per tracked stat, from this season only.</p>
+  <div class="awards" id="awardsD"></div>
+  <button class="ghostbtn" id="closeDet" style="margin-top:12px;width:100%">Close</button>
+</div></dialog>
+
+<script>
+const STATS=[
+ {id:'hi',name:'Highest single game',unit:'points',dec:1,scale:250,rows:[
+  ['Helaman',214.8,'Wk 11 vs Dax',2023],['Kade',208.4,'Wk 6 vs Jace',2025],['Jace',201.6,'Wk 14 vs Wes',2021],
+  ['Dax',197.2,'Wk 3 vs Lehi',2025],['Brock',194.9,'Wk 9 vs Ammon',2019],['Tyrell',190.1,'Wk 12 vs Gentry',2024],
+  ['Ammon',188.7,'Wk 2 vs Cory',2022],['Gentry',186.3,'Wk 7 vs Brock',2020]],award:'Biggest game'},
+ {id:'blow',name:'Biggest blowout',unit:'margin',dec:1,scale:120,rows:[
+  ['Kade',109.6,'Wk 6 over Jace',2025],['Helaman',98.2,'Wk 11 over Dax',2023],['Wes',91.4,'Wk 4 over Ruben',2022],
+  ['Jace',88.7,'Wk 14 over Wes',2021],['Dax',84.0,'Wk 3 over Lehi',2025],['Brock',79.5,'Wk 9 over Ammon',2019],
+  ['Lehi',76.8,'Wk 8 over Cory',2024],['Gentry',71.2,'Wk 5 over Tyrell',2020]],award:'Woodshed award'},
+ {id:'thin',name:'Narrowest win',unit:'margin',dec:2,scale:2,invert:true,asc:true,rows:[
+  ['Ruben',0.04,'Wk 13 over Kade',2024],['Tyrell',0.12,'Wk 7 over Jace',2025],['Cory',0.20,'Wk 2 over Brock',2021],
+  ['Jace',0.36,'Wk 10 over Gentry',2023],['Ammon',0.48,'Wk 5 over Wes',2019],['Dax',0.62,'Wk 9 over Lehi',2022],
+  ['Helaman',0.74,'Wk 15 over Ruben',2025],['Brock',0.90,'Wk 1 over Cory',2020]],award:'Heart attack award'},
+ {id:'loss',name:'Most points in a loss',unit:'points',dec:1,scale:200,rows:[
+  ['Jace',186.4,'Wk 6 lost to Kade',2025],['Dax',180.9,'Wk 11 lost to Helaman',2023],['Gentry',174.2,'Wk 12 lost to Tyrell',2024],
+  ['Wes',169.8,'Wk 14 lost to Jace',2021],['Cory',165.1,'Wk 2 lost to Ammon',2022],['Lehi',161.7,'Wk 3 lost to Dax',2025],
+  ['Ammon',158.3,'Wk 9 lost to Brock',2019],['Ruben',154.0,'Wk 8 lost to Lehi',2020]],award:'Hard luck award'},
+ {id:'streak',name:'Longest win streak',unit:'games',dec:0,scale:14,rows:[
+  ['Helaman',11,'Wk 3–13',2023],['Jace',9,'Wk 5–13',2021],['Kade',8,'Wk 1–8',2025],['Dax',8,'Wk 6–13',2022],
+  ['Brock',7,'Wk 2–8',2019],['Tyrell',7,'Wk 7–13',2024],['Gentry',6,'Wk 8–13',2020],['Wes',6,'Wk 1–6',2025]],award:'Hot hand award'},
+ {id:'pf',name:'Most points, full season',unit:'points',dec:1,scale:2200,rows:[
+  ['Kade',2104.6,'14–3, champion',2025],['Helaman',2061.2,'13–4, champion',2023],['Jace',1994.8,'12–5, runner-up',2021],
+  ['Tyrell',1952.3,'11–6, champion',2024],['Dax',1918.7,'10–7, third',2025],['Brock',1887.5,'12–5, champion',2019],
+  ['Gentry',1854.9,'11–6, runner-up',2020],['Ammon',1822.4,'10–7, fourth',2022]],award:'Scoring title'},
+ {id:'bench',name:'Points left on the bench',unit:'points',dec:1,scale:100,rows:[
+  ['Cory',86.4,'Wk 8, lost by 3.2',2024],['Ruben',79.1,'Wk 12, lost by 11.6',2025],['Lehi',74.6,'Wk 4, won by 24.0',2022],
+  ['Wes',70.2,'Wk 9, lost by 1.4',2021],['Ammon',66.8,'Wk 6, lost by 18.3',2023],['Brock',63.5,'Wk 2, won by 30.7',2019],
+  ['Gentry',59.9,'Wk 11, lost by 7.8',2020],['Jace',57.1,'Wk 5, lost by 2.9',2025]],award:'Wrong lineup award'},
+ {id:'faab',name:'Most FAAB on one player',unit:'dollars',dec:0,pre:'$',scale:200,off:true,rows:[
+  ['Dax',188,'Puka Nacua, Wk 3',2023],['Jace',164,'Bucky Irving, Wk 9',2024],['Helaman',151,'Kimani Vidal, Wk 5',2025],
+  ['Kade',139,'Jaylen Warren, Wk 4',2022],['Tyrell',122,'C. Patterson, Wk 6',2021],['Wes',110,'Gus Edwards, Wk 12',2025],
+  ['Brock',97,'Kyle Rudolph, Wk 7',2019],['Ruben',84,'Mike Davis, Wk 2',2020]],award:'Overpay award'},
+ {id:'trades',name:'Trades in a season',unit:'trades',dec:0,scale:20,off:true,rows:[
+  ['Ruben',17,'traded with 9 of 11',2025],['Kade',13,'six in-season flips',2024],['Helaman',11,'four pick swaps',2023],
+  ['Dax',10,'three-team deal, Wk 7',2025],['Jace',8,'two blockbusters',2022],['Lehi',7,'all before Wk 9',2021],
+  ['Gentry',5,'one at the deadline',2020],['Brock',4,'quiet year',2019]],award:'Wheeler dealer'}
+];
+const SEASONS=['ALL',2025,2024,2023,2022,2021,2020,2019];
+let sel=STATS[0].id, season='ALL';
+const tracked=new Set(STATS.filter(s=>!s.off).map(s=>s.id));
+const $=id=>document.getElementById(id);
+const fmt=(s,v)=>(s.pre||'')+v.toFixed(s.dec).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+const entries=(s,yr)=>s.rows.filter(r=>yr==='ALL'||r[3]===yr).sort((a,b)=>s.asc?a[1]-b[1]:b[1]-a[1]);
+const pct=(s,v)=>{const p=s.invert?1-v/s.scale:v/s.scale;return Math.max(.04,Math.min(1,p));};
+const rowHTML=(s,r,i)=>`<div class="row${i===0?' top':i===1?' r2':i===2?' r3':''}">
+  <span class="rk">${i+1}</span>
+  <span class="rn">${r[0]}<span class="rc">${r[2]} · ${r[3]}</span></span>
+  <span class="rv"><b>${fmt(s,r[1])}</b></span>
+  <span class="rwell"><i style="width:${(pct(s,r[1])*100).toFixed(1)}%"></i></span></div>`;
+
+function renderSeasons(){
+  $('seasons').innerHTML=SEASONS.map(y=>
+    `<button type="button" data-y="${y}" aria-pressed="${String(y)===String(season)}">${y==='ALL'?'All-time':y}</button>`).join('');
+}
+function renderStats(){
+  $('statlist').innerHTML=STATS.map(s=>`
+   <div class="stat" role="button" tabindex="0" data-id="${s.id}" data-sel="${s.id===sel?1:0}" data-off="${tracked.has(s.id)?0:1}">
+     <span class="sname">${s.name}<span class="sunit">${s.unit}</span></span>
+     <button class="sw" type="button" data-sw="${s.id}" aria-pressed="${tracked.has(s.id)}"
+       aria-label="Count ${s.name} toward awards"><i></i></button></div>`).join('');
+  $('trackCount').textContent=tracked.size;
+  $('recCount').textContent=STATS.reduce((n,s)=>n+s.rows.length,0);
+}
+function fitNumber(el){
+  // the numeral must clear the ring: fit it to the chord of the inner circle
+  const box=el.parentElement.getBoundingClientRect().width;
+  if(!box)return;
+  const avail=box*0.94;
+  el.style.fontSize='96px';
+  const w=el.scrollWidth;
+  if(w>avail)el.style.fontSize=Math.max(30,Math.floor(96*avail/w))+'px';
+}
+function setCap(p){
+  const a=(135+270*p)*Math.PI/180;
+  const x=170+138*Math.cos(a), y=170+138*Math.sin(a);
+  $('gcap').setAttribute('transform',`translate(${(x-170).toFixed(1)} ${(y-32).toFixed(1)})`);
+}
+function renderBoard(){
+  const s=STATS.find(x=>x.id===sel), list=entries(s,season);
+  $('statTitle').textContent=s.name;
+  $('gunit').textContent=s.unit;
+  $('kicker').textContent=season==='ALL'?'All-time leader':season+' leader';
+  $('boardLabel').textContent=season==='ALL'?'All-time board':season+' board';
+  $('boardCount').textContent=list.length+(list.length===1?' record':' records');
+  if(list.length){
+    const top=list[0],txt=fmt(s,top[1]),p=pct(s,top[1]);
+    const g=$('gval');g.textContent=txt;fitNumber(g);
+    $('garc').setAttribute('stroke-dasharray',(650*p).toFixed(0)+' 867');
+    $('gcap').style.opacity='1';setCap(p);
+    $('avi').textContent=top[0][0];
+    $('hname').textContent=top[0];
+    $('hctx').textContent=top[2]+' · '+top[3];
+  }else{
+    $('gval').textContent='—';fitNumber($('gval'));
+    $('garc').setAttribute('stroke-dasharray','0 867');$('gcap').style.opacity='0';
+    $('avi').textContent='–';$('hname').textContent='No record yet';$('hctx').textContent=season+' season';
+  }
+  $('rows').innerHTML=list.length?list.map((r,i)=>rowHTML(s,r,i)).join('')
+    :`<div class="empty">Nobody set a ${s.name.toLowerCase()} mark in ${season}.</div>`;
+  const showGhost=season!=='ALL';
+  $('ghostWrap').hidden=!showGhost;
+  if(showGhost){
+    $('ghostNote').textContent='top 5, all seasons';
+    $('ghostRows').innerHTML=entries(s,'ALL').slice(0,5).map((r,i)=>rowHTML(s,r,i)).join('');
+  }
+}
+function renderHolders(){
+  const on=STATS.filter(s=>tracked.has(s.id)),tally={};
+  on.forEach(s=>{const e=entries(s,'ALL');if(e.length)tally[e[0][0]]=(tally[e[0][0]]||0)+1;});
+  const list=Object.entries(tally).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const max=list.length?list[0][1]:1;
+  $('holdNote').textContent=on.length+(on.length===1?' stat':' stats')+' · all seasons';
+  $('holders').innerHTML=list.length?list.map(([n,c])=>`
+    <div class="hold"><b>${c}</b><span>${n}</span><div class="hbar" style="width:${(c/max*100).toFixed(0)}%"></div></div>`).join('')
+    :`<div class="empty" style="grid-column:1/-1">No stats tracked. Flip a switch to start the book.</div>`;
+}
+function renderAwards(){
+  const html=STATS.filter(s=>tracked.has(s.id)).map((s,idx)=>{
+    const list=entries(s,2025);if(!list.length)return '';
+    const w=list[0],p=pct(s,w[1]),g=idx===0;
+    return `<div class="award">
+      <svg viewBox="0 0 56 56" aria-hidden="true">
+        <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(0,0,0,.72)" stroke-width="6"/>
+        <circle cx="28" cy="28" r="22" fill="none" stroke="url(#${g?'gold':'gg'})" stroke-width="5"
+          stroke-linecap="round" stroke-dasharray="${(138*p).toFixed(0)} 139" transform="rotate(-90 28 28)"
+          style="filter:drop-shadow(0 0 4px rgba(${g?'255,200,97':'79,216,255'},.85))"/>
+        <text class="dialv" x="28" y="33" text-anchor="middle">${s.dec>1?w[1].toFixed(2):Math.round(w[1])}</text>
+      </svg>
+      <div><h5>${s.award}</h5><p>${w[0]}</p><span>${w[2]}</span></div></div>`;
+  }).join('');
+  const out=html||`<div class="empty">No stats tracked. Flip a switch to build the ballot.</div>`;
+  $('awards').innerHTML=out;$('awardsD').innerHTML=out;
+}
+function renderAll(){renderSeasons();renderStats();renderBoard();renderHolders();renderAwards();}
+
+$('seasons').addEventListener('click',e=>{const b=e.target.closest('button[data-y]');if(!b)return;
+  const y=b.dataset.y;season=y==='ALL'?'ALL':+y;renderSeasons();renderBoard();});
+$('statlist').addEventListener('click',e=>{
+  const sw=e.target.closest('.sw');
+  if(sw){const id=sw.dataset.sw;tracked.has(id)?tracked.delete(id):tracked.add(id);
+    renderStats();renderHolders();renderAwards();return;}
+  const st=e.target.closest('.stat');if(!st)return;sel=st.dataset.id;renderStats();renderBoard();});
+$('statlist').addEventListener('keydown',e=>{
+  if(e.key!=='Enter'&&e.key!==' ')return;const st=e.target.closest('.stat');
+  if(st&&!e.target.closest('.sw')){e.preventDefault();sel=st.dataset.id;renderStats();renderBoard();}});
+
+const rail=$('rail'),scrim=$('scrim');
+const shutRail=()=>{rail.classList.remove('open');scrim.hidden=true;};
+$('openRail').addEventListener('click',()=>{rail.classList.add('open');scrim.hidden=false;});
+$('closeRail').addEventListener('click',shutRail);
+scrim.addEventListener('click',shutRail);
+$('openDet').addEventListener('click',()=>$('detDlg').showModal());
+$('closeDet').addEventListener('click',()=>$('detDlg').close());
+
+renderAll();
+addEventListener('resize',()=>fitNumber($('gval')));
+</script>
+
+</body>
+</html>

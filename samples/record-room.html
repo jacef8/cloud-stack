@@ -1,0 +1,1084 @@
+<title>Record Room</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --e0:#080B0A;
+  --e1:rgba(19,27,26,.78);
+  --e1-hi:rgba(28,39,38,.86);
+  --e2:rgba(41,57,55,.92);
+  --e2-hi:rgba(56,76,73,.95);
+  --recess:#030605;
+  --ink:#FFFFFF;
+  --ink-2:rgba(255,255,255,.85);
+  --ink-3:rgba(255,255,255,.67);
+  --accent:#00E8A0;
+  --accent-2:#00D9FF;
+  --accent-lo:#039C73;
+  --on-accent:#03170F;
+  --r:22px; --r-s:14px;
+  --disp:'Space Grotesk',system-ui,sans-serif;
+  --text:'Instrument Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --raise:
+    inset 0 1px 0 rgba(255,255,255,.12),
+    inset 0 -1px 0 rgba(0,0,0,.55),
+    0 1px 2px rgba(0,0,0,.65),
+    0 9px 20px -11px rgba(0,0,0,.96);
+  --well-sh:
+    inset 0 3px 8px rgba(0,0,0,.92),
+    inset 0 -1px 0 rgba(255,255,255,.055);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--e0);color:var(--ink);font-family:var(--text);font-size:15px;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+
+/* ═══ environment ═══ */
+.amb{position:fixed;z-index:0;pointer-events:none;border-radius:50%;filter:blur(98px)}
+.a1{width:min(980px,104vw);height:min(700px,74vw);left:44%;top:34%;transform:translate(-50%,-50%);
+  background:radial-gradient(circle,rgba(0,232,160,.17),rgba(0,217,255,.08) 46%,transparent 72%);
+  animation:br 23s ease-in-out infinite alternate}
+.a2{width:min(560px,72vw);height:min(560px,72vw);right:-12vw;bottom:-18vh;
+  background:radial-gradient(circle,rgba(0,217,255,.13),transparent 68%)}
+@keyframes br{to{transform:translate(-50%,-39%) scale(1.09)}}
+.field{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:repeating-linear-gradient(90deg,rgba(190,255,235,.05) 0 1px,transparent 1px 92px),
+   repeating-linear-gradient(90deg,rgba(190,255,235,.022) 0 1px,transparent 1px 23px);
+  mask-image:radial-gradient(ellipse 82% 64% at 50% 42%,#000 18%,transparent 78%)}
+.vign{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 96% 80% at 48% 32%,transparent 44%,rgba(2,5,4,.76))}
+.grain{position:fixed;inset:0;z-index:30;pointer-events:none;opacity:.04;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ═══ shell: icon dock + content ═══ */
+.site{position:relative;z-index:1;height:100vh;height:100dvh;display:grid;gap:13px;
+  grid-template-columns:76px minmax(0,1fr);padding:13px clamp(14px,1.3vw,20px)}
+.site>*{min-height:0}
+.panel{position:relative;border-radius:var(--r);animation:rise .6s cubic-bezier(.2,.8,.2,1) both}
+.panel::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(168deg,rgba(255,255,255,.08),rgba(255,255,255,.012) 34%,transparent 62%)}
+.glass{background:linear-gradient(158deg,var(--e1-hi),var(--e1) 74%);
+  backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);
+  border:1px solid rgba(255,255,255,.09);box-shadow:var(--raise)}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}}
+
+/* dock */
+.dock{display:flex;flex-direction:column;align-items:center;gap:7px;padding:13px 0}
+.dock .crest{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;margin-bottom:6px;
+  background:linear-gradient(150deg,var(--accent),var(--accent-2));color:var(--on-accent);
+  font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:-.02em;
+  box-shadow:0 5px 18px rgba(0,232,160,.42),inset 0 1px 0 rgba(255,255,255,.7)}
+.nav{width:50px;height:50px;border-radius:50%;border:1px solid rgba(255,255,255,.07);cursor:pointer;
+  display:grid;place-items:center;position:relative;
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 8px 17px -10px rgba(0,0,0,.96);
+  transition:transform .16s,background .16s}
+.nav svg{width:21px;height:21px;fill:none;stroke:var(--ink-3);stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round;transition:stroke .16s}
+.nav:hover{transform:translateY(-2px)}
+.nav:hover svg{stroke:var(--ink)}
+.nav[aria-current="page"]{background:linear-gradient(150deg,#6BFFCF,var(--accent));
+  border-color:transparent;box-shadow:0 5px 16px rgba(0,232,160,.5),inset 0 1px 0 rgba(255,255,255,.7)}
+.nav[aria-current="page"] svg{stroke:var(--on-accent);stroke-width:2}
+.navlab{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--ink-3);
+  margin-top:-2px;margin-bottom:4px}
+.nav[aria-current="page"]+.navlab{color:var(--accent)}
+.dockspace{flex:1}
+
+/* content column */
+.col{display:grid;grid-template-rows:auto minmax(0,1fr);gap:13px;min-height:0}
+.bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:11px 16px}
+.bar h1{margin:0;min-width:0;font-family:var(--disp);font-weight:700;font-size:19px;letter-spacing:-.02em;line-height:1.1}
+.bar h1 span{display:block;font-family:var(--mono);font-size:12px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink-3);margin-top:3px;font-weight:400;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);padding:6px 11px;border-radius:999px;
+  background:var(--recess);box-shadow:var(--well-sh)}
+.chip i{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 7px rgba(0,232,160,.9)}
+.chip.mute i{background:rgba(255,255,255,.33);box-shadow:none}
+.chip.live{border:none;cursor:pointer;font:inherit;font-family:var(--mono);font-size:12px;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);transition:color .16s}
+.chip.live:hover{color:var(--ink)}
+.chip.live[data-state="busy"] i{background:var(--accent-2);animation:pulse 1.1s ease-in-out infinite}
+.chip.live[data-state="warn"] i{background:#FFB020;box-shadow:0 0 7px rgba(255,176,32,.9)}
+@keyframes pulse{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.chip.live[data-state="busy"] i{animation:none}}
+.barspace{flex:1 1 14px}
+.pills[hidden]{display:none}
+.pills{display:flex;flex-wrap:wrap;padding:3px;border-radius:999px;background:var(--recess);
+  box-shadow:var(--well-sh);gap:2px}
+.pills button{padding:6px 12px;border:none;border-radius:999px;background:transparent;color:var(--ink-3);
+  cursor:pointer;transition:.18s;font-family:var(--mono);font-size:12px;letter-spacing:.04em}
+.pills button:hover{color:var(--ink)}
+.pills button[aria-pressed="true"]{color:var(--on-accent);font-weight:700;
+  background:linear-gradient(150deg,#6BFFCF,var(--accent));
+  box-shadow:0 4px 12px rgba(0,232,160,.5),inset 0 1px 0 rgba(255,255,255,.72)}
+
+.page{display:none;min-height:0}
+.page[data-on="1"]{display:grid;gap:13px}
+.scroll{overflow:auto;scrollbar-width:thin;min-height:0}
+.panel{min-height:120px}
+.scroll::-webkit-scrollbar{width:8px}
+.scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:99px}
+
+/* shared bits */
+.eyebrow{margin:0 0 4px;font-family:var(--mono);font-size:12px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.hint{margin:0 0 12px;font-size:13px;color:var(--ink-3);line-height:1.5}
+.sechead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:8px}
+.sechead h4{margin:0;font-family:var(--mono);font-size:12px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:500}
+.sechead em{font-family:var(--mono);font-style:normal;font-size:12px;color:var(--ink-3)}
+.pad{padding:15px 17px}
+.empty{padding:22px 14px;text-align:center;font-size:14px;color:var(--ink-3);
+  border-radius:var(--r-s);background:var(--recess);box-shadow:var(--well-sh)}
+
+/* gauge */
+.gwrap{position:relative;width:100%;max-width:300px;margin-left:auto;margin-right:auto}
+.gwrap::after{content:"";display:block;padding-bottom:100%}
+@supports (aspect-ratio:1){.gwrap{aspect-ratio:1}.gwrap::after{display:none}}
+.gwrap>svg{position:absolute;inset:0;top:0;left:0;width:100%;height:100%}
+.gwrap::before{content:"";position:absolute;inset:12%;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,232,160,.15),transparent 66%)}
+.gwrap svg{position:relative;width:100%;height:auto;display:block;overflow:visible}
+.spin{transform-origin:170px 170px;animation:sp 52s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.gcenter{position:absolute;inset:18%;display:grid;place-content:center;text-align:center;pointer-events:none}
+.gcenter b{display:block;font-family:var(--disp);font-weight:700;line-height:.87;letter-spacing:-.05em;
+  font-variant-numeric:tabular-nums;color:#fff;font-size:86px}
+.gcenter em{display:block;font-family:var(--mono);font-style:normal;font-size:12px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--ink-3);margin-top:11px}
+
+/* rows */
+.rows{display:flex;flex-direction:column;gap:6px}
+.row{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:11px;align-items:center;
+  padding:9px 12px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.055);
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 -1px 0 rgba(0,0,0,.52),0 8px 17px -12px rgba(0,0,0,.97);
+  transition:transform .15s}
+.row:hover{transform:translateY(-1px)}
+.row.top{border-color:rgba(0,232,160,.42)}
+.rk{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-family:var(--mono);
+  font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums;background:var(--recess);box-shadow:var(--well-sh)}
+.row.top .rk{color:var(--on-accent);font-weight:700;background:linear-gradient(150deg,#6BFFCF,var(--accent));
+  box-shadow:0 3px 9px rgba(0,232,160,.5),inset 0 1px 0 rgba(255,255,255,.7)}
+.rn{font-size:15px;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rv b{font-family:var(--disp);font-size:18px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.rwell{grid-column:1/-1;height:5px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);overflow:hidden}
+.rwell i{display:block;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--accent-2),var(--accent));box-shadow:0 0 9px rgba(0,232,160,.6)}
+
+/* ═══ OVERVIEW: bento ═══ */
+#p-home{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);grid-template-rows:minmax(0,auto) minmax(0,1fr)}
+.hero{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:20px;align-items:center}
+.hero h2{margin:0;font-family:var(--disp);font-size:clamp(26px,3vw,36px);font-weight:700;
+  letter-spacing:-.035em;line-height:1.04;text-wrap:balance}
+.kick{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin:0 0 8px}
+.kick::before{content:"";width:16px;height:1px;background:linear-gradient(90deg,transparent,var(--accent))}
+.heroline{margin:14px 0 0;font-size:15px;color:var(--ink-3);line-height:1.5;max-width:44ch}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px;margin-top:16px}
+.tile{padding:11px 12px;border-radius:var(--r-s);background:var(--recess);box-shadow:var(--well-sh)}
+.tile b{display:block;font-family:var(--disp);font-size:25px;font-weight:700;letter-spacing:-.04em;
+  font-variant-numeric:tabular-nums;line-height:1}
+.tile span{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:6px;
+  letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile .tb{height:4px;border-radius:999px;margin-top:8px;
+  background:linear-gradient(90deg,var(--accent-2),var(--accent));box-shadow:0 0 8px rgba(0,232,160,.55)}
+.ring{display:grid;grid-template-columns:auto minmax(0,1fr);gap:11px;align-items:center;
+  padding:9px 11px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.05);
+  background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.016));transition:transform .15s}
+.ring:hover{transform:translateY(-1px)}
+.ring svg{width:50px;height:50px;display:block}
+.rlab{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.rman{font-size:15px;font-weight:700;margin-top:3px;letter-spacing:-.01em}
+.rsub{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dialv{font-family:var(--disp);font-size:13px;font-weight:700;fill:#fff;font-variant-numeric:tabular-nums;
+  letter-spacing:-.03em}
+/* champions timeline */
+.hbars{display:flex;flex-direction:column;gap:6px}
+.hb{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:11px;align-items:center;
+  padding:8px 11px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.05);
+  background:linear-gradient(160deg,rgba(255,255,255,.048),rgba(255,255,255,.016));transition:transform .15s}
+.hb:hover{transform:translateY(-1px)}
+.hb.lead{border-color:rgba(0,232,160,.4);background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 8px 17px -12px rgba(0,0,0,.97)}
+.hb .hav{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:var(--disp);
+  font-size:12px;font-weight:700;color:var(--on-accent);background:linear-gradient(150deg,#8BFFDA,var(--accent))}
+.hb .hav.none{background:linear-gradient(150deg,#5E6E6A,#38443F);color:rgba(255,255,255,.75)}
+.hb .hn{font-size:14px;font-weight:700;letter-spacing:-.01em}
+.hb .hs{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:2px}
+.hb .hv{font-family:var(--disp);font-size:17px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.hb .hw{grid-column:1/-1;height:5px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);overflow:hidden}
+.hb .hw i{display:block;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--accent-2),var(--accent));box-shadow:0 0 9px rgba(0,232,160,.6)}
+.tl{display:flex;gap:7px;overflow:visible}
+.tlx{flex:1;min-width:0;padding:10px 6px;border-radius:var(--r-s);text-align:center;
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));border:1px solid rgba(255,255,255,.05);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 8px 17px -12px rgba(0,0,0,.97)}
+.tlx.now{border-color:rgba(0,232,160,.45)}
+.tlx b{display:block;font-size:14px;font-weight:700;letter-spacing:-.01em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tlx span{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:4px}
+.tlx .dot{width:8px;height:8px;border-radius:50%;margin:0 auto 7px;background:rgba(255,255,255,.22)}
+.tlx.now .dot{background:var(--accent);box-shadow:0 0 8px rgba(0,232,160,.9)}
+
+/* ═══ RECORDS ═══ */
+#p-records{grid-template-columns:minmax(0,262px) minmax(0,1fr)}
+.filterhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.filterbtns{display:flex;padding:3px;gap:2px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh)}
+.minibtn{border:none;background:transparent;color:var(--ink-3);cursor:pointer;border-radius:999px;
+  padding:4px 10px;font-family:var(--mono);font-size:12px;letter-spacing:.05em;transition:.15s}
+.minibtn:hover{color:var(--ink);background:rgba(255,255,255,.07)}
+.chk{flex:none;width:22px;height:22px;border-radius:50%;border:none;cursor:pointer;padding:0;
+  display:grid;place-items:center;background:var(--recess);box-shadow:var(--well-sh);transition:.16s}
+.chk svg{width:14px;height:14px;fill:none;stroke:rgba(255,255,255,.2);stroke-width:2.4;
+  stroke-linecap:round;stroke-linejoin:round;transition:stroke .16s}
+.chk[aria-pressed="true"]{background:linear-gradient(150deg,#6BFFCF,var(--accent));
+  box-shadow:0 3px 10px rgba(0,232,160,.5),inset 0 1px 0 rgba(255,255,255,.7)}
+.chk[aria-pressed="true"] svg{stroke:var(--on-accent)}
+.sname[role="button"]{cursor:pointer}
+.statlist{display:flex;flex-direction:column;gap:6px}
+.stat{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:9px 10px;position:relative;
+  border:1px solid transparent;border-radius:var(--r-s);cursor:pointer;color:var(--ink-2);
+  background:linear-gradient(160deg,rgba(255,255,255,.048),rgba(255,255,255,.016));
+  transition:background .16s,color .16s,border-color .16s,transform .16s}
+.stat:hover{background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.03));
+  color:var(--ink);transform:translateX(2px)}
+.stat[data-sel="1"]{color:var(--ink);border-color:rgba(0,232,160,.45);
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.17),0 9px 19px -11px rgba(0,0,0,.97)}
+.stat[data-sel="1"]::after{content:"";position:absolute;left:0;top:14%;bottom:14%;width:3px;border-radius:99px;
+  background:linear-gradient(180deg,var(--accent),var(--accent-lo));box-shadow:0 0 8px rgba(0,232,160,.85)}
+.stat[data-off="1"] .sname{color:rgba(255,255,255,.44)}
+.stat[data-off="1"]{opacity:.78}
+.sname{flex:1;min-width:0;font-size:14px;font-weight:700;line-height:1.25;letter-spacing:-.01em}
+.sunit{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);font-weight:400;margin-top:2px}
+.sw{flex:none;width:36px;height:19px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);
+  border:none;position:relative;cursor:pointer;padding:0}
+.sw i{position:absolute;top:50%;left:10.5px;width:14px;height:14px;border-radius:50%;
+  transform:translate(-50%,-50%);transition:left .2s cubic-bezier(.3,1.35,.5,1),background .2s;
+  background:radial-gradient(circle at 34% 28%,#8DA39D,#49574F);
+  box-shadow:0 3px 8px rgba(0,0,0,.9),inset 0 -2px 3px rgba(0,0,0,.3)}
+.sw[aria-pressed="true"] i{left:25.5px;background:radial-gradient(circle at 34% 28%,#D8FFF1,var(--accent));
+  box-shadow:0 0 10px rgba(0,232,160,.85),0 3px 8px rgba(0,0,0,.9)}
+.railfoot{margin-top:12px;padding:10px 12px;border-radius:var(--r-s);background:var(--recess);box-shadow:var(--well-sh)}
+.railfoot p{margin:0;font-family:var(--mono);font-size:12px;color:var(--ink-3);line-height:1.6}
+.railfoot b{color:var(--accent);font-weight:700}
+.rec-main{display:flex;flex-direction:column;gap:15px}
+.anchor{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:22px;align-items:center}
+.ahold{margin:15px 0 0;display:flex;align-items:center;gap:12px}
+.av{width:44px;height:44px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-family:var(--disp);font-weight:700;font-size:16px;color:var(--on-accent);
+  background:linear-gradient(150deg,#8BFFDA,var(--accent));
+  box-shadow:0 5px 14px rgba(0,232,160,.42),inset 0 1px 0 rgba(255,255,255,.7)}
+.ahold p{margin:0;font-size:17px;font-weight:700;letter-spacing:-.015em}
+.ahold span{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+
+/* ═══ MANAGERS ═══ */
+#p-mgrs{grid-template-rows:minmax(0,1fr)}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:9px}
+.mcard{text-align:left;padding:12px;border-radius:var(--r-s);cursor:pointer;
+  border:1px solid rgba(255,255,255,.055);
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 9px 19px -12px rgba(0,0,0,.97);
+  transition:transform .16s,border-color .16s}
+.mcard:hover{transform:translateY(-2px);border-color:rgba(0,232,160,.4)}
+.mtop{display:flex;align-items:center;gap:10px}
+.mav{width:38px;height:38px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-family:var(--disp);font-weight:700;font-size:14px;color:var(--on-accent);
+  background:linear-gradient(150deg,#8BFFDA,var(--accent));
+  box-shadow:0 4px 12px rgba(0,232,160,.36),inset 0 1px 0 rgba(255,255,255,.65)}
+.mav.none{background:linear-gradient(150deg,#5E6E6A,#38443F);color:rgba(255,255,255,.75);box-shadow:none}
+.mname{font-size:16px;font-weight:700;letter-spacing:-.015em;line-height:1.1}
+.mrec{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:3px}
+.mteam{display:block;font-size:13px;color:var(--ink-3);margin-top:3px;line-height:1.25;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tname{display:block;font-size:13px;color:var(--ink-3);margin-top:3px}
+.seasonlist{display:flex;flex-direction:column;gap:5px}
+.sl{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;align-items:center;padding:8px 11px;
+  border-radius:11px;background:var(--recess);box-shadow:var(--well-sh)}
+.sl b{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:600}
+.sl span{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sl i{font-style:normal;color:var(--ink-3);font-weight:400}
+.mstats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:11px}
+.ms{padding:8px 9px;border-radius:11px;background:var(--recess);box-shadow:var(--well-sh)}
+.ms b{display:block;font-family:var(--disp);font-size:17px;font-weight:700;letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums;line-height:1}
+.ms span{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:4px}
+.mbar{height:5px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);margin-top:10px;overflow:hidden}
+.mbar i{display:block;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--accent-2),var(--accent));box-shadow:0 0 9px rgba(0,232,160,.6)}
+
+/* ═══ MATCHUPS ═══ */
+#p-h2h{grid-template-columns:minmax(0,300px) minmax(0,1fr)}
+.picker{display:flex;flex-direction:column;gap:5px;margin-top:9px}
+.pk{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:11px;cursor:pointer;
+  border:1px solid transparent;color:var(--ink-2);text-align:left;
+  background:linear-gradient(160deg,rgba(255,255,255,.045),rgba(255,255,255,.015));transition:.15s}
+.pk:hover{background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.03));color:var(--ink)}
+.pk[data-sel="1"]{border-color:rgba(0,232,160,.5);background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+.pk .pav{width:26px;height:26px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-family:var(--disp);font-size:12px;font-weight:700;color:var(--on-accent);
+  background:linear-gradient(150deg,#8BFFDA,var(--accent))}
+.pk span{flex:1;min-width:0;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pk em{font-family:var(--mono);font-style:normal;font-size:12px;color:var(--ink-3)}
+.pk .pteam{display:block;font-family:var(--text);font-size:12px;color:var(--ink-3);
+  font-weight:400;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.h2hwrap{display:flex;flex-direction:column;gap:15px}
+.vs{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:16px;align-items:center}
+.side{text-align:center}
+.side .bav{width:62px;height:62px;border-radius:50%;margin:0 auto 10px;display:grid;place-items:center;
+  font-family:var(--disp);font-weight:700;font-size:22px;color:var(--on-accent);
+  background:linear-gradient(150deg,#8BFFDA,var(--accent));
+  box-shadow:0 6px 18px rgba(0,232,160,.42),inset 0 1px 0 rgba(255,255,255,.7)}
+.side.b .bav{background:linear-gradient(150deg,#9BE8FF,var(--accent-2));
+  box-shadow:0 6px 18px rgba(0,217,255,.42),inset 0 1px 0 rgba(255,255,255,.7)}
+.side h3{margin:0;font-family:var(--disp);font-size:20px;font-weight:700;letter-spacing:-.02em}
+.side p{margin:5px 0 0;font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.side b{display:block;font-family:var(--disp);font-size:54px;font-weight:700;letter-spacing:-.05em;
+  line-height:1;margin-top:12px;font-variant-numeric:tabular-nums}
+.vsmid{font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--ink-3);text-transform:uppercase}
+.split{height:12px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);overflow:hidden;display:flex}
+.split i{display:block;height:100%}
+.split .sa{background:linear-gradient(90deg,var(--accent-lo),var(--accent));box-shadow:0 0 10px rgba(0,232,160,.55)}
+.split .sb{background:linear-gradient(90deg,#0B86A8,var(--accent-2));box-shadow:0 0 10px rgba(0,217,255,.5)}
+.splitlab{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;
+  color:var(--ink-3);margin-top:7px}
+
+/* ═══ AWARDS ═══ */
+#p-awards{grid-template-rows:minmax(0,1fr)}
+.agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:9px}
+.acard{padding:12px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.055);
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 9px 19px -12px rgba(0,0,0,.97);
+  display:grid;grid-template-columns:62px minmax(0,1fr);gap:12px;align-items:center}
+.acard.off{background:linear-gradient(160deg,rgba(255,255,255,.035),rgba(255,255,255,.012));box-shadow:none}
+.acard.off .rman{color:var(--ink-3)}
+.acard svg{width:62px;height:62px;display:block}
+.ahead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+/* ═══ dialog ═══ */
+dialog{border:none;padding:0;background:transparent;max-width:min(440px,92vw);width:100%}
+dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
+.dlg{padding:16px}
+.ghostbtn{border:1px solid rgba(255,255,255,.13);border-radius:999px;padding:8px 15px;cursor:pointer;
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 6px 15px -9px rgba(0,0,0,.95);
+  font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+
+/* ═══ breakpoints ═══ */
+@media(max-width:1099px){
+  #p-home{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
+  .hero{grid-template-columns:minmax(0,1fr);gap:10px}
+  .gwrap{max-width:240px}
+  .gcenter b{font-size:70px}
+}
+@media(max-width:820px){
+  .anchor{grid-template-columns:minmax(0,1fr);gap:10px}
+  .vs{grid-template-columns:minmax(0,1fr);gap:10px}
+  .vsmid{text-align:center}
+}
+@media(max-width:699px){
+  .site{height:auto;min-height:100vh;min-height:100dvh;grid-template-columns:minmax(0,1fr);
+    padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  .site>.dock{position:fixed;left:0;right:0;bottom:0;z-index:40;flex-direction:row;justify-content:space-around;
+    border-radius:var(--r) var(--r) 0 0;padding:9px 8px calc(9px + env(safe-area-inset-bottom,0px));gap:4px}
+  .dock .crest,.navlab{display:none}
+  .nav{width:46px;height:46px}
+  .page[data-on="1"]{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:none!important}
+  .col{grid-template-rows:auto auto}
+  .scroll{overflow:visible}
+  .gwrap{max-width:216px}
+  .gcenter b{font-size:62px}
+  .rec-rail{order:2}
+}
+@media (prefers-reduced-motion:reduce){.panel,.a1,.spin,.row,.stat,.mcard,.ring{animation:none!important;transition:none!important}}
+</style>
+
+<noscript><div style="position:fixed;inset:0;top:0;left:0;right:0;bottom:0;z-index:99;display:grid;
+  place-content:center;text-align:center;padding:24px;background:#080B0A;color:#fff;
+  font-family:system-ui,sans-serif">
+  <p style="font-size:19px;font-weight:700;margin:0 0 8px">Record Room needs JavaScript</p>
+  <p style="font-size:15px;color:rgba(255,255,255,.67);margin:0;max-width:34ch;line-height:1.5">
+  Every board on the site is built in the browser. Open the file in Chrome, Safari, Firefox or Edge
+  with scripting enabled.</p></div></noscript>
+<div class="amb a1"></div><div class="amb a2"></div><div class="field"></div><div class="vign"></div><div class="grain"></div>
+
+<svg style="position:absolute;width:0;height:0" aria-hidden="true" focusable="false"><defs>
+  <linearGradient id="gg" x1="0" y1="1" x2="1" y2="0">
+    <stop offset="0%" stop-color="#00D9FF"/><stop offset="55%" stop-color="#00E8A0"/>
+    <stop offset="100%" stop-color="#B6FF3D"/>
+  </linearGradient>
+  <filter id="gglow" x="-60%" y="-60%" width="220%" height="220%">
+    <feGaussianBlur stdDeviation="4" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+</defs></svg>
+
+<div class="site">
+  <nav class="panel glass dock" aria-label="Sections">
+    <div class="crest">RR</div>
+    <button class="nav" data-go="home" aria-current="page" aria-label="Overview"><svg viewBox="0 0 24 24"><path d="M4 11.5 12 5l8 6.5"/><path d="M6 11v8h12v-8"/></svg></button>
+    <span class="navlab">Home</span>
+    <button class="nav" data-go="records" aria-label="Records"><svg viewBox="0 0 24 24"><path d="M5 4h14v16l-7-4-7 4z"/><path d="M9 9h6"/></svg></button>
+    <span class="navlab">Book</span>
+    <button class="nav" data-go="mgrs" aria-label="Managers"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.4"/><path d="M5 20c.8-4 3.6-6 7-6s6.2 2 7 6"/></svg></button>
+    <span class="navlab">Teams</span>
+    <button class="nav" data-go="h2h" aria-label="Matchups"><svg viewBox="0 0 24 24"><path d="M4 8h5l2 8h5"/><path d="M16 5l4 3-4 3"/><path d="M20 16h-3"/></svg></button>
+    <span class="navlab">H2H</span>
+    <button class="nav" data-go="awards" aria-label="Awards"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="5"/><path d="M8.5 13.5 7 21l5-2.6L17 21l-1.5-7.5"/></svg></button>
+    <span class="navlab">Awards</span>
+    <div class="dockspace"></div>
+  </nav>
+
+  <div class="col">
+    <header class="panel glass bar">
+      <h1>Record Room<span id="crumb">Overview</span></h1>
+      <span class="chip"><i></i><span id="champChip"></span></span>
+      <button class="chip live" id="refreshBtn" type="button" title="Refresh from Sleeper"><i></i><span id="liveMsg">Loading</span></button>
+      <div class="barspace"></div>
+      <div class="pills" id="seasons" role="group" aria-label="Season" hidden></div>
+    </header>
+
+    <!-- ══ OVERVIEW ══ -->
+    <section class="page" id="p-home" data-on="1">
+      <div class="panel glass pad" style="grid-column:1;grid-row:1/-1;display:flex;flex-direction:column;gap:15px;overflow:auto" >
+        <div class="hero">
+          <div class="gwrap">
+            <svg viewBox="0 0 340 340" role="img" aria-label="Champion season points against the league record">
+              <circle class="spin" cx="170" cy="170" r="164" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1" stroke-dasharray="1.5 14"/>
+              <circle cx="170" cy="170" r="138" fill="none" stroke="rgba(0,0,0,.7)" stroke-width="21" stroke-linecap="round" stroke-dasharray="650 867" transform="rotate(135 170 170)"/>
+              <circle id="hgarc" cx="170" cy="170" r="138" fill="none" stroke="url(#gg)" stroke-width="19" stroke-linecap="round" stroke-dasharray="0 867" transform="rotate(135 170 170)" filter="url(#gglow)" style="transition:stroke-dasharray .6s cubic-bezier(.2,.8,.2,1)"/>
+            </svg>
+            <div class="gcenter"><b id="hgval">—</b><em>points, 2025</em></div>
+          </div>
+          <div>
+            <p class="kick">Reigning champion</p>
+            <h2 id="hheadline">Kade</h2>
+            <p class="heroline" id="hline"></p>
+            <div class="tiles" id="htiles"></div>
+          </div>
+        </div>
+        <section>
+          <div class="sechead"><h4>Where the records live</h4><em id="hbarNote"></em></div>
+          <div class="hbars" id="hbars"></div>
+        </section>
+      </div>
+      <div class="panel glass pad" style="grid-column:2;grid-row:1;overflow:auto">
+        <div class="sechead"><h4>Champions</h4><em id="champNote"></em></div>
+        <div class="tl" id="htl"></div>
+      </div>
+      <div class="panel glass pad scroll" style="grid-column:2;grid-row:2">
+        <div class="sechead"><h4>Standing records</h4><em id="hrecNote"></em></div>
+        <div class="rows" id="hrecs" style="gap:6px"></div>
+      </div>
+    </section>
+
+    <!-- ══ RECORDS ══ -->
+    <section class="page" id="p-records">
+      <aside class="panel glass pad scroll rec-rail">
+        <div class="filterhead">
+          <p class="eyebrow" style="margin:0">Stat filter</p>
+          <div class="filterbtns">
+            <button class="minibtn" id="selAll">All</button>
+            <button class="minibtn" id="selNone">None</button>
+          </div>
+        </div>
+        <p class="hint">Check the stats you want on the board, the overview and the ballot. Tap a name to open it.</p>
+        <div class="statlist" id="statlist"></div>
+        <div class="railfoot"><p>Showing <b id="trackCount">9</b> of <b>9</b> stats · <b id="recCount">72</b> entries</p></div>
+      </aside>
+      <main class="panel glass pad scroll rec-main">
+        <section class="anchor">
+          <div class="gwrap">
+            <svg viewBox="0 0 340 340" role="img" id="gsvg" aria-label="Record leader gauge">
+              <circle class="spin" cx="170" cy="170" r="164" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1" stroke-dasharray="1.5 14"/>
+              <circle cx="170" cy="170" r="157" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="7" stroke-dasharray="1.5 33.3" transform="rotate(135 170 170)" stroke-linecap="round" pathLength="100"/>
+              <circle cx="170" cy="170" r="138" fill="none" stroke="rgba(0,0,0,.7)" stroke-width="21" stroke-linecap="round" stroke-dasharray="650 867" transform="rotate(135 170 170)"/>
+              <circle id="garc" cx="170" cy="170" r="138" fill="none" stroke="url(#gg)" stroke-width="19" stroke-linecap="round" stroke-dasharray="0 867" transform="rotate(135 170 170)" filter="url(#gglow)" style="transition:stroke-dasharray .55s cubic-bezier(.2,.8,.2,1)"/>
+              <circle id="gcap" cx="170" cy="32" r="6.5" fill="#fff" style="filter:drop-shadow(0 2px 5px rgba(0,0,0,.9));transition:transform .55s cubic-bezier(.2,.8,.2,1)"/>
+            </svg>
+            <div class="gcenter"><b id="gval">—</b><em id="gunit">points</em></div>
+          </div>
+          <div>
+            <p class="kick" id="kicker">All-time leader</p>
+            <h2 id="statTitle" style="margin:0;font-family:var(--disp);font-size:clamp(25px,3vw,35px);font-weight:700;letter-spacing:-.035em;line-height:1.04">Highest single game</h2>
+            <div class="ahold">
+              <div class="av" id="avi">H</div>
+              <div><p id="hname">Helaman</p><span id="hctx">Wk 11 vs Dax · 2023</span></div>
+            </div>
+          </div>
+        </section>
+        <section>
+          <div class="sechead"><h4 id="boardLabel">All-time board</h4><em id="boardCount"></em></div>
+          <div class="rows" id="rows"></div>
+          <div id="ghostWrap" hidden>
+            <div class="sechead" style="margin-top:14px"><h4>All-time, for comparison</h4><em>top 5, all seasons</em></div>
+            <div class="rows" id="ghostRows"></div>
+          </div>
+        </section>
+      </main>
+    </section>
+
+    <!-- ══ MANAGERS ══ -->
+    <section class="page" id="p-mgrs">
+      <div class="panel glass pad scroll">
+        <div class="sechead"><h4>Managers</h4><em>all-time, 2019–2025 · tap a card</em></div>
+        <div class="mgrid" id="mgrid"></div>
+      </div>
+    </section>
+
+    <!-- ══ MATCHUPS ══ -->
+    <section class="page" id="p-h2h">
+      <aside class="panel glass pad scroll">
+        <p class="eyebrow">Pick two</p>
+        <p class="hint">Choose a manager on each side to pull their all-time series.</p>
+        <div class="sechead" style="margin-top:4px"><h4>Side A</h4></div>
+        <div class="picker" id="pickA"></div>
+        <div class="sechead" style="margin-top:12px"><h4>Side B</h4></div>
+        <div class="picker" id="pickB"></div>
+      </aside>
+      <main class="panel glass pad scroll h2hwrap">
+        <div class="vs">
+          <div class="side a">
+            <div class="bav" id="avA"></div><h3 id="nmA"></h3><p id="sbA"></p><b id="wA">0</b>
+          </div>
+          <div class="vsmid">wins</div>
+          <div class="side b">
+            <div class="bav" id="avB"></div><h3 id="nmB"></h3><p id="sbB"></p><b id="wB">0</b>
+          </div>
+        </div>
+        <div>
+          <div class="split"><i class="sa" id="spA"></i><i class="sb" id="spB"></i></div>
+          <div class="splitlab"><span id="lbA"></span><span id="lbMid"></span><span id="lbB"></span></div>
+        </div>
+        <div>
+          <div class="sechead"><h4>Records between them</h4><em id="h2hNote"></em></div>
+          <div class="rows" id="h2hRows"></div>
+        </div>
+      </main>
+    </section>
+
+    <!-- ══ AWARDS ══ -->
+    <section class="page" id="p-awards">
+      <div class="panel glass pad scroll">
+        <div class="ahead" style="margin-bottom:10px">
+          <div><p class="eyebrow" style="margin:0" id="awTitle">Award ballot</p>
+            <p class="hint" style="margin:5px 0 0">One trophy per tracked stat, this season only. Switch a stat off to drop its trophy.</p></div>
+          <span class="chip"><i></i><span id="awCount">7 trophies</span></span>
+        </div>
+        <div class="agrid" id="agrid"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<dialog id="mdlg"><div class="panel glass dlg" id="mdlgBody"></div></dialog>
+
+<script>
+/* ═══ data — all fabricated, labeled sample data in the UI ═══ */
+/* ─────────────────────────────────────────────────────────────
+   League configuration.
+
+   Everything tying this build to one league lives here. To point
+   the Record Room at a different Sleeper league, change LEAGUE_ID
+   and regenerate the baked history (see DEPLOY.md). To let people
+   enter their own league, read LEAGUE_ID from the page instead of
+   this constant: nothing else in the file assumes a league.
+   ───────────────────────────────────────────────────────────── */
+const APP_NAME='Record Room';
+const LEAGUE_ID='1325921258503667712';
+
+const HIST={"done":[2023,2024,2025],"games":[["2023",1,"TFragr",138.34,34.1,1],["2023",1,"SourJr02",98.78,26.02,1],["2023",1,"goodmojo",178.54,39.68,1],["2023",1,"swagmuffin06",102.24,58.24,1],["2023",1,"CO1096",108.84,32.66,1],["2023",1,"Nyewing",144.1,34.46,1],["2023",1,"EvanS52",90.76,51.46,1],["2023",1,"TSantana",171.3,58.02,1],["2023",2,"TFragr",179.64,35.0,1],["2023",2,"TSantana",135.84,87.0,1],["2023",2,"goodmojo",102.44,53.94,1],["2023",2,"Nyewing",113.62,58.9,1],["2023",2,"swagmuffin06",169.16,39.56,1],["2023",2,"CO1096",112.7,91.78,1],["2023",2,"SourJr02",127.88,85.26,1],["2023",2,"EvanS52",122.88,56.7,1],["2023",3,"TFragr",188.16,23.1,1],["2023",3,"EvanS52",124.18,37.16,1],["2023",3,"goodmojo",180.98,66.56,1],["2023",3,"CO1096",136.28,45.26,1],["2023",3,"swagmuffin06",163.08,51.16,1],["2023",3,"Nyewing",109.18,67.0,1],["2023",3,"SourJr02",138.06,41.46,1],["2023",3,"TSantana",138.3,71.8,1],["2023",4,"TFragr",96.72,63.3,1],["2023",4,"CO1096",102.42,73.16,1],["2023",4,"goodmojo",111.96,73.14,1],["2023",4,"EvanS52",133.12,23.5,1],["2023",4,"swagmuffin06",155.3,71.18,1],["2023",4,"TSantana",179.4,47.6,1],["2023",4,"SourJr02",176.8,66.74,1],["2023",4,"Nyewing",99.36,98.08,1],["2023",5,"TFragr",136.38,0.0,1],["2023",5,"Nyewing",148.32,40.4,1],["2023",5,"goodmojo",152.26,35.38,1],["2023",5,"TSantana",95.32,53.84,1],["2023",5,"swagmuffin06",128.26,18.92,1],["2023",5,"EvanS52",153.64,25.1,1],["2023",5,"CO1096",226.14,19.38,1],["2023",5,"SourJr02",137.14,58.32,1],["2023",6,"TFragr",110.28,53.1,1],["2023",6,"swagmuffin06",157.56,48.28,1],["2023",6,"goodmojo",133.34,40.24,1],["2023",6,"SourJr02",116.8,37.62,1],["2023",6,"CO1096",176.44,38.24,1],["2023",6,"TSantana",102.22,46.8,1],["2023",6,"Nyewing",162.4,61.2,1],["2023",6,"EvanS52",119.02,27.0,1],["2023",7,"TFragr",130.76,23.0,1],["2023",7,"goodmojo",132.1,30.6,1],["2023",7,"swagmuffin06",160.9,17.04,1],["2023",7,"SourJr02",141.36,57.38,1],["2023",7,"CO1096",117.56,25.44,1],["2023",7,"EvanS52",124.08,-0.8,1],["2023",7,"Nyewing",155.76,80.1,1],["2023",7,"TSantana",83.86,33.0,1],["2023",8,"TFragr",120.22,72.9,1],["2023",8,"SourJr02",198.38,74.0,1],["2023",8,"goodmojo",132.8,55.1,1],["2023",8,"swagmuffin06",142.06,60.96,1],["2023",8,"CO1096",158.8,39.48,1],["2023",8,"Nyewing",125.16,68.3,1],["2023",8,"EvanS52",131.68,94.72,1],["2023",8,"TSantana",151.66,27.8,1],["2023",9,"TFragr",124.54,61.4,1],["2023",9,"TSantana",66.8,14.1,1],["2023",9,"goodmojo",152.32,25.58,1],["2023",9,"Nyewing",122.98,66.0,1],["2023",9,"swagmuffin06",134.12,43.32,1],["2023",9,"CO1096",91.1,0.0,1],["2023",9,"SourJr02",142.06,0.0,1],["2023",9,"EvanS52",105.88,12.18,1],["2023",10,"TFragr",181.02,63.1,1],["2023",10,"EvanS52",86.22,26.28,1],["2023",10,"goodmojo",106.34,42.98,1],["2023",10,"CO1096",173.92,23.2,1],["2023",10,"swagmuffin06",150.18,23.3,1],["2023",10,"Nyewing",145.02,0.0,1],["2023",10,"SourJr02",193.96,72.14,1],["2023",10,"TSantana",122.62,30.3,1],["2023",11,"TFragr",159.5,31.0,1],["2023",11,"CO1096",128.48,63.64,1],["2023",11,"goodmojo",112.54,24.64,1],["2023",11,"EvanS52",106.86,20.74,1],["2023",11,"swagmuffin06",180.1,61.2,1],["2023",11,"TSantana",153.46,48.94,1],["2023",11,"SourJr02",113.56,105.32,1],["2023",11,"Nyewing",110.7,16.74,1],["2023",12,"TFragr",139.98,53.9,1],["2023",12,"Nyewing",161.1,68.98,1],["2023",12,"goodmojo",188.36,49.7,1],["2023",12,"TSantana",163.28,45.7,1],["2023",12,"swagmuffin06",137.56,72.42,1],["2023",12,"EvanS52",115.18,44.1,1],["2023",12,"CO1096",126.42,63.6,1],["2023",12,"SourJr02",155.24,33.76,1],["2023",13,"TFragr",140.58,11.4,1],["2023",13,"swagmuffin06",155.0,36.7,1],["2023",13,"goodmojo",198.86,41.8,1],["2023",13,"SourJr02",152.26,67.96,1],["2023",13,"CO1096",114.82,9.7,1],["2023",13,"TSantana",159.62,19.2,1],["2023",13,"Nyewing",163.42,33.22,1],["2023",13,"EvanS52",94.98,5.6,1],["2023",14,"TFragr",117.54,40.3,1],["2023",14,"goodmojo",107.16,39.34,1],["2023",14,"swagmuffin06",123.62,48.9,1],["2023",14,"SourJr02",156.54,39.02,1],["2023",14,"CO1096",128.94,82.3,1],["2023",14,"EvanS52",131.64,77.3,1],["2023",14,"Nyewing",109.68,26.94,1],["2023",14,"TSantana",181.12,40.7,1],["2023",15,"TFragr",137.22,77.0,0],["2023",15,"Nyewing",122.42,71.22,0],["2023",15,"goodmojo",110.92,33.94,0],["2023",15,"swagmuffin06",105.26,37.96,0],["2023",15,"CO1096",110.76,81.5,0],["2023",15,"EvanS52",117.72,47.78,0],["2023",15,"SourJr02",166.28,43.56,0],["2023",15,"TSantana",148.54,50.8,0],["2023",16,"TFragr",113.12,83.8,0],["2023",16,"swagmuffin06",204.28,44.22,0],["2023",16,"goodmojo",142.8,16.1,0],["2023",16,"SourJr02",137.32,52.0,0],["2023",16,"CO1096",95.74,49.2,0],["2023",16,"EvanS52",136.36,17.74,0],["2023",16,"Nyewing",99.34,53.78,0],["2023",16,"TSantana",167.3,51.3,0],["2023",17,"TFragr",149.36,25.6,0],["2023",17,"SourJr02",143.1,65.6,0],["2023",17,"goodmojo",131.42,69.48,0],["2023",17,"swagmuffin06",182.96,69.28,0],["2023",17,"CO1096",107.8,39.2,0],["2023",17,"Nyewing",127.98,34.24,0],["2023",17,"EvanS52",95.54,57.96,0],["2023",17,"TSantana",145.02,58.5,0],["2023",18,"TFragr",82.78,29.9,0],["2023",18,"goodmojo",152.26,25.1,0],["2023",18,"swagmuffin06",203.56,45.22,0],["2023",18,"CO1096",63.0,33.3,0],["2023",18,"SourJr02",119.16,44.0,0],["2023",18,"Nyewing",52.6,63.1,0],["2023",18,"EvanS52",104.7,49.32,0],["2023",18,"TSantana",65.92,79.8,0],["2024",1,"TFragr",125.04,33.08,1],["2024",1,"SourJr02",147.38,35.1,1],["2024",1,"goodmojo",163.58,50.86,1],["2024",1,"Jonnys720",133.92,59.88,1],["2024",1,"swagmuffin06",119.06,43.82,1],["2024",1,"CO1096",135.44,55.12,1],["2024",1,"Nyewing",112.88,61.98,1],["2024",1,"ToadBrother",93.92,70.76,1],["2024",1,"EvanS52",87.06,49.26,1],["2024",1,"StraightGas2025",130.06,41.94,1],["2024",1,"TSantana",103.0,31.66,1],["2024",1,"mailu",139.18,27.1,1],["2024",2,"TFragr",108.66,59.24,1],["2024",2,"Jonnys720",143.18,46.84,1],["2024",2,"goodmojo",125.74,28.24,1],["2024",2,"SourJr02",129.48,55.54,1],["2024",2,"swagmuffin06",146.2,32.0,1],["2024",2,"TSantana",129.38,27.5,1],["2024",2,"CO1096",140.84,45.26,1],["2024",2,"mailu",99.96,15.1,1],["2024",2,"Nyewing",115.96,62.5,1],["2024",2,"EvanS52",97.32,48.4,1],["2024",2,"ToadBrother",105.22,58.0,1],["2024",2,"StraightGas2025",141.12,42.08,1],["2024",3,"TFragr",114.38,51.94,1],["2024",3,"goodmojo",140.08,45.96,1],["2024",3,"swagmuffin06",111.8,68.3,1],["2024",3,"mailu",121.78,11.18,1],["2024",3,"CO1096",88.7,48.32,1],["2024",3,"TSantana",134.48,26.1,1],["2024",3,"SourJr02",173.86,43.8,1],["2024",3,"Jonnys720",120.48,47.54,1],["2024",3,"Nyewing",132.72,43.12,1],["2024",3,"StraightGas2025",120.36,120.16,1],["2024",3,"EvanS52",137.76,81.6,1],["2024",3,"ToadBrother",117.74,16.92,1],["2024",4,"TFragr",87.22,71.6,1],["2024",4,"StraightGas2025",106.14,72.9,1],["2024",4,"goodmojo",85.68,25.7,1],["2024",4,"mailu",128.74,32.3,1],["2024",4,"swagmuffin06",158.78,68.3,1],["2024",4,"ToadBrother",92.82,92.38,1],["2024",4,"CO1096",173.8,23.48,1],["2024",4,"Nyewing",93.4,28.16,1],["2024",4,"SourJr02",147.42,55.18,1],["2024",4,"EvanS52",121.88,31.46,1],["2024",4,"TSantana",141.16,56.34,1],["2024",4,"Jonnys720",130.44,59.16,1],["2024",5,"TFragr",147.26,54.6,1],["2024",5,"EvanS52",161.68,28.3,1],["2024",5,"goodmojo",162.3,19.7,1],["2024",5,"TSantana",108.96,8.4,1],["2024",5,"swagmuffin06",126.14,56.3,1],["2024",5,"Nyewing",119.84,31.74,1],["2024",5,"CO1096",118.34,42.96,1],["2024",5,"ToadBrother",122.8,11.8,1],["2024",5,"SourJr02",120.52,41.0,1],["2024",5,"StraightGas2025",106.48,67.46,1],["2024",5,"mailu",158.76,12.8,1],["2024",5,"Jonnys720",144.82,37.04,1],["2024",6,"TFragr",127.2,48.5,1],["2024",6,"ToadBrother",154.96,76.4,1],["2024",6,"goodmojo",193.96,26.6,1],["2024",6,"CO1096",153.94,42.5,1],["2024",6,"swagmuffin06",111.78,16.5,1],["2024",6,"Jonnys720",129.22,36.2,1],["2024",6,"SourJr02",151.36,41.7,1],["2024",6,"Nyewing",106.0,43.56,1],["2024",6,"EvanS52",107.32,47.68,1],["2024",6,"mailu",121.0,5.4,1],["2024",6,"TSantana",92.22,6.5,1],["2024",6,"StraightGas2025",66.98,16.02,1],["2024",7,"TFragr",131.18,33.0,1],["2024",7,"Nyewing",116.42,55.52,1],["2024",7,"goodmojo",131.04,41.7,1],["2024",7,"swagmuffin06",81.34,25.4,1],["2024",7,"CO1096",94.36,23.4,1],["2024",7,"Jonnys720",122.44,33.64,1],["2024",7,"SourJr02",144.74,24.4,1],["2024",7,"ToadBrother",123.9,27.76,1],["2024",7,"EvanS52",152.94,83.36,1],["2024",7,"TSantana",98.4,35.3,1],["2024",7,"mailu",125.96,31.86,1],["2024",7,"StraightGas2025",66.38,67.18,1],["2024",8,"TFragr",111.42,43.8,1],["2024",8,"swagmuffin06",117.0,69.3,1],["2024",8,"goodmojo",175.68,43.62,1],["2024",8,"EvanS52",129.36,45.16,1],["2024",8,"CO1096",145.28,39.34,1],["2024",8,"SourJr02",144.6,65.24,1],["2024",8,"Nyewing",176.72,40.92,1],["2024",8,"mailu",136.2,44.2,1],["2024",8,"TSantana",123.16,77.72,1],["2024",8,"ToadBrother",127.3,84.94,1],["2024",8,"StraightGas2025",153.74,50.98,1],["2024",8,"Jonnys720",125.16,23.52,1],["2024",9,"TFragr",119.4,25.3,1],["2024",9,"CO1096",151.94,27.48,1],["2024",9,"goodmojo",159.94,52.24,1],["2024",9,"StraightGas2025",106.48,39.12,1],["2024",9,"swagmuffin06",165.24,45.7,1],["2024",9,"SourJr02",138.46,10.5,1],["2024",9,"Nyewing",114.7,58.26,1],["2024",9,"TSantana",88.12,66.22,1],["2024",9,"EvanS52",111.04,19.3,1],["2024",9,"Jonnys720",107.4,11.86,1],["2024",9,"ToadBrother",136.2,80.5,1],["2024",9,"mailu",130.4,35.22,1],["2024",10,"TFragr",140.52,17.72,1],["2024",10,"TSantana",78.44,14.7,1],["2024",10,"goodmojo",144.66,45.54,1],["2024",10,"Nyewing",91.7,34.8,1],["2024",10,"swagmuffin06",131.88,0.0,1],["2024",10,"StraightGas2025",100.34,14.2,1],["2024",10,"CO1096",104.44,32.8,1],["2024",10,"EvanS52",175.12,0.0,1],["2024",10,"SourJr02",133.88,26.1,1],["2024",10,"mailu",121.24,20.66,1],["2024",10,"ToadBrother",134.68,26.44,1],["2024",10,"Jonnys720",109.5,25.28,1],["2024",11,"TFragr",120.26,52.7,1],["2024",11,"mailu",85.44,11.3,1],["2024",11,"goodmojo",171.48,17.5,1],["2024",11,"ToadBrother",121.74,35.5,1],["2024",11,"swagmuffin06",146.18,75.8,1],["2024",11,"EvanS52",133.64,31.0,1],["2024",11,"CO1096",144.84,61.44,1],["2024",11,"StraightGas2025",104.42,78.34,1],["2024",11,"SourJr02",129.44,46.18,1],["2024",11,"TSantana",127.68,42.94,1],["2024",11,"Nyewing",126.48,25.2,1],["2024",11,"Jonnys720",161.98,46.82,1],["2024",12,"TFragr",150.86,20.5,1],["2024",12,"SourJr02",147.2,41.26,1],["2024",12,"goodmojo",168.12,39.6,1],["2024",12,"Jonnys720",111.98,36.68,1],["2024",12,"swagmuffin06",109.78,32.0,1],["2024",12,"CO1096",134.16,87.0,1],["2024",12,"Nyewing",117.32,19.2,1],["2024",12,"ToadBrother",150.56,39.56,1],["2024",12,"EvanS52",114.86,7.1,1],["2024",12,"StraightGas2025",109.96,9.1,1],["2024",12,"TSantana",78.92,14.72,1],["2024",12,"mailu",147.0,22.38,1],["2024",13,"TFragr",107.66,40.5,1],["2024",13,"Jonnys720",142.58,46.3,1],["2024",13,"goodmojo",134.58,71.1,1],["2024",13,"SourJr02",121.34,51.74,1],["2024",13,"swagmuffin06",163.48,53.6,1],["2024",13,"TSantana",123.76,46.26,1],["2024",13,"CO1096",130.84,70.34,1],["2024",13,"mailu",138.1,62.16,1],["2024",13,"Nyewing",152.62,51.06,1],["2024",13,"EvanS52",130.96,51.68,1],["2024",13,"ToadBrother",113.62,54.5,1],["2024",13,"StraightGas2025",114.1,48.54,1],["2024",14,"TFragr",123.6,3.9,1],["2024",14,"goodmojo",152.32,39.26,1],["2024",14,"swagmuffin06",129.22,4.8,1],["2024",14,"mailu",176.78,4.0,1],["2024",14,"CO1096",114.86,31.9,1],["2024",14,"TSantana",135.94,4.0,1],["2024",14,"SourJr02",127.32,9.5,1],["2024",14,"Jonnys720",123.54,12.8,1],["2024",14,"Nyewing",165.88,31.1,1],["2024",14,"StraightGas2025",102.72,79.06,1],["2024",14,"EvanS52",180.06,29.68,1],["2024",14,"ToadBrother",158.72,25.2,1],["2024",15,"TFragr",111.58,65.4,0],["2024",15,"goodmojo",118.76,45.7,0],["2024",15,"SourJr02",82.04,62.86,0],["2024",15,"TSantana",133.96,34.1,0],["2024",15,"swagmuffin06",168.12,38.24,0],["2024",15,"CO1096",110.46,48.14,0],["2024",15,"Nyewing",146.48,64.6,0],["2024",15,"mailu",159.94,41.78,0],["2024",15,"EvanS52",88.44,52.64,0],["2024",15,"StraightGas2025",134.28,44.36,0],["2024",15,"ToadBrother",124.1,53.32,0],["2024",15,"Jonnys720",133.0,48.84,0],["2024",16,"TFragr",105.92,57.5,0],["2024",16,"EvanS52",130.18,49.3,0],["2024",16,"goodmojo",173.18,75.06,0],["2024",16,"swagmuffin06",118.14,59.04,0],["2024",16,"CO1096",185.4,54.56,0],["2024",16,"Nyewing",111.26,36.1,0],["2024",16,"SourJr02",146.52,65.74,0],["2024",16,"mailu",189.14,36.28,0],["2024",16,"TSantana",128.68,36.32,0],["2024",16,"ToadBrother",94.84,39.92,0],["2024",16,"StraightGas2025",166.86,52.02,0],["2024",16,"Jonnys720",139.18,66.8,0],["2024",17,"TFragr",137.08,72.1,0],["2024",17,"ToadBrother",138.76,31.2,0],["2024",17,"goodmojo",144.74,36.24,0],["2024",17,"mailu",115.88,47.62,0],["2024",17,"swagmuffin06",121.2,47.88,0],["2024",17,"SourJr02",127.78,41.32,0],["2024",17,"CO1096",113.4,39.48,0],["2024",17,"Nyewing",186.08,53.36,0],["2024",17,"StraightGas2025",135.2,69.82,0],["2024",17,"Jonnys720",134.72,27.5,0],["2024",17,"EvanS52",111.98,29.3,0],["2024",17,"TSantana",120.7,40.96,0],["2024",18,"TFragr",112.0,52.7,0],["2024",18,"goodmojo",132.54,30.48,0],["2024",18,"swagmuffin06",72.8,84.98,0],["2024",18,"CO1096",62.4,31.62,0],["2024",18,"SourJr02",89.32,31.94,0],["2024",18,"Nyewing",112.1,32.5,0],["2024",18,"EvanS52",104.28,31.0,0],["2024",18,"TSantana",79.66,63.64,0],["2024",18,"ToadBrother",142.54,33.3,0],["2024",18,"mailu",59.14,36.3,0],["2024",18,"StraightGas2025",66.62,62.74,0],["2024",18,"Jonnys720",114.98,18.7,0],["2025",1,"TFragr",99.72,62.72,1],["2025",1,"CO1096",101.78,39.12,1],["2025",1,"goodmojo",118.48,68.92,1],["2025",1,"SourJr02",114.42,42.8,1],["2025",1,"swagmuffin06",118.88,32.4,1],["2025",1,"Jonnys720",113.42,33.16,1],["2025",1,"Nyewing",135.12,36.6,1],["2025",1,"mailu",110.34,36.02,1],["2025",1,"EvanS52",127.96,58.82,1],["2025",1,"PapiChuloo0",157.78,62.12,1],["2025",1,"TSantana",131.52,58.92,1],["2025",1,"StraightGas2025",143.76,23.28,1],["2025",2,"TFragr",133.5,67.34,1],["2025",2,"Jonnys720",81.84,43.82,1],["2025",2,"goodmojo",176.08,39.1,1],["2025",2,"Nyewing",147.58,70.76,1],["2025",2,"swagmuffin06",116.2,67.0,1],["2025",2,"CO1096",106.5,42.02,1],["2025",2,"SourJr02",154.3,41.48,1],["2025",2,"mailu",118.54,35.88,1],["2025",2,"EvanS52",134.2,24.3,1],["2025",2,"TSantana",83.88,70.24,1],["2025",2,"PapiChuloo0",124.34,80.28,1],["2025",2,"StraightGas2025",109.82,38.3,1],["2025",3,"TFragr",154.76,49.58,1],["2025",3,"swagmuffin06",111.82,34.5,1],["2025",3,"goodmojo",142.9,43.72,1],["2025",3,"mailu",110.22,32.66,1],["2025",3,"CO1096",115.62,13.2,1],["2025",3,"Jonnys720",99.2,29.6,1],["2025",3,"SourJr02",156.82,35.7,1],["2025",3,"Nyewing",139.96,51.88,1],["2025",3,"EvanS52",109.12,52.08,1],["2025",3,"StraightGas2025",134.82,34.76,1],["2025",3,"TSantana",79.94,74.0,1],["2025",3,"PapiChuloo0",72.76,79.84,1],["2025",4,"TFragr",177.4,72.48,1],["2025",4,"goodmojo",100.32,44.22,1],["2025",4,"swagmuffin06",107.28,45.86,1],["2025",4,"EvanS52",130.08,44.42,1],["2025",4,"CO1096",131.86,9.2,1],["2025",4,"SourJr02",119.68,46.0,1],["2025",4,"Nyewing",143.8,73.52,1],["2025",4,"StraightGas2025",129.76,46.12,1],["2025",4,"TSantana",147.04,27.1,1],["2025",4,"mailu",144.54,53.72,1],["2025",4,"PapiChuloo0",122.8,53.54,1],["2025",4,"Jonnys720",143.66,90.1,1],["2025",5,"TFragr",136.6,43.0,1],["2025",5,"SourJr02",154.34,15.1,1],["2025",5,"goodmojo",155.52,67.54,1],["2025",5,"CO1096",110.88,8.2,1],["2025",5,"swagmuffin06",147.78,22.9,1],["2025",5,"PapiChuloo0",83.98,37.5,1],["2025",5,"Nyewing",129.82,63.82,1],["2025",5,"TSantana",142.02,35.7,1],["2025",5,"EvanS52",104.92,0.0,1],["2025",5,"Jonnys720",143.28,53.76,1],["2025",5,"mailu",147.88,38.34,1],["2025",5,"StraightGas2025",105.92,28.9,1],["2025",6,"TFragr",114.04,16.7,1],["2025",6,"PapiChuloo0",120.12,22.0,1],["2025",6,"goodmojo",154.24,37.76,1],["2025",6,"StraightGas2025",118.9,20.68,1],["2025",6,"swagmuffin06",160.2,49.6,1],["2025",6,"mailu",115.16,33.2,1],["2025",6,"CO1096",107.64,33.5,1],["2025",6,"EvanS52",95.86,16.4,1],["2025",6,"SourJr02",138.74,27.38,1],["2025",6,"TSantana",95.8,28.5,1],["2025",6,"Nyewing",136.18,33.62,1],["2025",6,"Jonnys720",131.04,58.66,1],["2025",7,"TFragr",133.86,2.5,1],["2025",7,"EvanS52",72.58,41.66,1],["2025",7,"goodmojo",181.3,34.72,1],["2025",7,"TSantana",89.14,44.7,1],["2025",7,"swagmuffin06",171.92,39.0,1],["2025",7,"Nyewing",166.64,20.24,1],["2025",7,"CO1096",93.42,25.1,1],["2025",7,"PapiChuloo0",127.24,14.66,1],["2025",7,"SourJr02",100.14,38.98,1],["2025",7,"StraightGas2025",149.3,24.2,1],["2025",7,"mailu",159.78,66.76,1],["2025",7,"Jonnys720",120.66,58.68,1],["2025",8,"TFragr",87.48,0.0,1],["2025",8,"StraightGas2025",102.72,30.96,1],["2025",8,"goodmojo",131.18,50.0,1],["2025",8,"Jonnys720",132.6,14.9,1],["2025",8,"swagmuffin06",131.38,54.7,1],["2025",8,"SourJr02",90.9,10.3,1],["2025",8,"CO1096",60.68,2.1,1],["2025",8,"TSantana",127.86,16.0,1],["2025",8,"Nyewing",196.96,11.8,1],["2025",8,"PapiChuloo0",188.96,52.52,1],["2025",8,"EvanS52",153.82,19.0,1],["2025",8,"mailu",103.88,36.28,1],["2025",9,"TFragr",89.3,0.0,1],["2025",9,"TSantana",132.04,6.6,1],["2025",9,"goodmojo",187.2,54.8,1],["2025",9,"swagmuffin06",146.58,64.38,1],["2025",9,"CO1096",65.4,42.02,1],["2025",9,"StraightGas2025",107.42,35.8,1],["2025",9,"SourJr02",122.42,123.9,1],["2025",9,"Jonnys720",115.92,34.64,1],["2025",9,"Nyewing",115.1,51.36,1],["2025",9,"EvanS52",130.36,57.08,1],["2025",9,"PapiChuloo0",147.0,26.9,1],["2025",9,"mailu",115.06,24.32,1],["2025",10,"TFragr",86.26,0.0,1],["2025",10,"Nyewing",144.7,55.4,1],["2025",10,"goodmojo",141.8,18.92,1],["2025",10,"PapiChuloo0",126.92,15.5,1],["2025",10,"swagmuffin06",135.5,33.6,1],["2025",10,"TSantana",142.14,27.9,1],["2025",10,"CO1096",141.12,18.72,1],["2025",10,"mailu",152.7,20.3,1],["2025",10,"SourJr02",139.4,45.32,1],["2025",10,"EvanS52",77.04,65.56,1],["2025",10,"StraightGas2025",128.14,20.9,1],["2025",10,"Jonnys720",127.7,22.84,1],["2025",11,"TFragr",89.52,30.94,1],["2025",11,"mailu",128.44,32.0,1],["2025",11,"goodmojo",135.24,26.36,1],["2025",11,"EvanS52",95.62,18.9,1],["2025",11,"swagmuffin06",104.94,51.0,1],["2025",11,"StraightGas2025",128.78,33.96,1],["2025",11,"CO1096",102.62,63.8,1],["2025",11,"Nyewing",147.64,57.3,1],["2025",11,"SourJr02",129.62,33.72,1],["2025",11,"PapiChuloo0",120.5,43.26,1],["2025",11,"TSantana",131.0,27.52,1],["2025",11,"Jonnys720",110.7,53.26,1],["2025",12,"TFragr",122.26,0.5,1],["2025",12,"CO1096",108.04,21.28,1],["2025",12,"goodmojo",179.28,63.9,1],["2025",12,"SourJr02",117.94,37.76,1],["2025",12,"swagmuffin06",124.34,23.4,1],["2025",12,"Jonnys720",112.42,32.06,1],["2025",12,"Nyewing",114.18,24.06,1],["2025",12,"mailu",144.36,22.6,1],["2025",12,"EvanS52",109.62,8.3,1],["2025",12,"PapiChuloo0",141.76,37.62,1],["2025",12,"TSantana",118.52,42.06,1],["2025",12,"StraightGas2025",129.82,41.3,1],["2025",13,"TFragr",142.8,18.7,1],["2025",13,"Jonnys720",121.72,57.06,1],["2025",13,"goodmojo",159.34,10.1,1],["2025",13,"Nyewing",134.24,58.64,1],["2025",13,"swagmuffin06",148.44,32.2,1],["2025",13,"CO1096",87.56,39.0,1],["2025",13,"SourJr02",82.96,41.96,1],["2025",13,"mailu",146.18,95.78,1],["2025",13,"EvanS52",71.14,45.06,1],["2025",13,"TSantana",130.16,61.72,1],["2025",13,"PapiChuloo0",128.4,11.0,1],["2025",13,"StraightGas2025",106.22,44.9,1],["2025",14,"TFragr",116.94,30.2,1],["2025",14,"swagmuffin06",102.1,26.9,1],["2025",14,"goodmojo",131.64,51.26,1],["2025",14,"mailu",150.06,55.48,1],["2025",14,"CO1096",85.28,20.72,1],["2025",14,"Jonnys720",139.84,69.16,1],["2025",14,"SourJr02",72.42,50.5,1],["2025",14,"Nyewing",139.0,52.76,1],["2025",14,"EvanS52",113.46,12.4,1],["2025",14,"StraightGas2025",115.24,63.5,1],["2025",14,"TSantana",165.16,49.7,1],["2025",14,"PapiChuloo0",65.8,31.0,1],["2025",15,"TFragr",95.26,31.9,0],["2025",15,"SourJr02",154.8,30.88,0],["2025",15,"goodmojo",141.1,35.6,0],["2025",15,"CO1096",97.48,76.9,0],["2025",15,"EvanS52",127.7,50.74,0],["2025",15,"TSantana",146.9,25.68,0],["2025",15,"swagmuffin06",187.46,51.7,0],["2025",15,"Nyewing",177.66,91.92,0],["2025",15,"PapiChuloo0",112.9,42.9,0],["2025",15,"Jonnys720",166.82,31.04,0],["2025",15,"mailu",106.8,52.9,0],["2025",15,"StraightGas2025",139.12,15.5,0],["2025",16,"TFragr",120.66,36.3,0],["2025",16,"CO1096",107.4,29.82,0],["2025",16,"goodmojo",195.2,38.1,0],["2025",16,"swagmuffin06",120.12,73.8,0],["2025",16,"SourJr02",130.06,36.0,0],["2025",16,"Jonnys720",152.78,38.98,0],["2025",16,"Nyewing",168.46,42.68,0],["2025",16,"mailu",149.0,89.56,0],["2025",16,"EvanS52",74.74,26.22,0],["2025",16,"PapiChuloo0",110.8,25.0,0],["2025",16,"TSantana",150.6,43.18,0],["2025",16,"StraightGas2025",118.5,51.6,0],["2025",17,"TFragr",116.68,32.3,0],["2025",17,"PapiChuloo0",81.4,44.4,0],["2025",17,"goodmojo",176.42,24.5,0],["2025",17,"TSantana",152.52,29.24,0],["2025",17,"swagmuffin06",118.78,43.9,0],["2025",17,"StraightGas2025",121.98,36.6,0],["2025",17,"CO1096",90.64,22.0,0],["2025",17,"EvanS52",61.6,32.48,0],["2025",17,"SourJr02",119.42,42.3,0],["2025",17,"Nyewing",85.08,66.08,0],["2025",17,"mailu",125.34,44.7,0],["2025",17,"Jonnys720",121.76,67.8,0],["2025",18,"TFragr",69.3,3.0,0],["2025",18,"goodmojo",129.46,46.4,0],["2025",18,"swagmuffin06",81.12,27.6,0],["2025",18,"CO1096",100.72,35.48,0],["2025",18,"SourJr02",106.5,31.08,0],["2025",18,"Nyewing",85.24,22.34,0],["2025",18,"EvanS52",66.52,20.4,0],["2025",18,"TSantana",111.78,18.24,0],["2025",18,"PapiChuloo0",75.2,32.7,0],["2025",18,"mailu",64.34,60.74,0],["2025",18,"StraightGas2025",113.8,64.8,0],["2025",18,"Jonnys720",131.56,45.2,0]],"pairs":[["2023",1,"TFragr",138.34,"SourJr02",98.78,1],["2023",1,"goodmojo",178.54,"swagmuffin06",102.24,1],["2023",1,"Nyewing",144.1,"CO1096",108.84,1],["2023",1,"TSantana",171.3,"EvanS52",90.76,1],["2023",2,"TFragr",179.64,"TSantana",135.84,1],["2023",2,"Nyewing",113.62,"goodmojo",102.44,1],["2023",2,"swagmuffin06",169.16,"CO1096",112.7,1],["2023",2,"SourJr02",127.88,"EvanS52",122.88,1],["2023",3,"TFragr",188.16,"EvanS52",124.18,1],["2023",3,"goodmojo",180.98,"CO1096",136.28,1],["2023",3,"swagmuffin06",163.08,"Nyewing",109.18,1],["2023",3,"TSantana",138.3,"SourJr02",138.06,1],["2023",4,"CO1096",102.42,"TFragr",96.72,1],["2023",4,"EvanS52",133.12,"goodmojo",111.96,1],["2023",4,"TSantana",179.4,"swagmuffin06",155.3,1],["2023",4,"SourJr02",176.8,"Nyewing",99.36,1],["2023",5,"Nyewing",148.32,"TFragr",136.38,1],["2023",5,"goodmojo",152.26,"TSantana",95.32,1],["2023",5,"EvanS52",153.64,"swagmuffin06",128.26,1],["2023",5,"CO1096",226.14,"SourJr02",137.14,1],["2023",6,"swagmuffin06",157.56,"TFragr",110.28,1],["2023",6,"goodmojo",133.34,"SourJr02",116.8,1],["2023",6,"CO1096",176.44,"TSantana",102.22,1],["2023",6,"Nyewing",162.4,"EvanS52",119.02,1],["2023",7,"goodmojo",132.1,"TFragr",130.76,1],["2023",7,"swagmuffin06",160.9,"SourJr02",141.36,1],["2023",7,"EvanS52",124.08,"CO1096",117.56,1],["2023",7,"Nyewing",155.76,"TSantana",83.86,1],["2023",8,"SourJr02",198.38,"TFragr",120.22,1],["2023",8,"swagmuffin06",142.06,"goodmojo",132.8,1],["2023",8,"CO1096",158.8,"Nyewing",125.16,1],["2023",8,"TSantana",151.66,"EvanS52",131.68,1],["2023",9,"TFragr",124.54,"TSantana",66.8,1],["2023",9,"goodmojo",152.32,"Nyewing",122.98,1],["2023",9,"swagmuffin06",134.12,"CO1096",91.1,1],["2023",9,"SourJr02",142.06,"EvanS52",105.88,1],["2023",10,"TFragr",181.02,"EvanS52",86.22,1],["2023",10,"CO1096",173.92,"goodmojo",106.34,1],["2023",10,"swagmuffin06",150.18,"Nyewing",145.02,1],["2023",10,"SourJr02",193.96,"TSantana",122.62,1],["2023",11,"TFragr",159.5,"CO1096",128.48,1],["2023",11,"goodmojo",112.54,"EvanS52",106.86,1],["2023",11,"swagmuffin06",180.1,"TSantana",153.46,1],["2023",11,"SourJr02",113.56,"Nyewing",110.7,1],["2023",12,"Nyewing",161.1,"TFragr",139.98,1],["2023",12,"goodmojo",188.36,"TSantana",163.28,1],["2023",12,"swagmuffin06",137.56,"EvanS52",115.18,1],["2023",12,"SourJr02",155.24,"CO1096",126.42,1],["2023",13,"swagmuffin06",155.0,"TFragr",140.58,1],["2023",13,"goodmojo",198.86,"SourJr02",152.26,1],["2023",13,"TSantana",159.62,"CO1096",114.82,1],["2023",13,"Nyewing",163.42,"EvanS52",94.98,1],["2023",14,"TFragr",117.54,"goodmojo",107.16,1],["2023",14,"SourJr02",156.54,"swagmuffin06",123.62,1],["2023",14,"EvanS52",131.64,"CO1096",128.94,1],["2023",14,"TSantana",181.12,"Nyewing",109.68,1],["2023",15,"TFragr",137.22,"Nyewing",122.42,0],["2023",15,"EvanS52",117.72,"CO1096",110.76,0],["2023",15,"SourJr02",166.28,"TSantana",148.54,0],["2023",16,"swagmuffin06",204.28,"TFragr",113.12,0],["2023",16,"goodmojo",142.8,"SourJr02",137.32,0],["2023",16,"TSantana",167.3,"Nyewing",99.34,0],["2023",17,"TFragr",149.36,"SourJr02",143.1,0],["2023",17,"swagmuffin06",182.96,"goodmojo",131.42,0],["2024",1,"SourJr02",147.38,"TFragr",125.04,1],["2024",1,"goodmojo",163.58,"Jonnys720",133.92,1],["2024",1,"CO1096",135.44,"swagmuffin06",119.06,1],["2024",1,"Nyewing",112.88,"ToadBrother",93.92,1],["2024",1,"StraightGas2025",130.06,"EvanS52",87.06,1],["2024",1,"mailu",139.18,"TSantana",103.0,1],["2024",2,"Jonnys720",143.18,"TFragr",108.66,1],["2024",2,"SourJr02",129.48,"goodmojo",125.74,1],["2024",2,"swagmuffin06",146.2,"TSantana",129.38,1],["2024",2,"CO1096",140.84,"mailu",99.96,1],["2024",2,"Nyewing",115.96,"EvanS52",97.32,1],["2024",2,"StraightGas2025",141.12,"ToadBrother",105.22,1],["2024",3,"goodmojo",140.08,"TFragr",114.38,1],["2024",3,"mailu",121.78,"swagmuffin06",111.8,1],["2024",3,"TSantana",134.48,"CO1096",88.7,1],["2024",3,"SourJr02",173.86,"Jonnys720",120.48,1],["2024",3,"Nyewing",132.72,"StraightGas2025",120.36,1],["2024",3,"EvanS52",137.76,"ToadBrother",117.74,1],["2024",4,"StraightGas2025",106.14,"TFragr",87.22,1],["2024",4,"mailu",128.74,"goodmojo",85.68,1],["2024",4,"swagmuffin06",158.78,"ToadBrother",92.82,1],["2024",4,"CO1096",173.8,"Nyewing",93.4,1],["2024",4,"SourJr02",147.42,"EvanS52",121.88,1],["2024",4,"TSantana",141.16,"Jonnys720",130.44,1],["2024",5,"EvanS52",161.68,"TFragr",147.26,1],["2024",5,"goodmojo",162.3,"TSantana",108.96,1],["2024",5,"swagmuffin06",126.14,"Nyewing",119.84,1],["2024",5,"ToadBrother",122.8,"CO1096",118.34,1],["2024",5,"SourJr02",120.52,"StraightGas2025",106.48,1],["2024",5,"mailu",158.76,"Jonnys720",144.82,1],["2024",6,"ToadBrother",154.96,"TFragr",127.2,1],["2024",6,"goodmojo",193.96,"CO1096",153.94,1],["2024",6,"Jonnys720",129.22,"swagmuffin06",111.78,1],["2024",6,"SourJr02",151.36,"Nyewing",106.0,1],["2024",6,"mailu",121.0,"EvanS52",107.32,1],["2024",6,"TSantana",92.22,"StraightGas2025",66.98,1],["2024",7,"TFragr",131.18,"Nyewing",116.42,1],["2024",7,"goodmojo",131.04,"swagmuffin06",81.34,1],["2024",7,"Jonnys720",122.44,"CO1096",94.36,1],["2024",7,"SourJr02",144.74,"ToadBrother",123.9,1],["2024",7,"EvanS52",152.94,"TSantana",98.4,1],["2024",7,"mailu",125.96,"StraightGas2025",66.38,1],["2024",8,"swagmuffin06",117.0,"TFragr",111.42,1],["2024",8,"goodmojo",175.68,"EvanS52",129.36,1],["2024",8,"CO1096",145.28,"SourJr02",144.6,1],["2024",8,"Nyewing",176.72,"mailu",136.2,1],["2024",8,"ToadBrother",127.3,"TSantana",123.16,1],["2024",8,"StraightGas2025",153.74,"Jonnys720",125.16,1],["2024",9,"CO1096",151.94,"TFragr",119.4,1],["2024",9,"goodmojo",159.94,"StraightGas2025",106.48,1],["2024",9,"swagmuffin06",165.24,"SourJr02",138.46,1],["2024",9,"Nyewing",114.7,"TSantana",88.12,1],["2024",9,"EvanS52",111.04,"Jonnys720",107.4,1],["2024",9,"ToadBrother",136.2,"mailu",130.4,1],["2024",10,"TFragr",140.52,"TSantana",78.44,1],["2024",10,"goodmojo",144.66,"Nyewing",91.7,1],["2024",10,"swagmuffin06",131.88,"StraightGas2025",100.34,1],["2024",10,"EvanS52",175.12,"CO1096",104.44,1],["2024",10,"SourJr02",133.88,"mailu",121.24,1],["2024",10,"ToadBrother",134.68,"Jonnys720",109.5,1],["2024",11,"TFragr",120.26,"mailu",85.44,1],["2024",11,"goodmojo",171.48,"ToadBrother",121.74,1],["2024",11,"swagmuffin06",146.18,"EvanS52",133.64,1],["2024",11,"CO1096",144.84,"StraightGas2025",104.42,1],["2024",11,"SourJr02",129.44,"TSantana",127.68,1],["2024",11,"Jonnys720",161.98,"Nyewing",126.48,1],["2024",12,"TFragr",150.86,"SourJr02",147.2,1],["2024",12,"goodmojo",168.12,"Jonnys720",111.98,1],["2024",12,"CO1096",134.16,"swagmuffin06",109.78,1],["2024",12,"ToadBrother",150.56,"Nyewing",117.32,1],["2024",12,"EvanS52",114.86,"StraightGas2025",109.96,1],["2024",12,"mailu",147.0,"TSantana",78.92,1],["2024",13,"Jonnys720",142.58,"TFragr",107.66,1],["2024",13,"goodmojo",134.58,"SourJr02",121.34,1],["2024",13,"swagmuffin06",163.48,"TSantana",123.76,1],["2024",13,"mailu",138.1,"CO1096",130.84,1],["2024",13,"Nyewing",152.62,"EvanS52",130.96,1],["2024",13,"StraightGas2025",114.1,"ToadBrother",113.62,1],["2024",14,"goodmojo",152.32,"TFragr",123.6,1],["2024",14,"mailu",176.78,"swagmuffin06",129.22,1],["2024",14,"TSantana",135.94,"CO1096",114.86,1],["2024",14,"SourJr02",127.32,"Jonnys720",123.54,1],["2024",14,"Nyewing",165.88,"StraightGas2025",102.72,1],["2024",14,"EvanS52",180.06,"ToadBrother",158.72,1],["2024",15,"swagmuffin06",168.12,"CO1096",110.46,0],["2024",15,"mailu",159.94,"Nyewing",146.48,0],["2024",15,"StraightGas2025",134.28,"EvanS52",88.44,0],["2024",15,"Jonnys720",133.0,"ToadBrother",124.1,0],["2024",16,"EvanS52",130.18,"TFragr",105.92,0],["2024",16,"goodmojo",173.18,"swagmuffin06",118.14,0],["2024",16,"CO1096",185.4,"Nyewing",111.26,0],["2024",16,"mailu",189.14,"SourJr02",146.52,0],["2024",16,"TSantana",128.68,"ToadBrother",94.84,0],["2024",16,"StraightGas2025",166.86,"Jonnys720",139.18,0],["2024",17,"ToadBrother",138.76,"TFragr",137.08,0],["2024",17,"goodmojo",144.74,"mailu",115.88,0],["2024",17,"SourJr02",127.78,"swagmuffin06",121.2,0],["2024",17,"TSantana",120.7,"EvanS52",111.98,0],["2025",1,"CO1096",101.78,"TFragr",99.72,1],["2025",1,"goodmojo",118.48,"SourJr02",114.42,1],["2025",1,"swagmuffin06",118.88,"Jonnys720",113.42,1],["2025",1,"Nyewing",135.12,"mailu",110.34,1],["2025",1,"PapiChuloo0",157.78,"EvanS52",127.96,1],["2025",1,"StraightGas2025",143.76,"TSantana",131.52,1],["2025",2,"TFragr",133.5,"Jonnys720",81.84,1],["2025",2,"goodmojo",176.08,"Nyewing",147.58,1],["2025",2,"swagmuffin06",116.2,"CO1096",106.5,1],["2025",2,"SourJr02",154.3,"mailu",118.54,1],["2025",2,"EvanS52",134.2,"TSantana",83.88,1],["2025",2,"PapiChuloo0",124.34,"StraightGas2025",109.82,1],["2025",3,"TFragr",154.76,"swagmuffin06",111.82,1],["2025",3,"goodmojo",142.9,"mailu",110.22,1],["2025",3,"CO1096",115.62,"Jonnys720",99.2,1],["2025",3,"SourJr02",156.82,"Nyewing",139.96,1],["2025",3,"StraightGas2025",134.82,"EvanS52",109.12,1],["2025",3,"TSantana",79.94,"PapiChuloo0",72.76,1],["2025",4,"TFragr",177.4,"goodmojo",100.32,1],["2025",4,"EvanS52",130.08,"swagmuffin06",107.28,1],["2025",4,"CO1096",131.86,"SourJr02",119.68,1],["2025",4,"Nyewing",143.8,"StraightGas2025",129.76,1],["2025",4,"TSantana",147.04,"mailu",144.54,1],["2025",4,"Jonnys720",143.66,"PapiChuloo0",122.8,1],["2025",5,"SourJr02",154.34,"TFragr",136.6,1],["2025",5,"goodmojo",155.52,"CO1096",110.88,1],["2025",5,"swagmuffin06",147.78,"PapiChuloo0",83.98,1],["2025",5,"TSantana",142.02,"Nyewing",129.82,1],["2025",5,"Jonnys720",143.28,"EvanS52",104.92,1],["2025",5,"mailu",147.88,"StraightGas2025",105.92,1],["2025",6,"PapiChuloo0",120.12,"TFragr",114.04,1],["2025",6,"goodmojo",154.24,"StraightGas2025",118.9,1],["2025",6,"swagmuffin06",160.2,"mailu",115.16,1],["2025",6,"CO1096",107.64,"EvanS52",95.86,1],["2025",6,"SourJr02",138.74,"TSantana",95.8,1],["2025",6,"Nyewing",136.18,"Jonnys720",131.04,1],["2025",7,"TFragr",133.86,"EvanS52",72.58,1],["2025",7,"goodmojo",181.3,"TSantana",89.14,1],["2025",7,"swagmuffin06",171.92,"Nyewing",166.64,1],["2025",7,"PapiChuloo0",127.24,"CO1096",93.42,1],["2025",7,"StraightGas2025",149.3,"SourJr02",100.14,1],["2025",7,"mailu",159.78,"Jonnys720",120.66,1],["2025",8,"StraightGas2025",102.72,"TFragr",87.48,1],["2025",8,"Jonnys720",132.6,"goodmojo",131.18,1],["2025",8,"swagmuffin06",131.38,"SourJr02",90.9,1],["2025",8,"TSantana",127.86,"CO1096",60.68,1],["2025",8,"Nyewing",196.96,"PapiChuloo0",188.96,1],["2025",8,"EvanS52",153.82,"mailu",103.88,1],["2025",9,"TSantana",132.04,"TFragr",89.3,1],["2025",9,"goodmojo",187.2,"swagmuffin06",146.58,1],["2025",9,"StraightGas2025",107.42,"CO1096",65.4,1],["2025",9,"SourJr02",122.42,"Jonnys720",115.92,1],["2025",9,"EvanS52",130.36,"Nyewing",115.1,1],["2025",9,"PapiChuloo0",147.0,"mailu",115.06,1],["2025",10,"Nyewing",144.7,"TFragr",86.26,1],["2025",10,"goodmojo",141.8,"PapiChuloo0",126.92,1],["2025",10,"TSantana",142.14,"swagmuffin06",135.5,1],["2025",10,"mailu",152.7,"CO1096",141.12,1],["2025",10,"SourJr02",139.4,"EvanS52",77.04,1],["2025",10,"StraightGas2025",128.14,"Jonnys720",127.7,1],["2025",11,"mailu",128.44,"TFragr",89.52,1],["2025",11,"goodmojo",135.24,"EvanS52",95.62,1],["2025",11,"StraightGas2025",128.78,"swagmuffin06",104.94,1],["2025",11,"Nyewing",147.64,"CO1096",102.62,1],["2025",11,"SourJr02",129.62,"PapiChuloo0",120.5,1],["2025",11,"TSantana",131.0,"Jonnys720",110.7,1],["2025",12,"TFragr",122.26,"CO1096",108.04,1],["2025",12,"goodmojo",179.28,"SourJr02",117.94,1],["2025",12,"swagmuffin06",124.34,"Jonnys720",112.42,1],["2025",12,"mailu",144.36,"Nyewing",114.18,1],["2025",12,"PapiChuloo0",141.76,"EvanS52",109.62,1],["2025",12,"StraightGas2025",129.82,"TSantana",118.52,1],["2025",13,"TFragr",142.8,"Jonnys720",121.72,1],["2025",13,"goodmojo",159.34,"Nyewing",134.24,1],["2025",13,"swagmuffin06",148.44,"CO1096",87.56,1],["2025",13,"mailu",146.18,"SourJr02",82.96,1],["2025",13,"TSantana",130.16,"EvanS52",71.14,1],["2025",13,"PapiChuloo0",128.4,"StraightGas2025",106.22,1],["2025",14,"TFragr",116.94,"swagmuffin06",102.1,1],["2025",14,"mailu",150.06,"goodmojo",131.64,1],["2025",14,"Jonnys720",139.84,"CO1096",85.28,1],["2025",14,"Nyewing",139.0,"SourJr02",72.42,1],["2025",14,"StraightGas2025",115.24,"EvanS52",113.46,1],["2025",14,"TSantana",165.16,"PapiChuloo0",65.8,1],["2025",15,"SourJr02",154.8,"TFragr",95.26,0],["2025",15,"swagmuffin06",187.46,"Nyewing",177.66,0],["2025",15,"Jonnys720",166.82,"PapiChuloo0",112.9,0],["2025",15,"StraightGas2025",139.12,"mailu",106.8,0],["2025",16,"TFragr",120.66,"CO1096",107.4,0],["2025",16,"goodmojo",195.2,"swagmuffin06",120.12,0],["2025",16,"Jonnys720",152.78,"SourJr02",130.06,0],["2025",16,"Nyewing",168.46,"mailu",149.0,0],["2025",16,"PapiChuloo0",110.8,"EvanS52",74.74,0],["2025",16,"TSantana",150.6,"StraightGas2025",118.5,0],["2025",17,"TFragr",116.68,"PapiChuloo0",81.4,0],["2025",17,"goodmojo",176.42,"TSantana",152.52,0],["2025",17,"StraightGas2025",121.98,"swagmuffin06",118.78,0],["2025",17,"CO1096",90.64,"EvanS52",61.6,0]],"waiv":{"2023|swagmuffin06":14,"2023|goodmojo":30,"2023|TSantana":17,"2023|TFragr":23,"2023|SourJr02":5,"2023|Nyewing":5,"2023|CO1096":5,"2023|EvanS52":16,"2024|Jonnys720":14,"2024|TSantana":20,"2024|swagmuffin06":8,"2024|Nyewing":7,"2024|TFragr":4,"2024|goodmojo":16,"2024|CO1096":5,"2024|StraightGas2025":5,"2024|SourJr02":4,"2024|EvanS52":2,"2024|mailu":12,"2024|ToadBrother":2,"2025|goodmojo":13,"2025|TSantana":30,"2025|Jonnys720":12,"2025|PapiChuloo0":23,"2025|SourJr02":7,"2025|Nyewing":12,"2025|swagmuffin06":6,"2025|StraightGas2025":2,"2025|mailu":12,"2025|TFragr":5,"2025|EvanS52":1},"trade":{"2023|TFragr":5,"2023|Nyewing":4,"2023|goodmojo":9,"2023|TSantana":6,"2023|CO1096":3,"2023|SourJr02":1,"2023|EvanS52":2,"2024|goodmojo":7,"2024|TSantana":3,"2024|StraightGas2025":3,"2024|Nyewing":3,"2024|ToadBrother":1,"2024|SourJr02":2,"2024|Jonnys720":3,"2024|TFragr":2,"2024|EvanS52":1,"2025|SourJr02":4,"2025|PapiChuloo0":9,"2025|goodmojo":9,"2025|Jonnys720":8,"2025|TFragr":3,"2025|Nyewing":2,"2025|mailu":4,"2025|StraightGas2025":1,"2025|CO1096":1,"2025|EvanS52":1},"titles":{"2023":"swagmuffin06","2024":"goodmojo","2025":"goodmojo"},"teams":{"TFragr":{"2023":"Consolidated FB Team","2024":"Consolidated FB Team","2025":"Consolidated FB Team"},"goodmojo":{"2023":"Jalen Rams Me","2024":"Murray me & be my Mcbride","2025":"I think I pulled McCaff","2026":"Daniels In The Lions Den"},"CO1096":{"2023":"Chase Down Ass Up","2024":"Taylor Swift Fan Club \u2764\ufe0f","2025":"The Sea Jeanty's"},"SourJr02":{"2023":"CeeDeezNutz","2024":"Henry Stickmin","2025":"The Only St. of Detroit","2026":"Onward, Christian Watson"},"Nyewing":{"2023":null,"2024":"Malik\u2019s Naber-hood","2025":"My lil Homie the QB Pony"},"EvanS52":{"2023":"Lamar Jackson Me Off","2024":"Ja'Marr Chased Off","2025":"Bateman and Dobbins","2026":null},"TSantana":{"2023":"Hill to the Promise Land","2024":"The Starvin Marvin's","2025":"Straight Outta Hampton"},"swagmuffin06":{"2023":"TFragr's sister","2024":"Nick Chubb squats 600","2025":"Najee Harris squats 600"},"mailu":{"2024":"Right on the Mooney","2025":"Easy Pickens"},"StraightGas2025":{"2024":"Super DeMario Bro\u2019s","2025":"Hailee steinfelds manslut"},"ToadBrother":{"2024":"HU-lu has live spo-RTS"},"Jonnys720":{"2024":null,"2025":"Skattered-brains","2026":"Stafford of David"},"PapiChuloo0":{"2025":"Jalen Hurts Me","2026":"JSN+K9 and sum gays"},"redruss91":{"2026":null},"ElijahSpikes":{"2026":null},"hietokolob":{"2026":null},"BlueCreekRedneck":{"2026":null},"bucsrok99":{"2026":"BB\u2019s Jahmyracle Makers"},"Cnannon":{"2026":"I Believe In Rice"},"LuketheNuke14":{"2026":"Lambs of God"}},"current":{"season":2026,"leagueId":"1325921258503667712","pw":15},"league":"The 12 Tribes of Gridiron"};
+const SNAP={"league":"The 12 Tribes of Gridiron","prevName":"May the Best Player Win","seasons":[2023,2024,2025,2026],"current":2026,"currentWeek":3,"stats":[{"id":"hi","name":"Highest single game","unit":"points","dec":2,"scale":240,"rows":[["CO1096",226.14,"Wk 5",2023],["swagmuffin06",204.28,"Wk 16",2023],["swagmuffin06",203.56,"Wk 18",2023],["goodmojo",198.86,"Wk 13",2023],["SourJr02",198.38,"Wk 8",2023],["Nyewing",196.96,"Wk 8",2025],["goodmojo",195.2,"Wk 16",2025],["SourJr02",193.96,"Wk 10",2023]],"award":"Biggest game"},{"id":"blow","name":"Biggest blowout","unit":"margin","dec":2,"scale":110,"rows":[["TSantana",99.36,"Wk 14 over PapiChuloo0",2025],["TFragr",94.8,"Wk 10 over EvanS52",2023],["goodmojo",92.16,"Wk 7 over TSantana",2025],["swagmuffin06",91.16,"Wk 16 over TFragr",2023],["CO1096",89.0,"Wk 5 over SourJr02",2023],["TSantana",80.54,"Wk 1 over EvanS52",2023],["CO1096",80.4,"Wk 4 over Nyewing",2024],["SourJr02",78.16,"Wk 8 over TFragr",2023]],"award":"Woodshed award"},{"id":"thin","name":"Narrowest win","unit":"margin","dec":2,"scale":3,"invert":true,"asc":true,"rows":[["TSantana",0.24,"Wk 3 over SourJr02",2023],["StraightGas2025",0.44,"Wk 10 over Jonnys720",2025],["StraightGas2025",0.48,"Wk 13 over ToadBrother",2024],["CO1096",0.68,"Wk 8 over SourJr02",2024],["bucsrok99",1.32,"Wk 2 over redruss91",2026],["goodmojo",1.34,"Wk 7 over TFragr",2023],["Jonnys720",1.42,"Wk 8 over goodmojo",2025],["ToadBrother",1.68,"Wk 17 over TFragr",2024]],"award":"Heart attack award"},{"id":"loss","name":"Most points in a loss","unit":"points","dec":2,"scale":200,"rows":[["PapiChuloo0",188.96,"Wk 8 lost to Nyewing",2025],["Nyewing",177.66,"Wk 15 lost to swagmuffin06",2025],["Nyewing",166.64,"Wk 7 lost to swagmuffin06",2025],["TSantana",163.28,"Wk 12 lost to goodmojo",2023],["ToadBrother",158.72,"Wk 14 lost to EvanS52",2024],["swagmuffin06",155.3,"Wk 4 lost to TSantana",2023],["CO1096",153.94,"Wk 6 lost to goodmojo",2024],["TSantana",153.46,"Wk 11 lost to swagmuffin06",2023]],"award":"Hard luck award"},{"id":"streak","name":"Longest win streak","unit":"games","dec":0,"scale":12,"rows":[["goodmojo",10,"Wk 5\u201314",2024],["swagmuffin06",8,"Wk 6\u201313",2023],["SourJr02",7,"Wk 1\u20137",2024],["StraightGas2025",6,"Wk 7\u201312",2025],["SourJr02",5,"Wk 8\u201312",2023],["mailu",5,"Wk 3\u20137",2024],["goodmojo",5,"Wk 9\u201313",2025],["mailu",5,"Wk 10\u201314",2025]],"award":"Hot hand award"},{"id":"pf","name":"Most points, regular season","unit":"points","dec":2,"scale":2200,"rows":[["goodmojo",2109.16,"14 games",2024],["goodmojo",2094.52,"14 games",2025],["swagmuffin06",2059.14,"14 games",2023],["SourJr02",2048.82,"14 games",2023],["Nyewing",1990.92,"14 games",2025],["goodmojo",1990.0,"14 games",2023],["TFragr",1963.66,"14 games",2023],["SourJr02",1957.0,"14 games",2024]],"award":"Scoring title"},{"id":"bench","name":"Most points left on the bench","unit":"points","dec":2,"scale":130,"rows":[["SourJr02",123.9,"Wk 9, scored 122.42",2025],["StraightGas2025",120.16,"Wk 3, scored 120.36",2024],["SourJr02",105.32,"Wk 11, scored 113.56",2023],["Nyewing",98.08,"Wk 4, scored 99.36",2023],["mailu",95.78,"Wk 13, scored 146.18",2025],["EvanS52",94.72,"Wk 8, scored 131.68",2023],["ToadBrother",92.38,"Wk 4, scored 92.82",2024],["Nyewing",91.92,"Wk 15, scored 177.66",2025]],"award":"Wrong lineup award"},{"id":"waiv","name":"Most waiver claims, one season","unit":"claims","dec":0,"scale":40,"off":true,"rows":[["goodmojo",30,"won on waivers",2023],["TSantana",30,"won on waivers",2025],["TFragr",23,"won on waivers",2023],["PapiChuloo0",23,"won on waivers",2025],["TSantana",20,"won on waivers",2024],["TSantana",17,"won on waivers",2023],["EvanS52",16,"won on waivers",2023],["goodmojo",16,"won on waivers",2024]],"award":"Waiver wire award"},{"id":"trades","name":"Most trades, one season","unit":"trades","dec":0,"scale":12,"off":true,"rows":[["goodmojo",9,"completed",2023],["PapiChuloo0",9,"completed",2025],["goodmojo",9,"completed",2025],["Jonnys720",8,"completed",2025],["PapiChuloo0",8,"completed",2026],["goodmojo",7,"completed",2024],["goodmojo",7,"completed",2026],["TSantana",6,"completed",2023]],"award":"Wheeler dealer"}],"mgr":[{"name":"goodmojo","w":39,"l":12,"g":51,"ppg":145.2,"titles":[2024,2025],"recs":4,"seasons":[2023,2024,2025,2026]},{"name":"SourJr02","w":30,"l":22,"g":52,"ppg":133.9,"titles":[],"recs":1,"seasons":[2023,2024,2025,2026]},{"name":"swagmuffin06","w":30,"l":20,"g":50,"ppg":136.8,"titles":[2023],"recs":0,"seasons":[2023,2024,2025]},{"name":"TSantana","w":23,"l":25,"g":48,"ppg":124.7,"titles":[],"recs":2,"seasons":[2023,2024,2025]},{"name":"Nyewing","w":22,"l":26,"g":48,"ppg":131.1,"titles":[],"recs":0,"seasons":[2023,2024,2025]},{"name":"TFragr","w":22,"l":28,"g":50,"ppg":124.3,"titles":[],"recs":0,"seasons":[2023,2024,2025]},{"name":"CO1096","w":18,"l":29,"g":47,"ppg":118.5,"titles":[],"recs":1,"seasons":[2023,2024,2025]},{"name":"EvanS52","w":18,"l":33,"g":51,"ppg":115.5,"titles":[],"recs":0,"seasons":[2023,2024,2025,2026]},{"name":"StraightGas2025","w":18,"l":15,"g":33,"ppg":117.7,"titles":[],"recs":0,"seasons":[2024,2025]},{"name":"mailu","w":18,"l":15,"g":33,"ppg":129.1,"titles":[],"recs":0,"seasons":[2024,2025]},{"name":"Jonnys720","w":12,"l":23,"g":35,"ppg":126.0,"titles":[],"recs":0,"seasons":[2024,2025,2026]},{"name":"PapiChuloo0","w":8,"l":12,"g":20,"ppg":118.8,"titles":[],"recs":1,"seasons":[2025,2026]},{"name":"ToadBrother","w":7,"l":10,"g":17,"ppg":125.2,"titles":[],"recs":0,"seasons":[2024]},{"name":"BlueCreekRedneck","w":3,"l":0,"g":3,"ppg":150.2,"titles":[],"recs":0,"seasons":[2026]},{"name":"bucsrok99","w":3,"l":0,"g":3,"ppg":125.9,"titles":[],"recs":0,"seasons":[2026]},{"name":"Cnannon","w":2,"l":1,"g":3,"ppg":121.3,"titles":[],"recs":0,"seasons":[2026]},{"name":"LuketheNuke14","w":2,"l":1,"g":3,"ppg":141.8,"titles":[],"recs":0,"seasons":[2026]},{"name":"redruss91","w":2,"l":1,"g":3,"ppg":141.4,"titles":[],"recs":0,"seasons":[2026]},{"name":"ElijahSpikes","w":1,"l":2,"g":3,"ppg":120.1,"titles":[],"recs":0,"seasons":[2026]},{"name":"hietokolob","w":0,"l":3,"g":3,"ppg":114.7,"titles":[],"recs":0,"seasons":[2026]}],"titles":{"2023":"swagmuffin06","2024":"goodmojo","2025":"goodmojo"},"h2h":{"TFragr":{"SourJr02":3,"TSantana":3,"EvanS52":3,"CO1096":3,"Nyewing":2,"swagmuffin06":2,"goodmojo":2,"Jonnys720":2,"StraightGas2025":0,"ToadBrother":0,"mailu":1,"PapiChuloo0":1},"SourJr02":{"TFragr":4,"EvanS52":5,"TSantana":4,"Nyewing":4,"CO1096":1,"goodmojo":1,"swagmuffin06":2,"Jonnys720":3,"StraightGas2025":1,"ToadBrother":1,"mailu":2,"PapiChuloo0":2,"ElijahSpikes":0},"goodmojo":{"swagmuffin06":5,"Nyewing":4,"CO1096":3,"EvanS52":3,"TSantana":5,"SourJr02":6,"TFragr":3,"Jonnys720":3,"mailu":2,"StraightGas2025":2,"ToadBrother":1,"PapiChuloo0":1,"LuketheNuke14":0,"ElijahSpikes":1},"swagmuffin06":{"goodmojo":2,"CO1096":5,"Nyewing":5,"TSantana":3,"EvanS52":2,"TFragr":4,"SourJr02":3,"mailu":1,"ToadBrother":1,"Jonnys720":2,"StraightGas2025":1,"PapiChuloo0":1},"Nyewing":{"CO1096":2,"goodmojo":1,"swagmuffin06":0,"SourJr02":1,"TFragr":3,"EvanS52":4,"TSantana":2,"ToadBrother":1,"StraightGas2025":3,"mailu":3,"Jonnys720":1,"PapiChuloo0":1},"CO1096":{"Nyewing":3,"swagmuffin06":2,"goodmojo":1,"TFragr":3,"SourJr02":3,"TSantana":1,"EvanS52":2,"mailu":1,"ToadBrother":0,"Jonnys720":1,"StraightGas2025":1,"PapiChuloo0":0},"TSantana":{"EvanS52":4,"TFragr":1,"SourJr02":1,"swagmuffin06":2,"goodmojo":0,"CO1096":4,"Nyewing":3,"mailu":1,"Jonnys720":2,"StraightGas2025":2,"ToadBrother":1,"PapiChuloo0":2},"EvanS52":{"TSantana":2,"SourJr02":0,"TFragr":2,"goodmojo":1,"swagmuffin06":2,"Nyewing":1,"CO1096":4,"StraightGas2025":1,"ToadBrother":2,"mailu":1,"Jonnys720":1,"PapiChuloo0":1,"bucsrok99":0},"Jonnys720":{"goodmojo":1,"TFragr":2,"SourJr02":1,"TSantana":0,"mailu":0,"swagmuffin06":1,"CO1096":2,"StraightGas2025":0,"EvanS52":1,"ToadBrother":1,"Nyewing":1,"PapiChuloo0":2,"BlueCreekRedneck":0,"Cnannon":0},"ToadBrother":{"Nyewing":1,"StraightGas2025":0,"EvanS52":0,"swagmuffin06":0,"CO1096":1,"TFragr":2,"SourJr02":0,"TSantana":1,"mailu":1,"Jonnys720":1,"goodmojo":0},"StraightGas2025":{"EvanS52":4,"ToadBrother":2,"Nyewing":0,"TFragr":2,"SourJr02":1,"TSantana":2,"mailu":1,"Jonnys720":3,"goodmojo":0,"swagmuffin06":2,"CO1096":1,"PapiChuloo0":0},"mailu":{"TSantana":2,"CO1096":2,"swagmuffin06":2,"goodmojo":2,"Jonnys720":2,"EvanS52":1,"StraightGas2025":2,"Nyewing":2,"ToadBrother":0,"SourJr02":2,"TFragr":1,"PapiChuloo0":0},"PapiChuloo0":{"EvanS52":3,"StraightGas2025":2,"TSantana":0,"Jonnys720":0,"swagmuffin06":0,"TFragr":1,"CO1096":1,"Nyewing":0,"mailu":1,"goodmojo":0,"SourJr02":0,"redruss91":0},"bucsrok99":{"EvanS52":1,"redruss91":1,"hietokolob":1},"BlueCreekRedneck":{"hietokolob":1,"Jonnys720":1,"LuketheNuke14":1},"hietokolob":{"BlueCreekRedneck":0,"Cnannon":0,"bucsrok99":0},"LuketheNuke14":{"ElijahSpikes":1,"goodmojo":1,"BlueCreekRedneck":0},"ElijahSpikes":{"LuketheNuke14":0,"SourJr02":1,"goodmojo":0},"redruss91":{"Cnannon":1,"bucsrok99":0,"PapiChuloo0":1},"Cnannon":{"redruss91":0,"hietokolob":1,"Jonnys720":1}},"meet":{"TFragr":{"SourJr02":7,"TSantana":4,"EvanS52":5,"CO1096":6,"Nyewing":5,"swagmuffin06":6,"goodmojo":5,"Jonnys720":4,"StraightGas2025":2,"ToadBrother":2,"mailu":2,"PapiChuloo0":2},"SourJr02":{"TFragr":7,"EvanS52":5,"TSantana":5,"Nyewing":5,"CO1096":4,"goodmojo":7,"swagmuffin06":5,"Jonnys720":4,"StraightGas2025":2,"ToadBrother":1,"mailu":4,"PapiChuloo0":2,"ElijahSpikes":1},"goodmojo":{"swagmuffin06":7,"Nyewing":5,"CO1096":4,"EvanS52":4,"TSantana":5,"SourJr02":7,"TFragr":5,"Jonnys720":4,"mailu":4,"StraightGas2025":2,"ToadBrother":1,"PapiChuloo0":1,"LuketheNuke14":1,"ElijahSpikes":1},"swagmuffin06":{"goodmojo":7,"CO1096":7,"Nyewing":5,"TSantana":5,"EvanS52":4,"TFragr":6,"SourJr02":5,"mailu":3,"ToadBrother":1,"Jonnys720":3,"StraightGas2025":3,"PapiChuloo0":1},"Nyewing":{"CO1096":5,"goodmojo":5,"swagmuffin06":5,"SourJr02":5,"TFragr":5,"EvanS52":5,"TSantana":5,"ToadBrother":2,"StraightGas2025":3,"mailu":5,"Jonnys720":2,"PapiChuloo0":1},"CO1096":{"Nyewing":5,"swagmuffin06":7,"goodmojo":4,"TFragr":6,"SourJr02":4,"TSantana":5,"EvanS52":6,"mailu":3,"ToadBrother":1,"Jonnys720":3,"StraightGas2025":2,"PapiChuloo0":1},"TSantana":{"EvanS52":6,"TFragr":4,"SourJr02":5,"swagmuffin06":5,"goodmojo":5,"CO1096":5,"Nyewing":5,"mailu":3,"Jonnys720":2,"StraightGas2025":4,"ToadBrother":2,"PapiChuloo0":2},"EvanS52":{"TSantana":6,"SourJr02":5,"TFragr":5,"goodmojo":4,"swagmuffin06":4,"Nyewing":5,"CO1096":6,"StraightGas2025":5,"ToadBrother":2,"mailu":2,"Jonnys720":2,"PapiChuloo0":4,"bucsrok99":1},"Jonnys720":{"goodmojo":4,"TFragr":4,"SourJr02":4,"TSantana":2,"mailu":2,"swagmuffin06":3,"CO1096":3,"StraightGas2025":3,"EvanS52":2,"ToadBrother":2,"Nyewing":2,"PapiChuloo0":2,"BlueCreekRedneck":1,"Cnannon":1},"ToadBrother":{"Nyewing":2,"StraightGas2025":2,"EvanS52":2,"swagmuffin06":1,"CO1096":1,"TFragr":2,"SourJr02":1,"TSantana":2,"mailu":1,"Jonnys720":2,"goodmojo":1},"StraightGas2025":{"EvanS52":5,"ToadBrother":2,"Nyewing":3,"TFragr":2,"SourJr02":2,"TSantana":4,"mailu":3,"Jonnys720":3,"goodmojo":2,"swagmuffin06":3,"CO1096":2,"PapiChuloo0":2},"mailu":{"TSantana":3,"CO1096":3,"swagmuffin06":3,"goodmojo":4,"Jonnys720":2,"EvanS52":2,"StraightGas2025":3,"Nyewing":5,"ToadBrother":1,"SourJr02":4,"TFragr":2,"PapiChuloo0":1},"PapiChuloo0":{"EvanS52":4,"StraightGas2025":2,"TSantana":2,"Jonnys720":2,"swagmuffin06":1,"TFragr":2,"CO1096":1,"Nyewing":1,"mailu":1,"goodmojo":1,"SourJr02":2,"redruss91":1},"bucsrok99":{"EvanS52":1,"redruss91":1,"hietokolob":1},"BlueCreekRedneck":{"hietokolob":1,"Jonnys720":1,"LuketheNuke14":1},"hietokolob":{"BlueCreekRedneck":1,"Cnannon":1,"bucsrok99":1},"LuketheNuke14":{"ElijahSpikes":1,"goodmojo":1,"BlueCreekRedneck":1},"ElijahSpikes":{"LuketheNuke14":1,"SourJr02":1,"goodmojo":1},"redruss91":{"Cnannon":1,"bucsrok99":1,"PapiChuloo0":1},"Cnannon":{"redruss91":1,"hietokolob":1,"Jonnys720":1}},"totalRecords":72,"teams":{"TFragr":{"2023":"Consolidated FB Team","2024":"Consolidated FB Team","2025":"Consolidated FB Team"},"goodmojo":{"2023":"Jalen Rams Me","2024":"Murray me & be my Mcbride","2025":"I think I pulled McCaff","2026":"Daniels In The Lions Den"},"CO1096":{"2023":"Chase Down Ass Up","2024":"Taylor Swift Fan Club \u2764\ufe0f","2025":"The Sea Jeanty's"},"SourJr02":{"2023":"CeeDeezNutz","2024":"Henry Stickmin","2025":"The Only St. of Detroit","2026":"Onward, Christian Watson"},"Nyewing":{"2023":null,"2024":"Malik\u2019s Naber-hood","2025":"My lil Homie the QB Pony"},"EvanS52":{"2023":"Lamar Jackson Me Off","2024":"Ja'Marr Chased Off","2025":"Bateman and Dobbins","2026":null},"TSantana":{"2023":"Hill to the Promise Land","2024":"The Starvin Marvin's","2025":"Straight Outta Hampton"},"swagmuffin06":{"2023":"TFragr's sister","2024":"Nick Chubb squats 600","2025":"Najee Harris squats 600"},"mailu":{"2024":"Right on the Mooney","2025":"Easy Pickens"},"StraightGas2025":{"2024":"Super DeMario Bro\u2019s","2025":"Hailee steinfelds manslut"},"ToadBrother":{"2024":"HU-lu has live spo-RTS"},"Jonnys720":{"2024":null,"2025":"Skattered-brains","2026":"Stafford of David"},"PapiChuloo0":{"2025":"Jalen Hurts Me","2026":"JSN+K9 and sum gays"},"redruss91":{"2026":null},"ElijahSpikes":{"2026":null},"hietokolob":{"2026":null},"BlueCreekRedneck":{"2026":null},"bucsrok99":{"2026":"BB\u2019s Jahmyracle Makers"},"Cnannon":{"2026":"I Believe In Rice"},"LuketheNuke14":{"2026":"Lambs of God"}}};
+
+/* ── stat definitions: one place, used by every rebuild ── */
+const DEFS=[
+ {id:'hi',   name:'Highest single game',       unit:'points', dec:2, scale:240,  award:'Biggest game'},
+ {id:'blow', name:'Biggest blowout',           unit:'margin', dec:2, scale:110,  award:'Woodshed award'},
+ {id:'thin', name:'Narrowest win',             unit:'margin', dec:2, scale:3, invert:true, asc:true, award:'Heart attack award'},
+ {id:'loss', name:'Most points in a loss',     unit:'points', dec:2, scale:200,  award:'Hard luck award'},
+ {id:'streak',name:'Longest win streak',       unit:'games',  dec:0, scale:12,   award:'Hot hand award'},
+ {id:'pf',   name:'Most points, regular season',unit:'points',dec:2, scale:2200, award:'Scoring title'},
+ {id:'bench',name:'Most points left on the bench',unit:'points',dec:2,scale:130, award:'Wrong lineup award'},
+ {id:'waiv', name:'Most waiver claims, one season',unit:'claims',dec:0,scale:40, off:true, award:'Waiver wire award'},
+ {id:'trades',name:'Most trades, one season',  unit:'trades', dec:0, scale:12, off:true, award:'Wheeler dealer'}
+];
+/* ── build the whole record book from games + pairs ── */
+function buildData(games,pairs,waiv,trade,titles,teams,current,currentWeek){
+  const S=id=>DEFS.find(d=>d.id===id);
+  const mk=(id,rows)=>Object.assign({},S(id),{rows:rows.slice(0,8)});
+  const stats=[];
+  stats.push(mk('hi',games.filter(g=>g.pts>0).sort((a,b)=>b.pts-a.pts)
+    .map(g=>[g.name,g.pts,'Wk '+g.w,g.s])));
+  stats.push(mk('blow',pairs.slice().sort((a,b)=>b.marg-a.marg)
+    .map(p=>[p.win,p.marg,'Wk '+p.w+' over '+p.lose,p.s])));
+  stats.push(mk('thin',pairs.slice().sort((a,b)=>a.marg-b.marg)
+    .map(p=>[p.win,p.marg,'Wk '+p.w+' over '+p.lose,p.s])));
+  stats.push(mk('loss',pairs.slice().sort((a,b)=>b.lp-a.lp)
+    .map(p=>[p.lose,p.lp,'Wk '+p.w+' lost to '+p.win,p.s])));
+  // streaks, regular season, within a season
+  const seq={};
+  pairs.slice().sort((x,y)=>x.s-y.s||x.w-y.w).forEach(p=>{
+    if(!p.reg)return;
+    (seq[p.s+'|'+p.win]=seq[p.s+'|'+p.win]||[]).push([p.w,1]);
+    (seq[p.s+'|'+p.lose]=seq[p.s+'|'+p.lose]||[]).push([p.w,0]);});
+  const streaks=Object.entries(seq).map(([k,ws])=>{
+    ws.sort((a,b)=>a[0]-b[0]);
+    let cur=0,best=0,st=0,bs=0,be=0;
+    ws.forEach(([w,r])=>{if(r){cur++;if(cur===1)st=w;if(cur>best){best=cur;bs=st;be=w;}}else cur=0;});
+    const [s,n]=k.split('|');return[n,best,'Wk '+bs+'–'+be,+s];});
+  stats.push(mk('streak',streaks.sort((a,b)=>b[1]-a[1])));
+  const pf={};
+  games.forEach(g=>{if(g.reg)pf[g.s+'|'+g.name]=(pf[g.s+'|'+g.name]||0)+g.pts;});
+  stats.push(mk('pf',Object.entries(pf).sort((a,b)=>b[1]-a[1])
+    .map(([k,v])=>{const [s,n]=k.split('|');return[n,+v.toFixed(2),'regular season',+s];})));
+  stats.push(mk('bench',games.slice().sort((a,b)=>b.bench-a.bench)
+    .map(g=>[g.name,g.bench,'Wk '+g.w+', scored '+g.pts.toFixed(2),g.s])));
+  const cnt=(o,label)=>Object.entries(o).sort((a,b)=>b[1]-a[1])
+    .map(([k,v])=>{const i=k.indexOf('|');return[k.slice(i+1),v,label,+k.slice(0,i)];});
+  stats.push(mk('waiv',cnt(waiv,'won on waivers')));
+  stats.push(mk('trades',cnt(trade,'completed')));
+
+  // managers + head to head
+  const w={},l={},h2h={},meet={},tot={},gp={},seen={};
+  pairs.forEach(p=>{
+    w[p.win]=(w[p.win]||0)+1; l[p.lose]=(l[p.lose]||0)+1;
+    (h2h[p.win]=h2h[p.win]||{})[p.lose]=((h2h[p.win]||{})[p.lose]||0)+1;
+    (meet[p.win]=meet[p.win]||{})[p.lose]=((meet[p.win]||{})[p.lose]||0)+1;
+    (meet[p.lose]=meet[p.lose]||{})[p.win]=((meet[p.lose]||{})[p.win]||0)+1;});
+  games.forEach(g=>{tot[g.name]=(tot[g.name]||0)+g.pts;gp[g.name]=(gp[g.name]||0)+1;
+    (seen[g.name]=seen[g.name]||new Set()).add(g.s);});
+  const held={};
+  stats.forEach(s=>{if(s.rows.length)held[s.rows[0][0]]=(held[s.rows[0][0]]||0)+1;});
+  const names=[...new Set(Object.keys(w).concat(Object.keys(l)))];
+  const mgr=names.map(n=>({name:n,w:w[n]||0,l:l[n]||0,g:(w[n]||0)+(l[n]||0),
+    ppg:+((tot[n]||0)/Math.max(1,gp[n])).toFixed(1),
+    titles:Object.keys(titles).filter(y=>titles[y]===n).map(Number).sort(),
+    recs:held[n]||0,seasons:[...(seen[n]||[])].sort()}))
+    .sort((a,b)=>b.w-a.w||b.recs-a.recs);
+  const seasons=[...new Set(games.map(g=>g.s))].sort();
+  return{league:HIST.league,seasons,current,currentWeek,stats,mgr,titles,h2h,meet,teams,
+    totalRecords:stats.reduce((n,s)=>n+s.rows.length,0)};
+}
+/* ── past seasons are final; only the current one is fetched ── */
+const api=u=>fetch('https://api.sleeper.app/v1/'+u).then(r=>r.ok?r.json():null).catch(()=>null);
+async function fetchCurrent(){
+  const id=LEAGUE_ID;
+  const L=await api('league/'+id); if(!L) throw new Error('league unavailable');
+  const season=+L.season, pw=L.settings.playoff_week_start||15;
+  const leagueName=(L.name||'').trim();
+  const lastWeek=Math.min((L.settings.leg||1)+1,pw+3);
+  const [users,rosters,bracket]=await Promise.all(
+    [api('league/'+id+'/users'),api('league/'+id+'/rosters'),api('league/'+id+'/winners_bracket')]);
+  const weeks=await Promise.all(Array.from({length:lastWeek},(_,i)=>api('league/'+id+'/matchups/'+(i+1))));
+  const txs=await Promise.all(Array.from({length:lastWeek},(_,i)=>api('league/'+id+'/transactions/'+(i+1))));
+  const nm={},tn={};
+  (users||[]).forEach(u=>{nm[u.user_id]=u.display_name||u.user_id;
+    tn[u.display_name||u.user_id]=((u.metadata||{}).team_name||'').trim()||null;});
+  const r2u={}; (rosters||[]).forEach(r=>r2u[r.roster_id]=r.owner_id);
+  const who=rid=>nm[r2u[rid]]||('roster '+rid);
+  const games=[],pairs=[]; let played=0;
+  weeks.forEach((ms,i)=>{
+    const wk=i+1; if(!ms||!ms.some(m=>(m.points||0)>0))return; played=wk;
+    const by={}; ms.forEach(m=>{(by[m.matchup_id]=by[m.matchup_id]||[]).push(m);});
+    Object.values(by).forEach(side=>{
+      side.forEach(m=>{
+        const st=new Set(m.starters||[]), pp=m.players_points||{};
+        let bench=0; for(const k in pp) if(!st.has(k)) bench+=pp[k];
+        games.push({s:season,w:wk,name:who(m.roster_id),pts:+(m.points||0).toFixed(2),
+          bench:+bench.toFixed(2),reg:wk<pw});});
+      if(side.length===2){
+        const [x,y]=side, xp=+(x.points||0).toFixed(2), yp=+(y.points||0).toFixed(2);
+        if(xp===yp)return;
+        const [W,Lo]=xp>yp?[x,y]:[y,x], wp=Math.max(xp,yp), lp=Math.min(xp,yp);
+        pairs.push({s:season,w:wk,win:who(W.roster_id),wp,lose:who(Lo.roster_id),lp,
+          marg:+(wp-lp).toFixed(2),reg:wk<pw});}});});
+  const waiv={},trade={};
+  txs.forEach(list=>(list||[]).forEach(t=>{
+    if(t.status!=='complete')return;
+    (t.roster_ids||[]).forEach(rid=>{
+      const key=season+'|'+who(rid);
+      if(t.type==='waiver')waiv[key]=(waiv[key]||0)+1;
+      else if(t.type==='trade')trade[key]=(trade[key]||0)+1;});}));
+  const titles={}; const fin=(bracket||[]).filter(m=>m.p===1);
+  if(fin.length&&fin[0].w)titles[season]=who(fin[0].w);
+  return{season,played,games,pairs,waiv,trade,titles,teams:tn,leagueName};
+}
+function mergeAll(cur){
+  const games=HIST.games.map(g=>({s:+g[0],w:g[1],name:g[2],pts:g[3],bench:g[4],reg:!!g[5]})).concat(cur.games);
+  const pairs=HIST.pairs.map(p=>({s:+p[0],w:p[1],win:p[2],wp:p[3],lose:p[4],lp:p[5],
+    marg:+(p[3]-p[5]).toFixed(2),reg:!!p[6]})).concat(cur.pairs);
+  const waiv=Object.assign({},HIST.waiv,cur.waiv), trade=Object.assign({},HIST.trade,cur.trade);
+  const titles=Object.assign({},HIST.titles,cur.titles);
+  const teams=JSON.parse(JSON.stringify(HIST.teams));
+  for(const n in cur.teams){(teams[n]=teams[n]||{})[cur.season]=cur.teams[n];}
+  const d=buildData(games,pairs,waiv,trade,titles,teams,cur.season,cur.played,0);
+  if(cur.leagueName)d.league=cur.leagueName;
+  return d;
+}
+
+let DATA=SNAP, STATS=DATA.stats, MGR=DATA.mgr, TITLES=DATA.titles;
+let NAMES=MGR.map(m=>m.name);
+let SEASONS=['ALL'].concat(DATA.seasons.slice().sort((a,b)=>b-a));
+let CHAMP_YEAR=Math.max(...Object.keys(TITLES).map(Number));
+let CHAMP=TITLES[CHAMP_YEAR];
+const wins=(a,b)=>((DATA.h2h[a]||{})[b])||0;
+const meetings=(a,b)=>((DATA.meet[a]||{})[b])||0;
+function adopt(d){
+  DATA=d;STATS=d.stats;MGR=d.mgr;TITLES=d.titles;NAMES=MGR.map(m=>m.name);
+  SEASONS=['ALL'].concat(d.seasons.slice().sort((a,b)=>b-a));
+  CHAMP_YEAR=Math.max(...Object.keys(TITLES).map(Number));CHAMP=TITLES[CHAMP_YEAR];
+  if(!NAMES.includes(pA))pA=MGR[0]?MGR[0].name:'';
+  if(!NAMES.includes(pB))pB=MGR[1]?MGR[1].name:'';
+  if(!STATS.some(s=>s.id===sel))sel=STATS[0].id;
+}
+
+const team=(n,s)=>((DATA.teams[n]||{})[String(s)])||'';
+const teamNow=n=>{const t=DATA.teams[n]||{};
+  for(const y of DATA.seasons.slice().reverse())if(t[String(y)])return t[String(y)];return'';};
+const sub=(n,s)=>{const t=team(n,s);return t?t+' · ':'';};
+
+/* ═══ helpers ═══ */
+const $=id=>document.getElementById(id);
+const fmt=(s,v)=>(s.pre||'')+v.toFixed(s.dec).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+function entries(s,yr){return s.rows.filter(r=>yr==='ALL'||r[3]===yr).sort((a,b)=>s.asc?a[1]-b[1]:b[1]-a[1]);}
+function best(s,yr){return entries(s,yr)[0];}
+const pct=(s,v)=>{const p=s.invert?1-v/s.scale:v/s.scale;return Math.max(.04,Math.min(1,p));};
+const initial=n=>n[0];
+function fitNumber(el,cap){
+  const box=el.parentElement.getBoundingClientRect().width;if(!box)return;
+  const avail=box*0.94;el.style.fontSize=cap+'px';
+  const w=el.scrollWidth;if(w>avail)el.style.fontSize=Math.max(30,Math.floor(cap*avail/w))+'px';
+}
+const ringSVG=(p,val,gold)=>`<svg viewBox="0 0 56 56" aria-hidden="true">
+  <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(0,0,0,.72)" stroke-width="6"/>
+  <circle cx="28" cy="28" r="22" fill="none" stroke="url(#gg)" stroke-width="5" stroke-linecap="round"
+    stroke-dasharray="${(138*p).toFixed(0)} 139" transform="rotate(-90 28 28)"
+    style="filter:drop-shadow(0 0 4px rgba(0,232,160,.8))"/>
+  <text class="dialv" x="28" y="33" text-anchor="middle">${val}</text></svg>`;
+const rowHTML=(s,r,i,ghost)=>`<div class="row${i===0&&!ghost?' top':''}"${ghost?' style="background:linear-gradient(160deg,rgba(255,255,255,.04),rgba(255,255,255,.014));box-shadow:none"':''}>
+  <span class="rk">${i+1}</span>
+  <span class="rn">${r[0]}<span class="rc">${sub(r[0],r[3])}${r[2]} · ${r[3]}</span></span>
+  <span class="rv"><b>${fmt(s,r[1])}</b></span>
+  <span class="rwell"><i style="width:${(pct(s,r[1])*100).toFixed(1)}%"></i></span></div>`;
+
+/* ═══ state ═══ */
+let page='home', sel=STATS[0].id, season='ALL', pA=MGR[0].name, pB=MGR[1].name;
+const tracked=new Set(STATS.filter(s=>!s.off).map(s=>s.id));
+const shown=new Set(STATS.map(s=>s.id));
+const visible=()=>STATS.filter(s=>shown.has(s.id));
+
+/* ═══ OVERVIEW ═══ */
+function renderHome(){
+  const pfs=STATS.find(s=>s.id==='pf');
+  const champRow=pfs.rows.find(r=>r[0]===CHAMP&&r[3]===CHAMP_YEAR)||pfs.rows.find(r=>r[0]===CHAMP);
+  const k=MGR.find(m=>m.name===CHAMP);
+  const p=champRow?pct(pfs,champRow[1]):0;
+  $('hgarc').setAttribute('stroke-dasharray',(650*p).toFixed(0)+' 867');
+  $('hgval').textContent=champRow?fmt(pfs,champRow[1]):'—';fitNumber($('hgval'),86);
+  $('hheadline').textContent=CHAMP;
+  document.querySelector('#p-home .kick').textContent=CHAMP_YEAR+' champion';
+  document.querySelector('#p-home .gcenter em').textContent='points, '+CHAMP_YEAR;
+  $('hline').textContent=`${CHAMP} took the ${CHAMP_YEAR} title`+
+    (champRow?` and put up ${fmt(pfs,champRow[1])} points in the regular season.`:'.')+
+    ` All-time ${k.w}–${k.l} across ${k.g} games, holding ${k.recs} of the ${STATS.length} records on the books.`+
+    ` ${DATA.current} is ${DATA.currentWeek} weeks old and still open.`;
+  $('htiles').innerHTML=[
+    ['Seasons',DATA.seasons.length,1],['Managers',NAMES.length,1],
+    ['Entries',visible().reduce((n,s)=>n+s.rows.length,0),1],
+    ['Showing',shown.size+'/'+STATS.length,shown.size/STATS.length]
+  ].map(([lab,v,f])=>`<div class="tile"><b>${v}</b><span>${lab}</span><div class="tb" style="width:${(f*100).toFixed(0)}%"></div></div>`).join('');
+  const yrs=Object.keys(TITLES).map(Number).sort((a,b)=>a-b);
+  $('champNote').textContent=yrs.length+(yrs.length===1?' title decided':' titles decided');
+  $('htl').innerHTML=yrs.map(y=>
+    `<div class="tlx${y===CHAMP_YEAR?' now':''}"><div class="dot"></div><b>${TITLES[y]}</b><span>${y}</span></div>`)
+    .concat([`<div class="tlx"><div class="dot"></div><b>—</b><span>${DATA.current}</span></div>`]).join('');
+  const held={};NAMES.forEach(n=>held[n]=0);
+  visible().forEach(s=>{const b=best(s,'ALL');if(b)held[b[0]]++;});
+  const rank=MGR.map(m=>({...m,held:held[m.name]})).sort((a,b)=>b.held-a.held||b.titles.length-a.titles.length||b.w-a.w);
+  const owners=rank.filter(m=>m.held>0).length;
+  $('hbarNote').textContent=owners+' of '+NAMES.length+' managers hold one';
+  $('hbars').innerHTML=rank.slice(0,8).map((m,i)=>`
+    <div class="hb${i===0?' lead':''}">
+      <span class="hav${m.titles.length?'':' none'}">${initial(m.name)}</span>
+      <span><span class="hn">${m.name}</span><span class="hs">${teamNow(m.name)||'no team name set'}</span></span>
+      <span class="hv">${m.held}</span>
+      <span class="hw"><i style="width:${(m.held/Math.max(1,rank[0].held)*100).toFixed(0)}%"></i></span></div>`).join('');
+  const standing=visible().map(s=>{const b=best(s,'ALL');return{s,b};}).filter(x=>x.b)
+    .sort((a,b)=>b.b[3]-a.b[3]).slice(0,6);
+  $('hrecNote').textContent='newest first';
+  $('hrecs').innerHTML=standing.map(({s,b})=>`
+    <div class="ring"><div>${ringSVG(pct(s,b[1]),s.dec>1?b[1].toFixed(2):Math.round(b[1]))}</div>
+    <div><div class="rlab">${s.name}</div><div class="rman">${b[0]}</div>
+    <span class="rsub">${sub(b[0],b[3])}${fmt(s,b[1])} ${s.unit} · ${b[2]} · ${b[3]}</span></div></div>`).join('')
+    ||`<div class="empty">No stats showing. Turn some on in the stat filter.</div>`;
+}
+
+/* ═══ RECORDS ═══ */
+function renderStats(){
+  $('statlist').innerHTML=STATS.map(s=>`
+   <div class="stat" data-id="${s.id}" data-sel="${s.id===sel?1:0}" data-off="${shown.has(s.id)?0:1}">
+     <button class="chk" type="button" data-chk="${s.id}" aria-pressed="${shown.has(s.id)}"
+       aria-label="Show ${s.name}"><svg viewBox="0 0 20 20"><path d="M5 10.4l3.4 3.4L15 7.1"/></svg></button>
+     <span class="sname" role="button" tabindex="0" data-open="${s.id}">${s.name}<span class="sunit">${s.unit}</span></span>
+   </div>`).join('');
+  $('trackCount').textContent=shown.size;
+  $('recCount').textContent=visible().reduce((n,s)=>n+s.rows.length,0);
+}
+function setCap(p){
+  const a=(135+270*p)*Math.PI/180;
+  $('gcap').setAttribute('transform',`translate(${(170+138*Math.cos(a)-170).toFixed(1)} ${(170+138*Math.sin(a)-32).toFixed(1)})`);
+}
+function renderBoard(){
+  const s=STATS.find(x=>x.id===sel);
+  if(!s||!shown.has(sel)){
+    $('statTitle').textContent='Nothing selected';$('kicker').textContent='Stat filter';
+    $('gval').textContent='—';fitNumber($('gval'),96);$('gunit').textContent='';
+    $('garc').setAttribute('stroke-dasharray','0 867');$('gcap').style.opacity='0';
+    $('avi').textContent='–';$('hname').textContent='No stat showing';
+    $('hctx').textContent='Check one in the filter';
+    $('boardLabel').textContent='Board';$('boardCount').textContent='';
+    $('rows').innerHTML='<div class="empty">Every stat is filtered out. Check one on the left to see its board.</div>';
+    $('ghostWrap').hidden=true;return;}
+  const list=entries(s,season);
+  $('statTitle').textContent=s.name;$('gunit').textContent=s.unit;
+  $('kicker').textContent=season==='ALL'?'All-time leader':season+' leader';
+  $('boardLabel').textContent=season==='ALL'?'All-time board':season+' board';
+  $('boardCount').textContent=list.length+(list.length===1?' record':' records');
+  if(list.length){
+    const t=list[0],p=pct(s,t[1]);
+    $('gval').textContent=fmt(s,t[1]);fitNumber($('gval'),96);
+    $('garc').setAttribute('stroke-dasharray',(650*p).toFixed(0)+' 867');
+    $('gcap').style.opacity='1';setCap(p);
+    $('avi').textContent=initial(t[0]);$('hname').textContent=t[0];
+    $('hctx').textContent=sub(t[0],t[3])+t[2]+' · '+t[3];
+  }else{
+    $('gval').textContent='—';fitNumber($('gval'),96);
+    $('garc').setAttribute('stroke-dasharray','0 867');$('gcap').style.opacity='0';
+    $('avi').textContent='–';$('hname').textContent='No record yet';$('hctx').textContent=season+' season';
+  }
+  $('rows').innerHTML=list.length?list.map((r,i)=>rowHTML(s,r,i)).join('')
+    :`<div class="empty">Nobody set a ${s.name.toLowerCase()} mark in ${season}.</div>`;
+  $('ghostWrap').hidden=season==='ALL';
+  if(season!=='ALL')$('ghostRows').innerHTML=entries(s,'ALL').slice(0,5).map((r,i)=>rowHTML(s,r,i,true)).join('');
+}
+
+/* ═══ MANAGERS ═══ */
+function renderMgrs(){
+  const maxW=MGR[0].w;
+  $('mgrid').innerHTML=MGR.map(m=>`
+    <button class="mcard" data-m="${m.name}">
+      <div class="mtop">
+        <div class="mav${m.titles.length?'':' none'}">${initial(m.name)}</div>
+        <div style="min-width:0"><div class="mname">${m.name}</div>
+          <span class="mteam">${teamNow(m.name)||'no team name set'}</span></div>
+      </div>
+      <div class="mstats" style="grid-template-columns:repeat(3,1fr)">
+        <div class="ms"><b>${m.w}–${m.l}</b><span>record</span></div>
+        <div class="ms"><b>${m.titles.length}</b><span>titles</span></div>
+        <div class="ms"><b>${m.recs}</b><span>records</span></div>
+      </div>
+      <div class="mbar"><i style="width:${(m.w/maxW*100).toFixed(0)}%"></i></div>
+    </button>`).join('');
+}
+function openMgr(name){
+  const m=MGR.find(x=>x.name===name);
+  const held=STATS.map(s=>{const b=best(s,'ALL');return b&&b[0]===name?{s,b}:null;}).filter(Boolean);
+  const rivals=NAMES.filter(o=>o!==name&&meetings(name,o)>0)
+    .map(o=>({o,w:wins(name,o),g:meetings(name,o)}))
+    .sort((a,b)=>(b.w/b.g)-(a.w/a.g)||b.g-a.g);
+  $('mdlgBody').innerHTML=`
+    <div class="mtop" style="margin-bottom:13px">
+      <div class="mav${m.titles.length?'':' none'}" style="width:48px;height:48px;font-size:17px">${initial(m.name)}</div>
+      <div style="min-width:0"><div class="mname" style="font-size:20px">${m.name}</div>
+        <span class="mrec">${m.w}–${m.l} all-time · ${m.ppg} points per game</span>
+        <span class="tname">${teamNow(m.name)||'no team name set'}</span></div>
+    </div>
+    <div class="mstats" style="grid-template-columns:repeat(3,1fr)">
+      <div class="ms"><b>${m.titles.length}</b><span>titles</span></div>
+      <div class="ms"><b>${m.recs}</b><span>records</span></div>
+      <div class="ms"><b>${(m.w/m.g*100).toFixed(0)}%</b><span>win rate</span></div>
+    </div>
+    ${m.titles.length?`<p class="hint" style="margin:12px 0 0">Champion in ${m.titles.join(', ')}.</p>`
+      :`<p class="hint" style="margin:12px 0 0">Still chasing a first title.</p>`}
+    <div class="sechead" style="margin-top:13px"><h4>Team names by season</h4><em>${m.seasons.length} ${m.seasons.length===1?'season':'seasons'}</em></div>
+    <div class="seasonlist">${m.seasons.map(y=>
+      `<div class="sl"><b>${y}</b><span>${team(m.name,y)||'<i>no team name set</i>'}</span></div>`).join('')}</div>
+    <div class="sechead" style="margin-top:13px"><h4>Records held</h4><em>${held.length} of ${STATS.length}</em></div>
+    ${held.length?`<div class="rows">${held.map(({s,b})=>`
+      <div class="row"><span class="rk">★</span>
+      <span class="rn">${s.name}<span class="rc">${b[2]} · ${b[3]}</span></span>
+      <span class="rv"><b>${fmt(s,b[1])}</b></span>
+      <span class="rwell"><i style="width:${(pct(s,b[1])*100).toFixed(1)}%"></i></span></div>`).join('')}</div>`
+      :`<div class="empty">Holds no league record yet.</div>`}
+    <div class="sechead" style="margin-top:13px"><h4>Best and worst matchups</h4><em>${rivals.length} opponents faced</em></div>
+    ${rivals.length?`<div class="rows">
+      <div class="row"><span class="rk">W</span><span class="rn">${rivals[0].o}<span class="rc">owns this matchup</span></span>
+        <span class="rv"><b>${rivals[0].w}–${rivals[0].g-rivals[0].w}</b></span>
+        <span class="rwell"><i style="width:${(rivals[0].w/rivals[0].g*100).toFixed(0)}%"></i></span></div>
+      <div class="row"><span class="rk">L</span><span class="rn">${rivals[rivals.length-1].o}<span class="rc">worst matchup</span></span>
+        <span class="rv"><b>${rivals[rivals.length-1].w}–${rivals[rivals.length-1].g-rivals[rivals.length-1].w}</b></span>
+        <span class="rwell"><i style="width:${(rivals[rivals.length-1].w/rivals[rivals.length-1].g*100).toFixed(0)}%"></i></span></div>
+    </div>`:`<div class="empty">No games played yet.</div>`}
+    <button class="ghostbtn" id="mdlgClose" style="margin-top:14px;width:100%">Close</button>`;
+  const d=$('mdlg');
+  if(typeof d.showModal==='function')d.showModal();
+  else{d.setAttribute('open','');d.style.cssText='display:block;position:fixed;z-index:50;'+
+    'top:50%;left:50%;transform:translate(-50%,-50%);max-height:88vh;overflow:auto';}
+  $('mdlgClose').onclick=()=>{
+    if(typeof d.close==='function')d.close();else{d.removeAttribute('open');d.style.display='none';}};
+}
+
+/* ═══ MATCHUPS ═══ */
+function renderPickers(){
+  const mk=(id,cur,other)=>$(id).innerHTML=MGR.map(m=>`
+    <button class="pk" data-pick="${id}" data-name="${m.name}" data-sel="${m.name===cur?1:0}"
+      ${m.name===other?'disabled style="opacity:.35;cursor:not-allowed"':''}>
+      <span class="pav">${initial(m.name)}</span>
+      <span>${m.name}<em class="pteam">${teamNow(m.name)||'no team name set'}</em></span>
+      <em>${m.w}–${m.l}</em></button>`).join('');
+  mk('pickA',pA,pB);mk('pickB',pB,pA);
+}
+function renderH2H(){
+  const wA=wins(pA,pB), wB=wins(pB,pA), GP=meetings(pA,pB)||(wA+wB);
+  $('avA').textContent=initial(pA);$('avB').textContent=initial(pB);
+  $('nmA').textContent=pA;$('nmB').textContent=pB;
+  const mA=MGR.find(m=>m.name===pA),mB=MGR.find(m=>m.name===pB);
+  const tl=n=>n+(n===1?' title':' titles');
+  $('sbA').innerHTML=`${teamNow(pA)||'no team name set'}<br>${mA.w}–${mA.l} all-time · ${tl(mA.titles.length)}`;
+  $('sbB').innerHTML=`${teamNow(pB)||'no team name set'}<br>${mB.w}–${mB.l} all-time · ${tl(mB.titles.length)}`;
+  $('wA').textContent=wA;$('wB').textContent=wB;
+  const den=GP||1;
+  $('spA').style.width=(wA/den*100)+'%';$('spB').style.width=(wB/den*100)+'%';
+  $('lbA').textContent=pA+' '+wA;
+  $('lbMid').textContent=GP?(GP+(GP===1?' meeting':' meetings')+' since '+DATA.seasons[0]):'never played each other';
+  $('lbB').textContent=wB+' '+pB;
+  const mine=[];
+  STATS.forEach(s=>entries(s,'ALL').forEach((r,i)=>{
+    if(r[0]===pA||r[0]===pB)mine.push({s,r,i});}));
+  mine.sort((a,b)=>a.i-b.i||b.r[3]-a.r[3]);
+  $('h2hNote').textContent=mine.length+' entries on the books';
+  $('h2hRows').innerHTML=mine.length?mine.slice(0,7).map(({s,r,i})=>`
+    <div class="row${i===0?' top':''}"><span class="rk">${i+1}</span>
+    <span class="rn">${r[0]} · ${s.name}<span class="rc">${r[2]} · ${r[3]}</span></span>
+    <span class="rv"><b>${fmt(s,r[1])}</b></span>
+    <span class="rwell"><i style="width:${(pct(s,r[1])*100).toFixed(1)}%"></i></span></div>`).join('')
+    :`<div class="empty">Neither one has cracked a leaderboard.</div>`;
+}
+
+/* ═══ AWARDS ═══ */
+function renderAwards(){
+  const nAw=visible().filter(s=>tracked.has(s.id)).length;
+  $('awCount').textContent=nAw+(nAw===1?' trophy':' trophies');
+  $('awTitle').textContent=DATA.current+' award ballot';
+  $('agrid').innerHTML=visible().map(s=>{
+    const list=entries(s,DATA.current).length?entries(s,DATA.current):entries(s,CHAMP_YEAR);
+    const on=tracked.has(s.id);
+    if(!list.length)return '';
+    const w=list[0],p=pct(s,w[1]);
+    return `<div class="acard${on?'':' off'}">
+      <div>${ringSVG(p,s.dec>1?w[1].toFixed(2):Math.round(w[1]))}</div>
+      <div><div class="ahead"><div class="rlab">${s.award}</div>
+        <button class="sw" type="button" data-sw="${s.id}" aria-pressed="${on}"
+          aria-label="Count ${s.name} toward awards"><i></i></button></div>
+        <div class="rman">${w[0]}</div>
+        <span class="rsub">${sub(w[0],w[3])}${fmt(s,w[1])} ${s.unit}</span></div></div>`;
+  }).join('')||`<div class="empty" style="grid-column:1/-1">No stats showing. Turn some on in the stat filter, on the Book page.</div>`;
+}
+
+/* ═══ routing ═══ */
+const CRUMB={home:'Overview',records:'Record book',mgrs:'Managers',h2h:'Head to head',awards:'Awards'};
+function go(p){
+  page=p;
+  document.querySelectorAll('.page').forEach(el=>el.dataset.on=el.id==='p-'+p?'1':'0');
+  document.querySelectorAll('.nav').forEach(b=>{
+    if(b.dataset.go===p)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
+  $('crumb').textContent=(DATA.league?DATA.league+' · ':'')+CRUMB[p];
+  $('seasons').hidden=p!=='records';
+  if(p==='home'){renderHome();}
+  if(p==='records'){renderStats();renderBoard();}
+  if(p==='mgrs')renderMgrs();
+  if(p==='h2h'){renderPickers();renderH2H();}
+  if(p==='awards')renderAwards();
+}
+
+function paintSeasons(){
+  $('seasons').innerHTML=SEASONS.map(y=>
+    `<button type="button" data-y="${y}" aria-pressed="${String(y)===String(season)}">${y==='ALL'?'All-time':y}</button>`).join('');
+}
+
+document.addEventListener('click',e=>{
+  const nav=e.target.closest('.nav');if(nav){go(nav.dataset.go);return;}
+  const yb=e.target.closest('#seasons button');if(yb){
+    season=yb.dataset.y==='ALL'?'ALL':+yb.dataset.y;
+    $('seasons').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b===yb));
+    renderBoard();return;}
+  const sw=e.target.closest('.sw');if(sw){
+    const id=sw.dataset.sw;tracked.has(id)?tracked.delete(id):tracked.add(id);
+    renderAwards();return;}
+  const chk=e.target.closest('.chk');if(chk){
+    const id=chk.dataset.chk;shown.has(id)?shown.delete(id):shown.add(id);
+    if(!shown.has(sel)&&visible().length)sel=visible()[0].id;
+    renderStats();renderBoard();return;}
+  if(e.target.closest('#selAll')){STATS.forEach(s=>shown.add(s.id));renderStats();renderBoard();return;}
+  if(e.target.closest('#selNone')){shown.clear();renderStats();renderBoard();return;}
+  const nmOpen=e.target.closest('[data-open]');if(nmOpen){
+    sel=nmOpen.dataset.open;shown.add(sel);renderStats();renderBoard();return;}
+  const mc=e.target.closest('.mcard');if(mc){openMgr(mc.dataset.m);return;}
+  const pk=e.target.closest('.pk');if(pk&&!pk.disabled){
+    if(pk.dataset.pick==='pickA')pA=pk.dataset.name;else pB=pk.dataset.name;
+    renderPickers();renderH2H();return;}
+});
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter'&&e.key!==' ')return;
+  const nmOpen=e.target.closest('[data-open]');
+  if(nmOpen){e.preventDefault();sel=nmOpen.dataset.open;shown.add(sel);renderStats();renderBoard();}
+});
+addEventListener('resize',()=>{
+  if(page==='records')fitNumber($('gval'),96);
+  if(page==='home')fitNumber($('hgval'),86);
+});
+function paintAll(){
+  $('champChip').textContent=CHAMP_YEAR+' champion · '+CHAMP;
+  paintSeasons();go(page);
+}
+const CACHE='recordroom.v1.'+LEAGUE_ID;
+const clock=t=>new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+function setLive(state,msg){
+  const c=$('refreshBtn');c.dataset.state=state;$('liveMsg').textContent=msg;
+}
+let stamp=0;
+async function refresh(){
+  setLive('busy','Checking Sleeper');
+  try{
+    const cur=await fetchCurrent();
+    adopt(mergeAll(cur));
+    stamp=Date.now();
+    try{localStorage.setItem(CACHE,JSON.stringify({t:stamp,d:DATA}));}catch(e){}
+    paintAll();
+    setLive('ok','Live · '+clock(stamp));
+  }catch(e){
+    setLive('warn',stamp?('Saved · '+clock(stamp)):'Sleeper unreachable');
+  }
+}
+try{
+  const c=JSON.parse(localStorage.getItem(CACHE)||'null');
+  if(c&&c.d&&c.d.stats){adopt(c.d);stamp=c.t;}
+}catch(e){}
+paintAll();
+setLive(stamp?'ok':'busy',stamp?('Saved · '+clock(stamp)):'Loading');
+$('refreshBtn').addEventListener('click',refresh);
+refresh();
+setInterval(refresh,10*60*1000);
+</script>

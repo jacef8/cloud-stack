@@ -1,0 +1,61 @@
+name: Deploy Record Room
+
+# Runs on a push to master that touches the site, and on demand from the
+# Actions tab. Nothing has to be installed on anyone's computer.
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'samples/record-room-standalone.html'
+      - 'public/**'
+      - 'firebase.json'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build the site
+        run: |
+          mkdir -p public
+          cp samples/record-room-standalone.html public/index.html
+          ls -l public/
+
+      - name: Write the service account key
+        env:
+          KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::error::The FIREBASE_SERVICE_ACCOUNT secret is not set. See samples/SETUP.md."
+            exit 1
+          fi
+          printf '%s' "$KEY" > "$HOME/key.json"
+          node -e "JSON.parse(require('fs').readFileSync(process.env.HOME+'/key.json','utf8'))" \
+            || { echo "::error::The secret is not valid JSON. Paste the whole downloaded file, including the braces."; exit 1; }
+
+      - name: Deploy
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /home/runner/key.json
+        run: |
+          npm install -g firebase-tools@13
+          PROJECT=$(node -p "JSON.parse(require('fs').readFileSync(process.env.HOME+'/key.json','utf8')).project_id || ''")
+          if [ -z "$PROJECT" ]; then
+            PROJECT=$(node -p "JSON.parse(require('fs').readFileSync('.firebaserc','utf8')).projects.default")
+          fi
+          SITE=$(node -p "JSON.parse(require('fs').readFileSync('firebase.json','utf8')).hosting.site")
+          echo "Deploying $SITE to project $PROJECT"
+          # Claim the site on the first run; harmless once it exists.
+          firebase hosting:sites:create "$SITE" --project "$PROJECT" || true
+          firebase deploy --only hosting --project "$PROJECT" --non-interactive
+          echo "Live at https://$SITE.web.app"
+
+      - name: Clean up
+        if: always()
+        run: rm -f "$HOME/key.json"

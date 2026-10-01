@@ -1,10 +1,14 @@
 {
-  "name": "cloud-stack",
+  "name": "record-room",
   "version": "1.0.0",
-  "description": "Unified Railway, GitHub, and Firebase Integration Stack",
+  "description": "Record Room - a living record book for a Sleeper fantasy football league",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:site": "cp samples/record-room-standalone.html public/index.html",
+    "deploy": "npm run build:site && firebase deploy --only hosting",
+    "serve": "firebase serve --only hosting",
+    "site:create": "firebase hosting:sites:create record-room"
   },
   "keywords": [
     "railway",

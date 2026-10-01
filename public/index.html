@@ -74,10 +74,7 @@ button{font:inherit;color:inherit}
 
 /* dock */
 .dock{display:flex;flex-direction:column;align-items:center;gap:7px;padding:13px 0}
-.dock .crest{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;margin-bottom:6px;
-  background:linear-gradient(150deg,var(--accent),var(--accent-2));color:var(--on-accent);
-  font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:-.02em;
-  box-shadow:0 5px 18px rgba(0,232,160,.42),inset 0 1px 0 rgba(255,255,255,.7)}
+.dock{padding-top:17px}
 .nav{width:50px;height:50px;border-radius:50%;border:1px solid rgba(255,255,255,.07);cursor:pointer;
   display:grid;place-items:center;position:relative;
   background:linear-gradient(160deg,var(--e2-hi),var(--e2));
@@ -98,7 +95,7 @@ button{font:inherit;color:inherit}
 /* content column */
 .col{display:grid;grid-template-rows:auto minmax(0,1fr);gap:13px;min-height:0}
 .bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:11px 16px}
-.bar h1{margin:0;min-width:0;font-family:var(--disp);font-weight:700;font-size:19px;letter-spacing:-.02em;line-height:1.1}
+.bar h1{margin:0;min-width:0;font-family:var(--disp);font-weight:700;font-size:clamp(25px,2.3vw,32px);letter-spacing:-.03em;line-height:1.05}
 .bar h1 span{display:block;font-family:var(--mono);font-size:12px;letter-spacing:.08em;
   text-transform:uppercase;color:var(--ink-3);margin-top:3px;font-weight:400;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -145,22 +142,11 @@ button{font:inherit;color:inherit}
   border-radius:var(--r-s);background:var(--recess);box-shadow:var(--well-sh)}
 
 /* gauge */
-.gwrap{position:relative;width:100%;max-width:300px;margin-left:auto;margin-right:auto}
-.gwrap::after{content:"";display:block;padding-bottom:100%}
-@supports (aspect-ratio:1){.gwrap{aspect-ratio:1}.gwrap::after{display:none}}
-.gwrap>svg{position:absolute;inset:0;top:0;left:0;width:100%;height:100%}
-.gwrap::before{content:"";position:absolute;inset:12%;border-radius:50%;
-  background:radial-gradient(circle,rgba(0,232,160,.15),transparent 66%)}
-.gwrap svg{position:relative;width:100%;height:auto;display:block;overflow:visible}
 .spin{transform-origin:170px 170px;animation:sp 52s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
-.gcenter{position:absolute;inset:18%;display:grid;place-content:center;text-align:center;pointer-events:none}
-.gcenter b{display:block;font-family:var(--disp);font-weight:700;line-height:.87;letter-spacing:-.05em;
-  font-variant-numeric:tabular-nums;color:#fff;font-size:86px}
-.gcenter em{display:block;font-family:var(--mono);font-style:normal;font-size:12px;letter-spacing:.15em;
-  text-transform:uppercase;color:var(--ink-3);margin-top:11px}
 
 /* rows */
+.scalenote{margin:0 0 8px;font-family:var(--mono);font-size:12px;color:var(--ink-3);letter-spacing:.03em}
 .rows{display:flex;flex-direction:column;gap:6px}
 .row{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:11px;align-items:center;
   padding:9px 12px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.055);
@@ -206,17 +192,33 @@ button{font:inherit;color:inherit}
   letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tile .tb{height:4px;border-radius:999px;margin-top:8px;
   background:linear-gradient(90deg,var(--accent-2),var(--accent));box-shadow:0 0 8px rgba(0,232,160,.55)}
-.ring{display:grid;grid-template-columns:auto minmax(0,1fr);gap:11px;align-items:center;
-  padding:9px 11px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.05);
-  background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.016));transition:transform .15s}
+.rtop{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.rnext{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:6px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ring{display:block;padding:12px 13px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.08);
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 8px 17px -12px rgba(0,0,0,.97);
+  transition:transform .15s}
 .ring:hover{transform:translateY(-1px)}
 .ring svg{width:50px;height:50px;display:block}
-.rlab{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
-.rman{font-size:15px;font-weight:700;margin-top:3px;letter-spacing:-.01em}
-.rsub{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:2px;
+.rlab{font-family:var(--disp);font-size:16px;font-weight:700;letter-spacing:-.015em;
+  color:var(--ink);line-height:1.15;text-transform:none}
+.rhold{display:flex;align-items:baseline;gap:8px;margin-top:5px;min-width:0}
+.rhold .rman{margin:0;flex:none}
+.rhold .rteam{font-size:13px;color:var(--ink-3);min-width:0;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dialv{font-family:var(--disp);font-size:13px;font-weight:700;fill:#fff;font-variant-numeric:tabular-nums;
-  letter-spacing:-.03em}
+.rman{font-size:15px;font-weight:700;margin-top:3px;letter-spacing:-.01em;color:var(--accent)}
+.rsub{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:5px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sbar{margin-top:9px}
+.sbtrack{height:7px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);overflow:hidden}
+.sbtrack i{display:block;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--accent-2),var(--accent));box-shadow:0 0 9px rgba(0,232,160,.55)}
+.sbends{display:flex;justify-content:space-between;margin-top:5px;font-family:var(--mono);
+  font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.rval{font-family:var(--disp);font-size:22px;font-weight:700;letter-spacing:-.035em;
+  font-variant-numeric:tabular-nums;line-height:1}
+.rvalu{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-left:6px}
 /* champions timeline */
 .hbars{display:flex;flex-direction:column;gap:6px}
 .hb{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:11px;align-items:center;
@@ -230,7 +232,10 @@ button{font:inherit;color:inherit}
 .hb .hav.none{background:linear-gradient(150deg,#5E6E6A,#38443F);color:rgba(255,255,255,.75)}
 .hb .hn{font-size:14px;font-weight:700;letter-spacing:-.01em}
 .hb .hs{display:block;font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:2px}
-.hb .hv{font-family:var(--disp);font-size:17px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.hb .hv{font-family:var(--disp);font-size:19px;font-weight:700;letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums;text-align:right;line-height:1}
+.hb .hv em{display:block;font-family:var(--mono);font-style:normal;font-size:12px;font-weight:400;
+  color:var(--ink-3);letter-spacing:.04em;margin-top:4px}
 .hb .hw{grid-column:1/-1;height:5px;border-radius:999px;background:var(--recess);box-shadow:var(--well-sh);overflow:hidden}
 .hb .hw i{display:block;height:100%;border-radius:999px;
   background:linear-gradient(90deg,var(--accent-2),var(--accent));box-shadow:0 0 9px rgba(0,232,160,.6)}
@@ -288,7 +293,22 @@ button{font:inherit;color:inherit}
 .railfoot p{margin:0;font-family:var(--mono);font-size:12px;color:var(--ink-3);line-height:1.6}
 .railfoot b{color:var(--accent);font-weight:700}
 .rec-main{display:flex;flex-direction:column;gap:15px}
-.anchor{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:22px;align-items:center}
+.anchor{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;align-items:center}
+.bignum{display:flex;flex-direction:column;align-items:flex-start;gap:7px;margin-top:14px}
+.bignum b{font-family:var(--disp);font-weight:700;font-size:clamp(46px,7vw,86px);line-height:.9;
+  letter-spacing:-.05em;font-variant-numeric:tabular-nums;color:#fff}
+.bignum span{font-family:var(--mono);font-size:12px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);white-space:nowrap}
+.range{margin-top:18px;max-width:640px}
+.rtrack{position:relative;height:12px;border-radius:999px;background:var(--recess);
+  box-shadow:var(--well-sh)}
+.rtrack i{position:absolute;top:50%;width:9px;height:9px;border-radius:50%;transform:translate(-50%,-50%);
+  background:rgba(255,255,255,.34)}
+.rtrack i.lead{width:15px;height:15px;background:radial-gradient(circle at 34% 30%,#DFFFF3,var(--accent));
+  box-shadow:0 0 11px rgba(0,232,160,.85),0 2px 6px rgba(0,0,0,.8)}
+.rends{display:flex;justify-content:space-between;margin-top:8px;font-family:var(--mono);
+  font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.rnote{margin:9px 0 0;font-size:13px;color:var(--ink-3);line-height:1.45}
 .ahold{margin:15px 0 0;display:flex;align-items:center;gap:12px}
 .av{width:44px;height:44px;border-radius:50%;flex:none;display:grid;place-items:center;
   font-family:var(--disp);font-weight:700;font-size:16px;color:var(--on-accent);
@@ -371,14 +391,13 @@ button{font:inherit;color:inherit}
 
 /* ═══ AWARDS ═══ */
 #p-awards{grid-template-rows:minmax(0,1fr)}
-.agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:9px}
-.acard{padding:12px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.055);
+.agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.acard{padding:13px;border-radius:var(--r-s);border:1px solid rgba(255,255,255,.07);
   background:linear-gradient(160deg,var(--e2-hi),var(--e2));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 9px 19px -12px rgba(0,0,0,.97);
-  display:grid;grid-template-columns:62px minmax(0,1fr);gap:12px;align-items:center}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 9px 19px -12px rgba(0,0,0,.97);display:block}
 .acard.off{background:linear-gradient(160deg,rgba(255,255,255,.035),rgba(255,255,255,.012));box-shadow:none}
 .acard.off .rman{color:var(--ink-3)}
-.acard svg{width:62px;height:62px;display:block}
+
 .ahead{display:flex;align-items:center;justify-content:space-between;gap:8px}
 
 /* ═══ dialog ═══ */
@@ -397,9 +416,7 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
   #p-home > .panel{flex:0 0 auto}
   .home-a,.home-b{overflow:visible}
   .hero{grid-template-columns:minmax(0,1fr);gap:10px}
-  .gwrap{max-width:240px}
-  .gcenter b{font-size:70px}
-}
+  }
 @media(max-width:820px){
   .anchor{grid-template-columns:minmax(0,1fr);gap:10px}
   .vs{grid-template-columns:minmax(0,1fr);gap:10px}
@@ -410,14 +427,12 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
     padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
   .site>.dock{position:fixed;left:0;right:0;bottom:0;z-index:40;flex-direction:row;justify-content:space-around;
     border-radius:var(--r) var(--r) 0 0;padding:9px 8px calc(9px + env(safe-area-inset-bottom,0px));gap:4px}
-  .dock .crest,.navlab{display:none}
+  .navlab{display:none}
   .nav{width:46px;height:46px}
   .page[data-on="1"]{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:none!important}
   .col{grid-template-rows:auto auto}
   .scroll{overflow:visible}
-  .gwrap{max-width:216px}
-  .gcenter b{font-size:62px}
-  .rec-rail{order:2}
+    .rec-rail{order:2}
 }
 @media (prefers-reduced-motion:reduce){.panel,.a1,.spin,.row,.stat,.mcard,.ring{animation:none!important;transition:none!important}}
 </style>
@@ -447,7 +462,6 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
 
 <div class="site">
   <nav class="panel glass dock" aria-label="Sections">
-    <div class="crest">RR</div>
     <button class="nav" data-go="home" aria-current="page" aria-label="Overview"><svg viewBox="0 0 24 24"><path d="M4 11.5 12 5l8 6.5"/><path d="M6 11v8h12v-8"/></svg></button>
     <span class="navlab">Home</span>
     <button class="nav" data-go="records" aria-label="Records"><svg viewBox="0 0 24 24"><path d="M5 4h14v16l-7-4-7 4z"/><path d="M9 9h6"/></svg></button>
@@ -474,23 +488,17 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
     <section class="page" id="p-home" data-on="1">
       <div class="panel glass pad home-a">
         <div class="hero">
-          <div class="gwrap">
-            <svg viewBox="0 0 340 340" role="img" aria-label="Champion season points against the league record">
-              <circle class="spin" cx="170" cy="170" r="164" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1" stroke-dasharray="1.5 14"/>
-              <circle cx="170" cy="170" r="138" fill="none" stroke="rgba(0,0,0,.7)" stroke-width="21" stroke-linecap="round" stroke-dasharray="650 867" transform="rotate(135 170 170)"/>
-              <circle id="hgarc" cx="170" cy="170" r="138" fill="none" stroke="url(#gg)" stroke-width="19" stroke-linecap="round" stroke-dasharray="0 867" transform="rotate(135 170 170)" filter="url(#gglow)" style="transition:stroke-dasharray .6s cubic-bezier(.2,.8,.2,1)"/>
-            </svg>
-            <div class="gcenter"><b id="hgval">—</b><em>points, 2025</em></div>
-          </div>
           <div>
             <p class="kick">Reigning champion</p>
-            <h2 id="hheadline">Kade</h2>
+            <h2 id="hheadline"></h2>
+            <div class="bignum"><b id="hbig">—</b><span id="hbigu">points</span></div>
+            <div class="sbar" id="hbar"></div>
             <p class="heroline" id="hline"></p>
             <div class="tiles" id="htiles"></div>
           </div>
         </div>
         <section>
-          <div class="sechead"><h4>Where the records live</h4><em id="hbarNote"></em></div>
+          <div class="sechead"><h4>Who holds the records</h4><em id="hbarNote"></em></div>
           <div class="hbars" id="hbars"></div>
         </section>
       </div>
@@ -500,7 +508,7 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
       </div>
       <div class="panel glass pad scroll home-c">
         <div class="sechead"><h4>Standing records</h4><em id="hrecNote"></em></div>
-        <div class="rows" id="hrecs" style="gap:6px"></div>
+        <div class="rows" id="hrecs" style="gap:8px"></div>
       </div>
     </section>
 
@@ -520,27 +528,24 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
       </aside>
       <main class="panel glass pad scroll rec-main">
         <section class="anchor">
-          <div class="gwrap">
-            <svg viewBox="0 0 340 340" role="img" id="gsvg" aria-label="Record leader gauge">
-              <circle class="spin" cx="170" cy="170" r="164" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1" stroke-dasharray="1.5 14"/>
-              <circle cx="170" cy="170" r="157" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="7" stroke-dasharray="1.5 33.3" transform="rotate(135 170 170)" stroke-linecap="round" pathLength="100"/>
-              <circle cx="170" cy="170" r="138" fill="none" stroke="rgba(0,0,0,.7)" stroke-width="21" stroke-linecap="round" stroke-dasharray="650 867" transform="rotate(135 170 170)"/>
-              <circle id="garc" cx="170" cy="170" r="138" fill="none" stroke="url(#gg)" stroke-width="19" stroke-linecap="round" stroke-dasharray="0 867" transform="rotate(135 170 170)" filter="url(#gglow)" style="transition:stroke-dasharray .55s cubic-bezier(.2,.8,.2,1)"/>
-              <circle id="gcap" cx="170" cy="32" r="6.5" fill="#fff" style="filter:drop-shadow(0 2px 5px rgba(0,0,0,.9));transition:transform .55s cubic-bezier(.2,.8,.2,1)"/>
-            </svg>
-            <div class="gcenter"><b id="gval">—</b><em id="gunit">points</em></div>
-          </div>
           <div>
             <p class="kick" id="kicker">All-time leader</p>
             <h2 id="statTitle" style="margin:0;font-family:var(--disp);font-size:clamp(25px,3vw,35px);font-weight:700;letter-spacing:-.035em;line-height:1.04">Highest single game</h2>
+            <div class="bignum"><b id="gval2">—</b><span id="gunit2">points</span></div>
             <div class="ahold">
               <div class="av" id="avi">H</div>
-              <div><p id="hname">Helaman</p><span id="hctx">Wk 11 vs Dax · 2023</span></div>
+              <div><p id="hname"></p><span id="hctx"></span></div>
+            </div>
+            <div class="range" id="rangeWrap">
+              <div class="rtrack" id="rtrack"></div>
+              <div class="rends"><span id="rlo"></span><span id="rhi"></span></div>
+              <p class="rnote" id="rnote"></p>
             </div>
           </div>
         </section>
         <section>
           <div class="sechead"><h4 id="boardLabel">All-time board</h4><em id="boardCount"></em></div>
+          <p class="scalenote" id="scaleNote"></p>
           <div class="rows" id="rows"></div>
           <div id="ghostWrap" hidden>
             <div class="sechead" style="margin-top:14px"><h4>All-time, for comparison</h4><em>top 5, all seasons</em></div>
@@ -774,19 +779,22 @@ const $=id=>document.getElementById(id);
 const fmt=(s,v)=>(s.pre||'')+v.toFixed(s.dec).replace(/\B(?=(\d{3})+(?!\d))/g,',');
 function entries(s,yr){return s.rows.filter(r=>yr==='ALL'||r[3]===yr).sort((a,b)=>s.asc?a[1]-b[1]:b[1]-a[1]);}
 function best(s,yr){return entries(s,yr)[0];}
-const pct=(s,v)=>{const p=s.invert?1-v/s.scale:v/s.scale;return Math.max(.04,Math.min(1,p));};
-const initial=n=>n[0];
-function fitNumber(el,cap){
-  const box=el.parentElement.getBoundingClientRect().width;if(!box)return;
-  const avail=box*0.94;el.style.fontSize=cap+'px';
-  const w=el.scrollWidth;if(w>avail)el.style.fontSize=Math.max(30,Math.floor(cap*avail/w))+'px';
+/* The old scale was an invented ceiling, so an arc showed a share of nothing.
+   Every bar now runs from zero to the all-time record for that stat: a real
+   start and a real end, both labelled. For "lower is better" stats the record
+   is the smallest value, so the ratio inverts. */
+function recordOf(s){const e=entries(s,'ALL');return e.length?e[0][1]:0;}
+function share(s,v){
+  const best=recordOf(s);if(!best||!v)return 0;
+  const r=s.asc?best/v:v/best;
+  return Math.max(.02,Math.min(1,r));
 }
-const ringSVG=(p,val,gold)=>`<svg viewBox="0 0 56 56" aria-hidden="true">
-  <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(0,0,0,.72)" stroke-width="6"/>
-  <circle cx="28" cy="28" r="22" fill="none" stroke="url(#gg)" stroke-width="5" stroke-linecap="round"
-    stroke-dasharray="${(138*p).toFixed(0)} 139" transform="rotate(-90 28 28)"
-    style="filter:drop-shadow(0 0 4px rgba(0,232,160,.8))"/>
-  <text class="dialv" x="28" y="33" text-anchor="middle">${val}</text></svg>`;
+const pct=share;
+const initial=n=>n[0];
+/* A bar that runs 0 -> the all-time record, with both ends written out. */
+const scaleBar=(s,v,capLabel)=>`<div class="sbar">
+  <div class="sbtrack"><i style="width:${(share(s,v)*100).toFixed(1)}%"></i></div>
+  <div class="sbends"><span>0</span><span>${capLabel}</span></div></div>`;
 const rowHTML=(s,r,i,ghost)=>`<div class="row${i===0&&!ghost?' top':''}"${ghost?' style="background:linear-gradient(160deg,rgba(255,255,255,.04),rgba(255,255,255,.014));box-shadow:none"':''}>
   <span class="rk">${i+1}</span>
   <span class="rn">${r[0]}<span class="rc">${sub(r[0],r[3])}${r[2]} · ${r[3]}</span></span>
@@ -804,12 +812,13 @@ function renderHome(){
   const pfs=STATS.find(s=>s.id==='pf');
   const champRow=pfs.rows.find(r=>r[0]===CHAMP&&r[3]===CHAMP_YEAR)||pfs.rows.find(r=>r[0]===CHAMP);
   const k=MGR.find(m=>m.name===CHAMP);
-  const p=champRow?pct(pfs,champRow[1]):0;
-  $('hgarc').setAttribute('stroke-dasharray',(650*p).toFixed(0)+' 867');
-  $('hgval').textContent=champRow?fmt(pfs,champRow[1]):'—';fitNumber($('hgval'),86);
   $('hheadline').textContent=CHAMP;
   document.querySelector('#p-home .kick').textContent=CHAMP_YEAR+' champion';
-  document.querySelector('#p-home .gcenter em').textContent='points, '+CHAMP_YEAR;
+  $('hbig').textContent=champRow?fmt(pfs,champRow[1]):'—';
+  $('hbigu').textContent='points · '+CHAMP_YEAR+' regular season';
+  $('hbar').innerHTML=champRow?`
+    <div class="sbtrack"><i style="width:${(share(pfs,champRow[1])*100).toFixed(1)}%"></i></div>
+    <div class="sbends"><span>0</span><span>league record ${fmt(pfs,recordOf(pfs))}</span></div>`:'';
   $('hline').textContent=`${CHAMP} took the ${CHAMP_YEAR} title`+
     (champRow?` and put up ${fmt(pfs,champRow[1])} points in the regular season.`:'.')+
     ` All-time ${k.w}–${k.l} across ${k.g} games, holding ${k.recs} of the ${STATS.length} records on the books.`+
@@ -820,7 +829,7 @@ function renderHome(){
     ['Showing',shown.size+'/'+STATS.length,shown.size/STATS.length]
   ].map(([lab,v,f])=>`<div class="tile"><b>${v}</b><span>${lab}</span><div class="tb" style="width:${(f*100).toFixed(0)}%"></div></div>`).join('');
   const yrs=Object.keys(TITLES).map(Number).sort((a,b)=>a-b);
-  $('champNote').textContent=yrs.length+(yrs.length===1?' title decided':' titles decided');
+  $('champNote').textContent=DATA.current+' still playing';
   $('htl').innerHTML=yrs.map(y=>
     `<div class="tlx${y===CHAMP_YEAR?' now':''}"><div class="dot"></div><b>${TITLES[y]}</b><span>${y}</span></div>`)
     .concat([`<div class="tlx"><div class="dot"></div><b>—</b><span>${DATA.current}</span></div>`]).join('');
@@ -828,20 +837,28 @@ function renderHome(){
   visible().forEach(s=>{const b=best(s,'ALL');if(b)held[b[0]]++;});
   const rank=MGR.map(m=>({...m,held:held[m.name]})).sort((a,b)=>b.held-a.held||b.titles.length-a.titles.length||b.w-a.w);
   const owners=rank.filter(m=>m.held>0).length;
-  $('hbarNote').textContent=owners+' of '+NAMES.length+' managers hold one';
+  $('hbarNote').textContent='league records each';
   $('hbars').innerHTML=rank.slice(0,8).map((m,i)=>`
     <div class="hb${i===0?' lead':''}">
       <span class="hav${m.titles.length?'':' none'}">${initial(m.name)}</span>
       <span><span class="hn">${m.name}</span><span class="hs">${teamNow(m.name)||'no team name set'}</span></span>
-      <span class="hv">${m.held}</span>
+      <span class="hv">${m.held}<em>${m.held===1?'record':'records'}</em></span>
       <span class="hw"><i style="width:${(m.held/Math.max(1,rank[0].held)*100).toFixed(0)}%"></i></span></div>`).join('');
   const standing=visible().map(s=>{const b=best(s,'ALL');return{s,b};}).filter(x=>x.b)
     .sort((a,b)=>b.b[3]-a.b[3]).slice(0,6);
   $('hrecNote').textContent='newest first';
-  $('hrecs').innerHTML=standing.map(({s,b})=>`
-    <div class="ring"><div>${ringSVG(pct(s,b[1]),s.dec>1?b[1].toFixed(2):Math.round(b[1]))}</div>
-    <div><div class="rlab">${s.name}</div><div class="rman">${b[0]}</div>
-    <span class="rsub">${sub(b[0],b[3])}${fmt(s,b[1])} ${s.unit} · ${b[2]} · ${b[3]}</span></div></div>`).join('')
+  $('hrecs').innerHTML=standing.map(({s,b})=>{
+    const all=entries(s,'ALL'), second=all[1];
+    const gap=second?Math.abs(b[1]-second[1]):0;
+    return `<div class="ring">
+      <div class="rtop">
+        <div class="rlab">${s.name}</div>
+        <div><span class="rval">${fmt(s,b[1])}</span><span class="rvalu">${s.unit}</span></div>
+      </div>
+      <div class="rhold"><span class="rman">${b[0]}</span><span class="rteam">${team(b[0],b[3])||''}</span></div>
+      <span class="rsub">${b[2]} · ${b[3]}</span>
+      ${second?`<span class="rnext">next best ${fmt(s,second[1])} by ${second[0]}, ${gap.toFixed(s.dec)} back</span>`:''}
+    </div>`;}).join('')
     ||`<div class="empty">No stats showing. Turn some on in the stat filter.</div>`;
 }
 
@@ -856,38 +873,48 @@ function renderStats(){
   $('trackCount').textContent=shown.size;
   $('recCount').textContent=visible().reduce((n,s)=>n+s.rows.length,0);
 }
-function setCap(p){
-  const a=(135+270*p)*Math.PI/180;
-  $('gcap').setAttribute('transform',`translate(${(170+138*Math.cos(a)-170).toFixed(1)} ${(170+138*Math.sin(a)-32).toFixed(1)})`);
-}
 function renderBoard(){
   const s=STATS.find(x=>x.id===sel);
   if(!s||!shown.has(sel)){
     $('statTitle').textContent='Nothing selected';$('kicker').textContent='Stat filter';
-    $('gval').textContent='—';fitNumber($('gval'),96);$('gunit').textContent='';
-    $('garc').setAttribute('stroke-dasharray','0 867');$('gcap').style.opacity='0';
+    $('gval2').textContent='—';$('gunit2').textContent='';
+    $('rangeWrap').hidden=true;$('scaleNote').textContent='';
     $('avi').textContent='–';$('hname').textContent='No stat showing';
     $('hctx').textContent='Check one in the filter';
     $('boardLabel').textContent='Board';$('boardCount').textContent='';
     $('rows').innerHTML='<div class="empty">Every stat is filtered out. Check one on the left to see its board.</div>';
     $('ghostWrap').hidden=true;return;}
   const list=entries(s,season);
-  $('statTitle').textContent=s.name;$('gunit').textContent=s.unit;
+  $('statTitle').textContent=s.name;
   $('kicker').textContent=season==='ALL'?'All-time leader':season+' leader';
   $('boardLabel').textContent=season==='ALL'?'All-time board':season+' board';
   $('boardCount').textContent=list.length+(list.length===1?' record':' records');
   if(list.length){
-    const t=list[0],p=pct(s,t[1]);
-    $('gval').textContent=fmt(s,t[1]);fitNumber($('gval'),96);
-    $('garc').setAttribute('stroke-dasharray',(650*p).toFixed(0)+' 867');
-    $('gcap').style.opacity='1';setCap(p);
+    const t=list[0];
+    $('gval2').textContent=fmt(s,t[1]);
+    $('gunit2').textContent=s.unit;
     $('avi').textContent=initial(t[0]);$('hname').textContent=t[0];
     $('hctx').textContent=sub(t[0],t[3])+t[2]+' · '+t[3];
+    // A strip with a real start and end: the lowest and highest on this board.
+    const vals=list.map(r=>r[1]);
+    const lo=Math.min(...vals), hi=Math.max(...vals), span=(hi-lo)||1;
+    $('rtrack').innerHTML=list.map(r=>{
+      const x=((r[1]-lo)/span*100).toFixed(1);
+      const lead=r===t?' lead':'';
+      return `<i class="${lead.trim()}" style="left:clamp(8px,${x}%,calc(100% - 8px))"
+        title="${r[0]} ${fmt(s,r[1])}"></i>`;}).join('');
+    $('rlo').textContent=fmt(s,lo);
+    $('rhi').textContent=fmt(s,hi);
+    $('rnote').textContent=`Each dot is one of the ${list.length} entries on this board. `+
+      `${t[0]} sits at ${fmt(s,t[1])}, the ${s.asc?'lowest':'highest'} of them.`;
+    $('rangeWrap').hidden=false;
   }else{
-    $('gval').textContent='—';fitNumber($('gval'),96);
-    $('garc').setAttribute('stroke-dasharray','0 867');$('gcap').style.opacity='0';
+    $('gval2').textContent='—';$('gunit2').textContent='';
     $('avi').textContent='–';$('hname').textContent='No record yet';$('hctx').textContent=season+' season';
+    $('rangeWrap').hidden=true;
   }
+  $('scaleNote').textContent=list.length
+    ? 'Bars run from zero to the all-time record, '+fmt(s,recordOf(s))+' '+s.unit+'.' : '';
   $('rows').innerHTML=list.length?list.map((r,i)=>rowHTML(s,r,i)).join('')
     :`<div class="empty">Nobody set a ${s.name.toLowerCase()} mark in ${season}.</div>`;
   $('ghostWrap').hidden=season==='ALL';
@@ -1008,12 +1035,15 @@ function renderAwards(){
     if(!list.length)return '';
     const w=list[0],p=pct(s,w[1]);
     return `<div class="acard${on?'':' off'}">
-      <div>${ringSVG(p,s.dec>1?w[1].toFixed(2):Math.round(w[1]))}</div>
       <div><div class="ahead"><div class="rlab">${s.award}</div>
         <button class="sw" type="button" data-sw="${s.id}" aria-pressed="${on}"
           aria-label="Count ${s.name} toward awards"><i></i></button></div>
-        <div class="rman">${w[0]}</div>
-        <span class="rsub">${sub(w[0],w[3])}${fmt(s,w[1])} ${s.unit}</span></div></div>`;
+        <div class="rhold"><span class="rman">${w[0]}</span><span class="rteam">${team(w[0],w[3])||''}</span></div>
+        <div class="rtop" style="margin-top:8px">
+          <span class="rsub" style="margin:0">${w[2]}</span>
+          <div><span class="rval" style="font-size:20px">${fmt(s,w[1])}</span><span class="rvalu">${s.unit}</span></div>
+        </div>
+        ${scaleBar(s,w[1],'record '+fmt(s,recordOf(s)))}</div></div>`;
   }).join('')||`<div class="empty" style="grid-column:1/-1">No stats showing. Turn some on in the stat filter, on the Book page.</div>`;
 }
 
@@ -1064,10 +1094,6 @@ document.addEventListener('keydown',e=>{
   if(e.key!=='Enter'&&e.key!==' ')return;
   const nmOpen=e.target.closest('[data-open]');
   if(nmOpen){e.preventDefault();sel=nmOpen.dataset.open;shown.add(sel);renderStats();renderBoard();}
-});
-addEventListener('resize',()=>{
-  if(page==='records')fitNumber($('gval'),96);
-  if(page==='home')fitNumber($('hgval'),86);
 });
 function paintAll(){
   $('champChip').textContent=CHAMP_YEAR+' champion · '+CHAMP;

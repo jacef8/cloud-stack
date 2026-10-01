@@ -121,7 +121,8 @@ button{font:inherit;color:inherit}
 @keyframes pulse{50%{opacity:.25}}
 @media (prefers-reduced-motion:reduce){.chip.live[data-state="busy"] i{animation:none}}
 .barspace{flex:1 1 14px}
-.pills[hidden]{display:none}
+/* a display rule beats the browser's [hidden], so say it once, loudly */
+[hidden]{display:none!important}
 .pills{display:flex;flex-wrap:wrap;padding:3px;border-radius:999px;background:var(--recess);
   box-shadow:var(--well-sh);gap:2px}
 .pills button{padding:6px 12px;border:none;border-radius:999px;background:transparent;color:var(--ink-3);
@@ -1377,7 +1378,7 @@ let deferredInstall=null;
 const installed=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 const dismissed=()=>{try{return localStorage.getItem(INSTALL_SEEN)==='1';}catch(e){return false;}};
 const dismiss=()=>{try{localStorage.setItem(INSTALL_SEEN,'1');}catch(e){}
-  $('installBar').hidden=true;};
+  const b=$('installBar');if(b){b.hidden=true;b.remove();}};
 /* The dock is fixed on a phone and its height moves with the safe area, so
    the banner is placed above whatever the dock actually measures. */
 function placeInstall(){
@@ -1388,8 +1389,8 @@ function placeInstall(){
 }
 addEventListener('resize',placeInstall);
 function showInstall(kind){
-  if(installed()||dismissed())return;
   const bar=$('installBar');
+  if(!bar||installed()||dismissed())return;
   if(kind==='ios'){
     $('ibTitle').textContent='Add Record Room to your home screen';
     $('ibBody').innerHTML='Tap Share, then <b style="color:var(--ink-2)">Add to Home Screen</b> '+
@@ -1399,8 +1400,12 @@ function showInstall(kind){
   bar.hidden=false;
   placeInstall();
 }
+if(installed())$('installBar').remove();
+matchMedia('(display-mode: standalone)').addEventListener?.('change',e=>{
+  if(e.matches){const b=$('installBar');if(b)b.remove();}});
 $('ibNo').addEventListener('click',dismiss);
 $('ibGo').addEventListener('click',async()=>{
+  if(!deferredInstall&&installed()){dismiss();return;}
   if(!deferredInstall){dismiss();return;}          // iOS: the button just acknowledges
   deferredInstall.prompt();
   try{await deferredInstall.userChoice;}catch(e){}

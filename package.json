@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:site": "cp samples/league-site-standalone.html public/index.html",
     "deploy": "npm run build:site && firebase deploy --only hosting",
-    "serve": "firebase serve --only hosting"
+    "serve": "firebase serve --only hosting",
+    "site:create": "firebase hosting:sites:create tribes-of-gridiron"
   },
   "keywords": [
     "railway",

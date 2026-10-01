@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "tribes-of-gridiron",
     "public": "public",
     "ignore": [
       "firebase.json",

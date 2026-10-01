@@ -48,8 +48,18 @@ The last line of the log prints the URL.
 
 ## From then on
 
-Any change to the site that lands on `master` deploys on its own. You can also
-hit **Run workflow** any time.
+Nothing. A push to `master` or to a `claude/**` working branch deploys on its
+own, so an update is one push and no pull request. The Actions tab also has a
+**Run workflow** button to redeploy the current version on demand.
+
+Every run builds the page, checks it is whole before shipping (right title,
+right viewport, the league id and the baked history all present, and not
+truncated), deploys, and then fetches the live URL to confirm it is serving a
+Record Room page. A run that goes green means the site is actually up, not
+just that the upload finished.
+
+`master` only moves when a branch is merged into it, which stays a deliberate
+step. The deploy does not need it: whatever branch was pushed is what ships.
 
 ## If it fails
 

@@ -1,16 +1,25 @@
 name: Deploy Record Room
 
-# Runs on a push to master that touches the site, and on demand from the
-# Actions tab. Nothing has to be installed on anyone's computer.
+# Deploys whatever was just pushed, from master or from a working branch.
+# No pull request, no merge step: the branch that gets pushed is the branch
+# that ships, so an update is one push and nothing else.
 on:
   push:
-    branches: [master]
+    branches:
+      - master
+      - 'claude/**'
     paths:
       - 'samples/record-room-standalone.html'
       - 'public/**'
       - 'firebase.json'
+      - '.firebaserc'
       - '.github/workflows/deploy.yml'
   workflow_dispatch:
+
+# One deploy at a time, and never cancel one halfway through.
+concurrency:
+  group: deploy-record-room
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -28,6 +37,19 @@ jobs:
           cp samples/record-room-standalone.html public/index.html
           ls -l public/
 
+      - name: Check the build before shipping it
+        run: |
+          node - <<'CHECK'
+          const fs=require('fs');
+          const html=fs.readFileSync('public/index.html','utf8');
+          const must=[['doctype','<!doctype html>'],['title','<title>Record Room</title>'],
+                      ['viewport','name="viewport"'],['league id','LEAGUE_ID'],['history','HIST=']];
+          const missing=must.filter(([,n])=>!html.includes(n)).map(([name])=>name);
+          if(missing.length){console.error('::error::Build is missing: '+missing.join(', '));process.exit(1);}
+          if(html.length<50000){console.error('::error::Build looks truncated: '+html.length+' bytes');process.exit(1);}
+          console.log('build ok, '+html.length+' bytes');
+          CHECK
+
       - name: Write the service account key
         env:
           KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
@@ -38,7 +60,7 @@ jobs:
           fi
           printf '%s' "$KEY" > "$HOME/key.json"
           node -e "JSON.parse(require('fs').readFileSync(process.env.HOME+'/key.json','utf8'))" \
-            || { echo "::error::The secret is not valid JSON. Paste the whole downloaded file, including the braces."; exit 1; }
+            || { echo "::error::The secret is not valid JSON. Paste the whole file, braces included."; exit 1; }
 
       - name: Deploy
         env:
@@ -50,11 +72,23 @@ jobs:
             PROJECT=$(node -p "JSON.parse(require('fs').readFileSync('.firebaserc','utf8')).projects.default")
           fi
           SITE=$(node -p "JSON.parse(require('fs').readFileSync('firebase.json','utf8')).hosting.site")
-          echo "Deploying $SITE to project $PROJECT"
-          # Claim the site on the first run; harmless once it exists.
+          echo "Deploying $SITE to project $PROJECT from ${GITHUB_REF#refs/heads/}"
           firebase hosting:sites:create "$SITE" --project "$PROJECT" || true
           firebase deploy --only hosting --project "$PROJECT" --non-interactive
           echo "Live at https://$SITE.web.app"
+
+      - name: Confirm the site is serving
+        run: |
+          SITE=$(node -p "JSON.parse(require('fs').readFileSync('firebase.json','utf8')).hosting.site")
+          for i in 1 2 3 4 5 6; do
+            CODE=$(curl -s -o /tmp/live.html -w '%{http_code}' "https://$SITE.web.app" || echo 000)
+            if [ "$CODE" = "200" ] && grep -q "<title>Record Room</title>" /tmp/live.html; then
+              echo "Serving: https://$SITE.web.app"; exit 0
+            fi
+            echo "attempt $i: HTTP $CODE, waiting"; sleep 10
+          done
+          echo "::error::Deployed, but the site did not serve a Record Room page."
+          exit 1
 
       - name: Clean up
         if: always()

@@ -29,7 +29,6 @@ import java.io.File
 class CaptureService : AccessibilityService() {
     private val main = Handler(Looper.getMainLooper())
     private lateinit var prefs: Prefs
-    private var picker: PickerOverlay? = null
 
     @Volatile private var running = false
     @Volatile private var stopRequested = false
@@ -56,7 +55,6 @@ class CaptureService : AccessibilityService() {
     override fun onDestroy() {
         instance = null
         try { unregisterReceiver(stopReceiver) } catch (_: Exception) { }
-        picker?.dismiss()
         super.onDestroy()
     }
 
@@ -108,24 +106,15 @@ class CaptureService : AccessibilityService() {
     }
 
     private fun onShortcut() {
-        when {
-            running -> stopRequested = true
-            picker?.isShowing == true -> picker?.dismiss()
-            else -> showPicker(0)
-        }
+        // While a long capture runs the shortcut stops it; otherwise it takes a screenshot at once.
+        if (running) stopRequested = true else requestCapture(Mode.SCREENSHOT, 0)
     }
 
-    // ---- choices and capture ----
+    // ---- capture ----
 
-    fun showPicker(delayMs: Long) {
-        main.postDelayed({
-            if (running) return@postDelayed
-            picker?.dismiss()
-            picker = PickerOverlay(
-                this, prefs,
-                onPick = { startCapture(it) },
-            ).also { it.show() }
-        }, delayMs)
+    /** Starts a capture after [delayMs]. A screenshot from the shortcut starts at once. */
+    fun requestCapture(mode: Mode, delayMs: Long) {
+        main.postDelayed({ if (!running) startCapture(mode) }, delayMs)
     }
 
     private fun startCapture(mode: Mode) {
@@ -135,8 +124,6 @@ class CaptureService : AccessibilityService() {
         buzz(60)
         progressNotice(1)
         Thread {
-            // Let the picker finish disappearing so it is not in the picture.
-            Thread.sleep(450)
             val engine = CaptureEngine(this, mode, prefs, { stopRequested }) { progressNotice(it) }
             val outcome = engine.run()
             running = false

@@ -16,7 +16,7 @@ class Prefs(ctx: Context) {
         get() = sp.getBoolean("autocopy", true)
         set(v) = sp.edit().putBoolean("autocopy", v).apply()
 
-    /** Opening the app (side button double press) goes straight to the capture choices. */
+    /** Opening the app (side button double press) takes a screenshot at once. */
     var startOnOpen: Boolean
         get() = sp.getBoolean("onopen", false)
         set(v) = sp.edit().putBoolean("onopen", v).apply()

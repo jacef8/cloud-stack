@@ -40,7 +40,7 @@ class MainActivity : Activity() {
         val wantsCapture = intent.getBooleanExtra(EXTRA_CAPTURE_NOW, false) ||
             (prefs.startOnOpen && !intent.getBooleanExtra(EXTRA_NO_AUTOSTART, false))
         if (savedInstanceState == null && wantsCapture && svc != null) {
-            svc.showPicker(450)
+            svc.requestCapture(Mode.SCREENSHOT, 450)
             finish()
             overridePendingTransition(0, 0)
             return
@@ -126,7 +126,7 @@ class MainActivity : Activity() {
                     Toast.makeText(context, "Turn on Scroll Capture in Accessibility first", Toast.LENGTH_LONG).show()
                 } else {
                     moveTaskToBack(true)
-                    s.showPicker(700)
+                    s.requestCapture(Mode.SCREENSHOT, 700)
                 }
             }
         }
@@ -191,8 +191,8 @@ class MainActivity : Activity() {
         // Settings card
         val opts = card()
         opts.addView(Ui.label(this, "How it starts"))
-        opts.addView(Ui.toggleRow(this, "Volume Up + Down", "Press both together to open the choices", prefs.volumeTrigger) { prefs.volumeTrigger = it })
-        opts.addView(Ui.toggleRow(this, "Open app starts a capture", "For the side button: Settings, Advanced features, Side button, Double press, Open app", prefs.startOnOpen) { prefs.startOnOpen = it })
+        opts.addView(Ui.toggleRow(this, "Volume Up + Down", "Press both together to take a screenshot at once", prefs.volumeTrigger) { prefs.volumeTrigger = it })
+        opts.addView(Ui.toggleRow(this, "Open app takes a screenshot", "For the side button: Settings, Advanced features, Side button, Double press, Open app", prefs.startOnOpen) { prefs.startOnOpen = it })
         opts.addView(Ui.label(this, "Results").apply { setPadding(0, dp(10f), 0, 0) })
         opts.addView(Ui.toggleRow(this, "Copy text automatically", "Text captures are ready to paste right away", prefs.autoCopyText) { prefs.autoCopyText = it })
         opts.addView(Ui.toggleRow(this, "Start long captures at the top", "Scrolls back up first so nothing is missed", prefs.startFromTop) { prefs.startFromTop = it })

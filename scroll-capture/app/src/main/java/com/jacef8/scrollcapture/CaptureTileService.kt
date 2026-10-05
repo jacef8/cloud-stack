@@ -5,10 +5,10 @@ import android.content.Intent
 import android.os.Build
 import android.service.quicksettings.TileService
 
-/** A tile in the pull-down shade: tap it to open the capture choices. */
+/** A tile in the pull-down shade: tap it to take a screenshot. */
 class CaptureTileService : TileService() {
     override fun onClick() {
-        // Opening our own (invisible) screen is what collapses the shade; it then shows the choices.
+        // Opening our own (invisible) screen is what collapses the shade; it then takes the screenshot.
         val intent = Intent(this, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             .putExtra(MainActivity.EXTRA_CAPTURE_NOW, true)

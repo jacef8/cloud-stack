@@ -7,18 +7,21 @@ word, so a transcript or a long post can be pasted somewhere else.
 ## What it does
 
 Press **Volume Up + Volume Down** together (or use the Quick Settings tile, or set
-the side button's double press to open the app) and pick:
+the side button's double press to open the app). It takes a screenshot **at once**
+and opens it fitted whole on the screen, with no scrolling. Tap the picture to hide
+the bars for a full-screen view.
 
-| Choice | Result |
+From the toolbar under the picture:
+
+| Button | Result |
 | --- | --- |
-| Screenshot | This screen, like the normal tool |
-| Scroll capture | One tall image of the whole scrolling section |
-| Text only | Every word, in order, copyable |
-| Image + text | Both |
+| Share, Edit, Copy, Delete | The usual screenshot actions (Edit opens your normal image editor) |
+| Scroll | Goes back to that app and captures one tall image of the whole scrolling section |
+| Text | Goes back and reads every word, in order, copyable |
+| Both | The long image and its words |
 
-The result screen has Share, Edit (hands off to your normal image editor), Copy and
-Delete. Images are saved to `Pictures/Screenshots` next to Samsung's own; text goes to
-`Documents/ScrollCapture`.
+Images are saved to `Pictures/Screenshots` next to Samsung's own; text goes to
+`Documents/ScrollCapture`. Very long captures scroll in the viewer.
 
 ## How it works
 

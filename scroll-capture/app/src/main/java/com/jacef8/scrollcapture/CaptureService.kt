@@ -9,9 +9,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
+import android.media.MediaActionSound
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.VibrationEffect
+import android.os.VibrationAttributes
 import android.os.Vibrator
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
@@ -31,6 +34,7 @@ class CaptureService : AccessibilityService() {
     private lateinit var prefs: Prefs
 
     private var bar: ResultBar? = null
+    private var shutterSound: MediaActionSound? = null
     private val indicator by lazy { CaptureIndicator(this) { stopRequested = true } }
 
     @Volatile private var running = false
@@ -50,6 +54,8 @@ class CaptureService : AccessibilityService() {
         prefs = Prefs(this)
         DebugLog.init(this)
         DebugLog.log("service connected")
+        // Load the camera shutter now so it plays instantly later.
+        shutterSound = MediaActionSound().also { it.load(MediaActionSound.SHUTTER_CLICK) }
         createChannel()
         ContextCompat.registerReceiver(
             this, stopReceiver, IntentFilter(ACTION_STOP), ContextCompat.RECEIVER_NOT_EXPORTED
@@ -60,6 +66,8 @@ class CaptureService : AccessibilityService() {
     override fun onDestroy() {
         instance = null
         try { unregisterReceiver(stopReceiver) } catch (_: Exception) { }
+        shutterSound?.release()
+        shutterSound = null
         super.onDestroy()
     }
 
@@ -129,10 +137,12 @@ class CaptureService : AccessibilityService() {
         running = true
         stopRequested = false
         DebugLog.log("capture requested: $mode")
-        buzz(60)
+        // A plain screenshot gives its feedback the instant the picture is taken (below); a long
+        // capture buzzes now to say it has started, and clicks when it is done.
+        if (mode != Mode.SCREENSHOT) sharpBuzz()
         progressNotice(1)
         Thread {
-            val engine = CaptureEngine(this, mode, prefs, { stopRequested }) { pages ->
+            val engine = CaptureEngine(this, mode, prefs, { stopRequested }, { if (mode == Mode.SCREENSHOT) captureFeedback() }) { pages ->
                 progressNotice(pages)
                 main.post { if (running) indicator.showOrUpdate(pages) }
             }
@@ -147,7 +157,7 @@ class CaptureService : AccessibilityService() {
                 } catch (_: Exception) { "" }
             }.orEmpty()
             NotificationManagerCompat.from(this).cancel(NOTE_PROGRESS)
-            buzz(110)
+            if (outcome.id != null) { if (mode != Mode.SCREENSHOT) captureFeedback() } else sharpBuzz(120)
             main.post {
                 indicator.hide()
                 if (warning.isNotBlank()) Toast.makeText(this, warning, Toast.LENGTH_LONG).show()
@@ -188,9 +198,27 @@ class CaptureService : AccessibilityService() {
         } catch (_: SecurityException) { }
     }
 
-    private fun buzz(ms: Long) {
-        val v = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        v.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE))
+    /** The camera shutter click and a quick, sharp buzz, together. */
+    private fun captureFeedback() {
+        sharpBuzz()
+        try { shutterSound?.play(MediaActionSound.SHUTTER_CLICK) } catch (_: Exception) { }
+    }
+
+    /** A short buzz at full strength, so it feels like a click. Marked as accessibility feedback so it is not muted with touch feedback. */
+    private fun sharpBuzz(ms: Long = 30) {
+        try {
+            val v = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            val effect = VibrationEffect.createOneShot(
+                ms, if (v.hasAmplitudeControl()) 255 else VibrationEffect.DEFAULT_AMPLITUDE
+            )
+            if (Build.VERSION.SDK_INT >= 33) {
+                v.vibrate(effect, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ACCESSIBILITY))
+            } else {
+                v.vibrate(effect)
+            }
+        } catch (e: Exception) {
+            DebugLog.error("buzz", e)
+        }
     }
 
     /** Captures kept only while they might still be open on screen. */

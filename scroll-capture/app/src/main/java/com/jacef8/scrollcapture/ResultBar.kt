@@ -27,10 +27,10 @@ import java.util.concurrent.Executors
 import kotlin.math.abs
 
 /**
- * What appears right after a capture, laid out like Samsung's: a framed thumbnail at the bottom-left
- * and a rounded translucent bar of icons at the bottom-centre, floating over the live app.
+ * What appears right after a capture, laid out like Samsung's: a thumbnail at the bottom-left and a
+ * wide, rounded, dark bar at the bottom-centre (Edit, Text, Share, then a white Scroll-capture circle), floating over the live app.
  *
- * It fades in, then fades away by itself after a few seconds (holding a finger on it keeps it a
+ * It fades in, then fades away by itself after about five seconds (holding a finger on it keeps it a
  * little longer). Swipe the thumbnail aside to dismiss it sooner. They are two small windows, so
  * touches anywhere else go straight through to the app, which can still be scrolled and used.
  * Tap the thumbnail for the full-screen viewer.
@@ -58,41 +58,45 @@ class ResultBar(
         val ctx: Context = ContextThemeWrapper(svc, android.R.style.Theme_DeviceDefault)
         val dp = { v: Float -> Ui.dp(ctx, v) }
 
-        // ---- the bar of icons ----
+        // ---- the bar of icons: a wide dark pill, four even slots, the last one a white circle ----
         val pill = LinearLayout(ctx).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            background = GradientDrawable().apply {
-                setColor(0xB3141518.toInt())          // dark, see-through
-                cornerRadius = dp(28f).toFloat()
+            background = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(0xEB252C38.toInt(), 0xEB171C25.toInt())).apply {
+                cornerRadius = dp(40f).toFloat()
             }
-            setPadding(dp(8f), dp(4f), dp(8f), dp(4f))
+            setPadding(dp(24f), dp(4f), dp(24f), dp(4f))
             elevation = dp(6f).toFloat()
         }
 
-        fun button(icon: Int, label: String, onClick: () -> Unit) {
-            val b = FrameLayout(ctx).apply {
-                background = StateListDrawable().apply {
-                    addState(intArrayOf(android.R.attr.state_pressed), GradientDrawable().apply {
-                        shape = GradientDrawable.OVAL
-                        setColor(0x33FFFFFF)
-                    })
-                    addState(intArrayOf(), ColorDrawable(0))
-                }
+        fun slot(content: View, label: String, onClick: () -> Unit) {
+            val slot = FrameLayout(ctx).apply {
                 contentDescription = label
                 tooltipText = label
                 setOnClickListener { onClick() }
             }
-            b.addView(ImageView(ctx).apply { setImageResource(icon) }, FrameLayout.LayoutParams(dp(24f), dp(24f), Gravity.CENTER))
-            pill.addView(b, LinearLayout.LayoutParams(dp(48f), dp(44f)))
+            slot.addView(content, FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER))
+            pill.addView(slot, LinearLayout.LayoutParams(0, dp(43f), 1f))
         }
 
-        // Go on from this screen, then the usual actions.
-        button(R.drawable.ic_cap_scroll, "Scroll capture") { dismissNow(); onMore(Mode.SCROLL) }
-        button(R.drawable.ic_cap_text, "Text of the whole page") { dismissNow(); onMore(Mode.TEXT) }
-        button(R.drawable.ic_cap_both, "Image and text") { dismissNow(); onMore(Mode.SCROLL_TEXT) }
-        if (hasImage) button(R.drawable.ic_edit, "Edit") { dismissNow(); Actions.edit(svc, dir) }
-        button(R.drawable.ic_share, "Share") { dismissNow(); Actions.share(svc, dir, hasImage) }
+        fun plainIcon(icon: Int) = FrameLayout(ctx).apply {
+            addView(ImageView(ctx).apply { setImageResource(icon) }, FrameLayout.LayoutParams(dp(26f), dp(26f), Gravity.CENTER))
+            layoutParams = FrameLayout.LayoutParams(dp(43f), dp(43f))
+        }
+
+        if (hasImage) slot(plainIcon(R.drawable.ic_edit), "Edit") { dismissNow(); Actions.edit(svc, dir) }
+        slot(plainIcon(R.drawable.ic_cap_text), "Text of the whole page") { dismissNow(); onMore(Mode.TEXT) }
+        slot(plainIcon(R.drawable.ic_share), "Share") { dismissNow(); Actions.share(svc, dir, hasImage) }
+        // Scroll capture is the main action: a white circle with a blue icon, as on Samsung's.
+        val scrollCircle = FrameLayout(ctx).apply {
+            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0xFFFFFFFF.toInt()) }
+            addView(ImageView(ctx).apply {
+                setImageResource(R.drawable.ic_cap_scroll)
+                setColorFilter(0xFF2F6FF0.toInt())
+            }, FrameLayout.LayoutParams(dp(26f), dp(26f), Gravity.CENTER))
+            layoutParams = FrameLayout.LayoutParams(dp(42f), dp(42f))
+        }
+        slot(scrollCircle, "Scroll capture") { dismissNow(); onMore(Mode.SCROLL) }
 
         // ---- the thumbnail ----
         val thumb = ImageView(ctx).apply {
@@ -100,7 +104,7 @@ class ResultBar(
             background = GradientDrawable().apply {
                 setColor(0xCC141518.toInt())
                 cornerRadius = dp(12f).toFloat()
-                setStroke(dp(2f), 0xFFFFFFFF.toInt())
+                setStroke(dp(1f), 0x33FFFFFF)
             }
             clipToOutline = true
             outlineProvider = ViewOutlineProvider.BACKGROUND
@@ -118,14 +122,16 @@ class ResultBar(
         holdWhileTouched(pill)
         holdWhileTouched(thumb)
 
+        val screenW = ctx.resources.displayMetrics.widthPixels
         val thumbLp = overlayParams().apply {
             gravity = Gravity.BOTTOM or Gravity.START
-            x = dp(14f)
-            y = dp(28f + 52f + 10f)
+            x = dp(24f)
+            y = dp(128f)
         }
         val pillLp = overlayParams().apply {
+            width = screenW - dp(58f)
             gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-            y = dp(28f)
+            y = dp(58f)
         }
         // Each is its own small window, so the empty space between them is not blocked.
         wm.addView(thumb, thumbLp)
@@ -134,7 +140,7 @@ class ResultBar(
         views += pill
         thumb.layoutParams = thumbLp
         pill.layoutParams = pillLp
-        thumb.updateSize(dp(72f), dp(124f))
+        thumb.updateSize(dp(65f), dp(126f))
 
         // Fade in and rise a little, like Samsung's.
         for (v in views) {
@@ -267,7 +273,7 @@ class ResultBar(
     }
 
     private companion object {
-        const val SHOW_MS = 6_000L      // how long it stays before fading, like Samsung's
+        const val SHOW_MS = 5_000L      // how long it stays before fading, like Samsung's
         const val TOUCH_MS = 3_000L     // extra time after a finger lifts
     }
 }

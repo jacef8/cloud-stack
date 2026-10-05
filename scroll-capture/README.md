@@ -9,21 +9,23 @@ word, so a transcript or a long post can be pasted somewhere else.
 Press **Volume Up + Volume Down** together (or use the Quick Settings tile, or set
 the side button's double press to open the app). It takes a screenshot **at once**.
 
-A thumbnail (bottom-left) and a rounded bar of icons (bottom-centre) then float over the live
-app, laid out like Samsung's. They fade in, then **fade away by themselves after about six
-seconds**; holding a finger on them keeps them a little longer, and swiping the thumbnail
-aside sends them away sooner. Touches anywhere else go straight to the app.
+The instant the picture is taken there is a **camera shutter click and a short, sharp buzz**.
 
-| Button | Result |
+Then, laid out like Samsung's, a thumbnail (bottom-left) and a wide dark bar of icons (bottom-centre)
+float over the live app. They fade in, then **fade away by themselves after about five seconds**;
+holding a finger on them keeps them a little longer, and swiping the thumbnail aside sends them away
+sooner. Touches anywhere else go straight to the app.
+
+| Control | Result |
 | --- | --- |
-| Thumbnail (tap) | Opens the screenshot fitted whole on the screen; tap it again for full screen |
-| Scroll | One tall image of the whole scrolling section |
+| Thumbnail (tap) | Opens the screenshot fitted whole on the screen; tap it again for full screen. The full-screen viewer also has Both (image + text), Copy and Delete |
+| Edit | Opens your normal image editor |
 | Text | Every word of the whole page, in order, copyable |
-| Both | The long image and its words |
-| Edit, Share | The usual actions (Edit opens your normal image editor) |
+| Share | The usual share sheet |
+| White circle (Scroll) | One tall image of the whole scrolling section |
 
 While a scroll capture runs, a **"Capturing… screen N · tap to stop"** pill shows near the top
-(and the phone buzzes at the start and the end). It stops by itself if the screen changes in a way it
+(the phone buzzes when it starts, and clicks and buzzes when it is done). It stops by itself if the screen changes in a way it
 cannot follow, or if you leave the app, and tells you why. Everything captured up to that point is kept.
 
 Images are saved to `DCIM/Screenshots`, the folder Samsung phones use for their own screenshots, so they appear

@@ -41,6 +41,7 @@ class CaptureEngine(
     private val mode: Mode,
     private val prefs: Prefs,
     private val shouldStop: () -> Boolean,
+    private val onFirstFrame: () -> Unit,
     private val onProgress: (Int) -> Unit,
 ) {
     private val exec = Executors.newSingleThreadExecutor()
@@ -90,6 +91,7 @@ class CaptureEngine(
             null,
             "Couldn't take a screenshot. Check that Scroll Capture is still turned on in Accessibility."
         )
+        onFirstFrame()   // the picture is taken: the shutter sound and buzz fire now, before anything is saved
         val w = bmp0.width
         val h = bmp0.height
         val px0 = pixels(bmp0)

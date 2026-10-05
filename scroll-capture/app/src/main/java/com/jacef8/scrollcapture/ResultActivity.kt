@@ -60,6 +60,7 @@ class ResultActivity : Activity() {
         hasText = File(dir, "text.txt").exists()
         tab = if (hasImage) TAB_IMAGE else TAB_TEXT
 
+        (getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).cancel(CaptureService.NOTE_READY)
         setContentView(buildUi())
         showTab(tab)
 

@@ -148,11 +148,12 @@ class CaptureService : AccessibilityService() {
             buzz(110)
             main.post {
                 if (outcome.id != null) {
-                    startActivity(
-                        Intent(this, ResultActivity::class.java)
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                            .putExtra(ResultActivity.EXTRA_ID, outcome.id)
-                    )
+                    val open = Intent(this, ResultActivity::class.java)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                        .putExtra(ResultActivity.EXTRA_ID, outcome.id)
+                    // Also leave a tap-to-open notice, in case Android declines to open a screen from the background.
+                    readyNotice(open)
+                    try { startActivity(open) } catch (_: Exception) { }
                 } else {
                     Toast.makeText(this, outcome.error ?: "Capture failed", Toast.LENGTH_LONG).show()
                 }
@@ -164,7 +165,11 @@ class CaptureService : AccessibilityService() {
 
     private fun createChannel() {
         val ch = NotificationChannel(CHANNEL, "Capture progress", NotificationManager.IMPORTANCE_LOW)
-        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(ch)
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        nm.createNotificationChannel(ch)
+        nm.createNotificationChannel(
+            NotificationChannel(CHANNEL_READY, "Capture ready", NotificationManager.IMPORTANCE_DEFAULT)
+        )
     }
 
     private fun progressNotice(pages: Int) {
@@ -184,6 +189,22 @@ class CaptureService : AccessibilityService() {
         } catch (_: SecurityException) { }
     }
 
+    private fun readyNotice(open: Intent) {
+        val tap = PendingIntent.getActivity(
+            this, 1, open, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        val n = NotificationCompat.Builder(this, CHANNEL_READY)
+            .setSmallIcon(R.drawable.ic_tile)
+            .setContentTitle("Capture ready")
+            .setContentText("Tap to share, edit or copy it")
+            .setContentIntent(tap)
+            .setAutoCancel(true)
+            .build()
+        try {
+            NotificationManagerCompat.from(this).notify(NOTE_READY, n)
+        } catch (_: SecurityException) { }
+    }
+
     private fun buzz(ms: Long) {
         val v = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         v.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE))
@@ -199,6 +220,8 @@ class CaptureService : AccessibilityService() {
     companion object {
         @Volatile var instance: CaptureService? = null
         private const val CHANNEL = "capture"
+        private const val CHANNEL_READY = "ready"
+        const val NOTE_READY = 2
         private const val NOTE_PROGRESS = 1
         private const val ACTION_STOP = "com.jacef8.scrollcapture.STOP"
         private const val COMBO_WINDOW_MS = 160L

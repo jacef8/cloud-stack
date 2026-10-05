@@ -124,10 +124,6 @@ class CaptureService : AccessibilityService() {
             picker = PickerOverlay(
                 this, prefs,
                 onPick = { startCapture(it) },
-                onSettings = {
-                    startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        .putExtra(MainActivity.EXTRA_NO_AUTOSTART, true))
-                },
             ).also { it.show() }
         }, delayMs)
     }

@@ -3,24 +3,27 @@ package com.jacef8.scrollcapture
 import android.accessibilityservice.AccessibilityService
 import android.content.Context
 import android.graphics.PixelFormat
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.StateListDrawable
 import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 
 /**
- * The "what do you want?" bar. It is a slim strip, with no dimming, and touches
- * outside it go straight through to the app underneath, so the screen can still be
- * scrolled and lined up before choosing.
+ * The capture toolbar: a slim dark rounded bar of icons, like the screenshot toolbar
+ * Samsung shows. There is no dimming, and touches outside it go straight through to the
+ * app underneath, so the screen can still be scrolled and lined up before choosing.
  */
 class PickerOverlay(
     private val svc: AccessibilityService,
     private val prefs: Prefs,
     private val onPick: (Mode) -> Unit,
-    private val onSettings: () -> Unit,
 ) {
     private var root: View? = null
     private var atTop = false
@@ -34,61 +37,63 @@ class PickerOverlay(
         val dp = { v: Float -> Ui.dp(ctx, v) }
 
         val bar = LinearLayout(ctx).apply {
-            orientation = LinearLayout.VERTICAL
-            background = Ui.card(ctx)
-            setPadding(dp(10f), dp(10f), dp(10f), dp(6f))
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            background = GradientDrawable().apply {
+                setColor(0xEB1B1D22.toInt())
+                cornerRadius = dp(28f).toFloat()
+                setStroke(dp(1f), C.EDGE_HI)
+            }
+            setPadding(dp(6f), dp(6f), dp(6f), dp(6f))
             elevation = dp(10f).toFloat()
         }
 
-        fun tile(title: String, sub: String, mode: Mode): View {
-            val t = LinearLayout(ctx).apply {
+        fun item(icon: Int, label: String, onClick: (ImageView, TextView) -> Unit): Triple<View, ImageView, TextView> {
+            val col = LinearLayout(ctx).apply {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
-                background = Ui.widget(ctx, 12f)
-                setPadding(dp(4f), dp(8f), dp(4f), dp(8f))
-                elevation = dp(2f).toFloat()
-                setOnClickListener { dismiss(); onPick(mode) }
+                setPadding(0, dp(7f), 0, dp(6f))
+                background = StateListDrawable().apply {
+                    addState(intArrayOf(android.R.attr.state_pressed), GradientDrawable().apply {
+                        setColor(0x33FFFFFF)
+                        cornerRadius = dp(22f).toFloat()
+                    })
+                    addState(intArrayOf(), ColorDrawable(0))
+                }
+                contentDescription = label
             }
-            t.addView(Ui.text(ctx, title, 15f, C.INK, true).apply { gravity = Gravity.CENTER })
-            t.addView(Ui.text(ctx, sub, 12f, C.INK3).apply { gravity = Gravity.CENTER })
-            return t
+            val img = ImageView(ctx).apply { setImageResource(icon) }
+            col.addView(img, LinearLayout.LayoutParams(dp(26f), dp(26f)))
+            val txt = Ui.text(ctx, label, 12f, C.INK2, false).apply { gravity = Gravity.CENTER; maxLines = 1 }
+            col.addView(txt)
+            col.setOnClickListener { onClick(img, txt) }
+            return Triple(col, img, txt)
         }
 
-        val tiles = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL }
-        val entries = listOf(
-            Triple("Screenshot", "this screen", Mode.SCREENSHOT),
-            Triple("Scroll", "long image", Mode.SCROLL),
-            Triple("Text", "every word", Mode.TEXT),
-            Triple("Both", "image + text", Mode.SCROLL_TEXT),
-        )
-        entries.forEachIndexed { i, (title, sub, mode) ->
-            tiles.addView(tile(title, sub, mode), Ui.lp(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
-                if (i > 0) leftMargin = dp(6f)
-            })
+        fun add(t: Triple<View, ImageView, TextView>) {
+            bar.addView(t.first, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
         }
-        bar.addView(tiles)
 
-        // Small controls underneath.
-        val controls = LinearLayout(ctx).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-        }
-        fun chip(label: String, color: Int = C.ACCENT, onClick: (TextView) -> Unit): TextView =
-            Ui.text(ctx, label, 14f, color, true).apply {
-                setPadding(dp(8f), dp(8f), dp(8f), dp(8f))
-                setOnClickListener { onClick(this) }
-            }
+        add(item(R.drawable.ic_cap_screen, "Screen") { _, _ -> dismiss(); onPick(Mode.SCREENSHOT) })
+        add(item(R.drawable.ic_cap_scroll, "Scroll") { _, _ -> dismiss(); onPick(Mode.SCROLL) })
+        add(item(R.drawable.ic_cap_text, "Text") { _, _ -> dismiss(); onPick(Mode.TEXT) })
+        add(item(R.drawable.ic_cap_both, "Both") { _, _ -> dismiss(); onPick(Mode.SCROLL_TEXT) })
 
-        fun startLabel() = if (prefs.startFromTop) "Starts: from the top" else "Starts: from here"
-        controls.addView(chip(startLabel()) { v ->
+        bar.addView(View(ctx).apply { setBackgroundColor(0x33FFFFFF) },
+            LinearLayout.LayoutParams(dp(1f), dp(30f)).apply { leftMargin = dp(2f); rightMargin = dp(2f) })
+
+        // Where long captures start: tapping flips between the two.
+        val start = item(
+            if (prefs.startFromTop) R.drawable.ic_cap_top else R.drawable.ic_cap_here,
+            if (prefs.startFromTop) "Top" else "Here",
+        ) { img, txt ->
             prefs.startFromTop = !prefs.startFromTop
-            v.text = startLabel()
-        })
-        controls.addView(View(ctx), Ui.lp(0, 1, 1f))
-        controls.addView(chip("Settings", C.INK2) { dismiss(); onSettings() })
-        controls.addView(chip("Move") { move(it) })
-        controls.addView(chip("Close", C.INK2) { dismiss() })
-        bar.addView(controls)
+            img.setImageResource(if (prefs.startFromTop) R.drawable.ic_cap_top else R.drawable.ic_cap_here)
+            txt.text = if (prefs.startFromTop) "Top" else "Here"
+        }
+        add(start)
+        add(item(R.drawable.ic_cap_move, "Move") { _, _ -> move() })
+        add(item(R.drawable.ic_cap_close, "Close") { _, _ -> dismiss() })
 
         val lp = WindowManager.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
@@ -101,10 +106,9 @@ class PickerOverlay(
             PixelFormat.TRANSLUCENT,
         ).apply {
             gravity = Gravity.BOTTOM
-            x = 0
             y = dp(28f)
         }
-        // Side margins come from wrapping the bar so the window itself stays tight to its content.
+        // Side margins come from a wrapper so the window itself stays tight to its content.
         val holder = LinearLayout(ctx).apply {
             setPadding(dp(10f), 0, dp(10f), 0)
             addView(bar, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
@@ -114,7 +118,7 @@ class PickerOverlay(
     }
 
     /** Swap between the bottom and the top of the screen, whichever leaves the content visible. */
-    private fun move(@Suppress("UNUSED_PARAMETER") v: View) {
+    private fun move() {
         val r = root ?: return
         val ctx = r.context
         atTop = !atTop

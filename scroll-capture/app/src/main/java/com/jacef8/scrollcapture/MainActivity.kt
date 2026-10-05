@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -70,7 +71,7 @@ class MainActivity : Activity() {
         val notes = notificationsOk()
         ring.fraction = when { on && notes -> 1f; on -> 0.8f; else -> 0.15f }
         ringTitle.text = if (on) "READY" else "SET UP"
-        ringSub.text = if (on) "Press Volume Up + Down" else "1 step to go"
+        ringSub.text = if (on) "Press Volume\nUp + Down" else "1 step\nto go"
         step1Status.text = if (on) "On" else "Off"
         step1Status.setTextColor(if (on) C.ACCENT2 else C.WARN)
         step1Btn.text = if (on) "Open Accessibility settings" else "Turn on"
@@ -92,17 +93,28 @@ class MainActivity : Activity() {
             setPadding(0, dp(4f), 0, dp(14f))
         })
 
-        // Anchor
+        // Anchor. The words inside are sized to the ring's inner circle, with a buffer, so they can never touch it.
+        val ringDp = 260f
+        val (boxW, boxH) = Ring.safeBoxDp(ringDp)
         val anchor = FrameLayout(this)
         ring = Ring(this)
-        anchor.addView(ring, FrameLayout.LayoutParams(dp(230f), dp(230f), Gravity.CENTER))
+        anchor.addView(ring, FrameLayout.LayoutParams(dp(ringDp), dp(ringDp), Gravity.CENTER))
         val center = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER }
-        ringTitle = Ui.text(this, "", 40f, C.INK, true).apply { letterSpacing = -0.03f }
-        ringSub = Ui.text(this, "", 14f, C.INK3)
-        center.addView(ringTitle)
-        center.addView(ringSub)
-        anchor.addView(center, FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER))
-        col.addView(anchor, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, dp(240f)))
+        ringTitle = Ui.text(this, "", 30f, C.INK, true).apply {
+            maxLines = 1
+            gravity = Gravity.CENTER
+            letterSpacing = -0.02f
+            setAutoSizeTextTypeUniformWithConfiguration(14, 30, 1, TypedValue.COMPLEX_UNIT_SP)
+        }
+        ringSub = Ui.text(this, "", 13f, C.INK3).apply {
+            maxLines = 2
+            gravity = Gravity.CENTER
+            setAutoSizeTextTypeUniformWithConfiguration(12, 13, 1, TypedValue.COMPLEX_UNIT_SP)
+        }
+        center.addView(ringTitle, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        center.addView(ringSub, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        anchor.addView(center, FrameLayout.LayoutParams(dp(boxW), dp(boxH), Gravity.CENTER))
+        col.addView(anchor, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, dp(ringDp + 10f)))
 
         captureBtn = Ui.text(this, "Capture now", 18f, C.ON_ACCENT, true).apply {
             gravity = Gravity.CENTER

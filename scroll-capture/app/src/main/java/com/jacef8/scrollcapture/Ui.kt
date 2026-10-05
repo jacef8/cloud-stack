@@ -117,8 +117,32 @@ object Ui {
     }
 }
 
-/** The one large circular anchor: a thick gradient arc over a dark track. */
+/**
+ * The one large circular anchor: a thick gradient arc over a dark track.
+ *
+ * Anything drawn inside must stay clear of the track: use [safeBoxDp] for the box that fits
+ * inside the inner circle with a buffer, and size text to it, never to the screen.
+ */
 class Ring(ctx: Context) : View(ctx) {
+    companion object {
+        private const val STROKE = 0.085f   // arc thickness as a share of the ring's size
+        private const val GLOW_DP = 4f
+        const val MIN_BUFFER_DP = 14f
+
+        /**
+         * Width and height (dp) of the largest 3:2 box that fits inside the ring with a buffer
+         * between its corners and the inner edge of the track and glow.
+         */
+        fun safeBoxDp(ringDp: Float): Pair<Float, Float> {
+            val stroke = ringDp * STROKE
+            val ringRadius = ringDp / 2f - stroke * 1.6f
+            val inner = ringRadius - stroke * 0.55f - GLOW_DP   // thickest stroke (the track) plus glow
+            val buffer = maxOf(MIN_BUFFER_DP, inner * 0.12f)
+            val r = inner - buffer
+            return Pair(1.66f * r, 1.11f * r)
+        }
+    }
+
     var fraction = 0f
         set(v) { field = v.coerceIn(0f, 1f); invalidate() }
 
@@ -142,7 +166,7 @@ class Ring(ctx: Context) : View(ctx) {
 
     override fun onDraw(c: Canvas) {
         val s = minOf(width, height).toFloat()
-        val stroke = s * 0.085f
+        val stroke = s * STROKE
         val cx = width / 2f
         val cy = height / 2f
         val r = s / 2f - stroke * 1.6f
@@ -151,7 +175,7 @@ class Ring(ctx: Context) : View(ctx) {
         arc.shader = SweepGradient(cx, cy, intArrayOf(C.ACCENT, C.ACCENT2, C.ACCENT2), floatArrayOf(0f, 0.75f, 1f)).also {
             it.setLocalMatrix(Matrix().apply { postRotate(135f, cx, cy) })
         }
-        arc.setShadowLayer(Ui.dp(context, 4f).toFloat(), 0f, 0f, C.ACCENT)
+        arc.setShadowLayer(Ui.dp(context, GLOW_DP).toFloat(), 0f, 0f, C.ACCENT)
         ticks.pathEffect = DashPathEffect(floatArrayOf(1.5f, Ui.dp(context, 5f).toFloat()), 0f)
         c.drawCircle(cx, cy, s / 2f - stroke * 0.3f, ticks)
         rect.set(cx - r, cy - r, cx + r, cy + r)

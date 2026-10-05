@@ -246,7 +246,8 @@ class CaptureService : AccessibilityService() {
                 }
             }
             NotificationManagerCompat.from(this).cancel(NOTE_PROGRESS)
-            if (outcome.id != null) { if (mode != Mode.SCREENSHOT) captureFeedback() } else sharpBuzz(120)
+            // The screenshot already clicked; a long capture finishing is only a buzz, so there is one camera sound, not two.
+            if (outcome.id != null) { if (mode != Mode.SCREENSHOT) sharpBuzz() } else sharpBuzz(120)
             main.post {
                 indicator.hide()
                 bar?.dismiss()

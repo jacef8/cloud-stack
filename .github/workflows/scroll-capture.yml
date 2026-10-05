@@ -44,15 +44,31 @@ jobs:
           name: ScrollCapture-apk
           path: scroll-capture/ScrollCapture.apk
 
-      # One release that always holds the newest build, at a fixed address:
-      # github.com/<owner>/<repo>/releases/tag/scroll-capture-latest
+      # Two releases per build:
+      #  - scroll-capture-latest: always the newest build, at a fixed address (for a quick manual download).
+      #  - scroll-capture-v1.0.N: this build under its own version number, so an updater app (Obtainium) can
+      #    see that a NEW version exists and install it by itself. Only the latest five are kept.
       - name: Publish the newest build
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          VERSION="1.0.${{ github.run_number }}"
+          NOTES="Build ${{ github.run_number }} (version $VERSION) from ${GITHUB_SHA::7} on ${{ github.ref_name }}."
+
           gh release delete scroll-capture-latest --yes --cleanup-tag || true
           gh release create scroll-capture-latest ScrollCapture.apk \
             --title "Scroll Capture build ${{ github.run_number }}" \
-            --notes "Build ${{ github.run_number }} from ${GITHUB_SHA::7} on ${{ github.ref_name }}. Open on your phone and tap ScrollCapture.apk to install or update." \
+            --notes "$NOTES Open on your phone and tap ScrollCapture.apk to install or update." \
             --prerelease \
             --target "$GITHUB_SHA"
+
+          gh release create "scroll-capture-v$VERSION" ScrollCapture.apk \
+            --title "Scroll Capture $VERSION" \
+            --notes "$NOTES" \
+            --latest \
+            --target "$GITHUB_SHA"
+
+          # Keep the newest five numbered releases; remove older ones and their tags.
+          gh release list --limit 100 --json tagName,createdAt \
+            --jq '[.[] | select(.tagName | startswith("scroll-capture-v"))] | sort_by(.createdAt) | reverse | .[5:] | .[].tagName' \
+            | while read -r old; do gh release delete "$old" --yes --cleanup-tag || true; done

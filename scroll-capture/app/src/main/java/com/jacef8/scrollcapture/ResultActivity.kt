@@ -139,11 +139,12 @@ class ResultActivity : Activity() {
         })
 
         if (hasImage) {
-            imageList.post {
-                val raw = File(dir, "image.raw")
-                if (raw.exists()) {
-                    imageList.adapter = TileAdapter(raw, meta.getProperty("width").toInt(), meta.getProperty("rows").toInt(), imageList.width)
-                }
+            val raw = File(dir, "image.raw")
+            if (raw.exists()) {
+                // The list's width is only known once it is laid out, so the adapter asks for it when each slice is shown.
+                imageList.adapter = TileAdapter(
+                    raw, meta.getProperty("width").toInt(), meta.getProperty("rows").toInt()
+                ) { imageList.width }
             }
         }
 
@@ -271,10 +272,9 @@ private class TileAdapter(
     private val raw: File,
     private val width: Int,
     private val rows: Int,
-    viewWidth: Int,
+    private val viewWidth: () -> Int,
 ) : RecyclerView.Adapter<TileAdapter.Holder>() {
     private val tileRows = 800
-    private val scale = viewWidth.toFloat() / width
     private val exec = Executors.newSingleThreadExecutor()
     private val ui = Handler(Looper.getMainLooper())
 
@@ -293,6 +293,8 @@ private class TileAdapter(
     override fun onBindViewHolder(h: Holder, position: Int) {
         val from = position * tileRows
         val count = minOf(tileRows, rows - from)
+        val vw = viewWidth().takeIf { it > 0 } ?: h.view.resources.displayMetrics.widthPixels
+        val scale = vw.toFloat() / width
         h.view.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (count * scale).toInt().coerceAtLeast(1))
         h.view.setImageDrawable(null)
         h.view.tag = position

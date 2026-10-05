@@ -94,7 +94,7 @@ class CaptureEngine(
         if (!scrolling) {
             store?.append(px0, w, 0, h)
             if (wantText) acc.add(split(tree0, 0, h, px0, w).body, 0)
-            return finish(id, dir, store, w, 1, acc, wantText, warnings)
+            return finish(id, dir, store, w, acc, wantText, warnings)
         }
 
         // Scroll once to learn how this screen moves.
@@ -105,7 +105,7 @@ class CaptureEngine(
             warnings += "Couldn't scroll this screen, so only what was visible was captured."
             store?.append(px0, w, 0, h)
             if (wantText) acc.add(split(tree0, 0, h, px0, w).body, 0)
-            return finish(id, dir, store, w, 1, acc, wantText, warnings)
+            return finish(id, dir, store, w, acc, wantText, warnings)
         }
         var tree = if (wantText) currentTree() else emptyList()
 
@@ -120,7 +120,7 @@ class CaptureEngine(
             }
             store?.append(px0, w, 0, h)
             if (wantText) acc.add(split(tree0, 0, h, px0, w).body, 0)
-            return finish(id, dir, store, w, 1, acc, wantText, warnings)
+            return finish(id, dir, store, w, acc, wantText, warnings)
         }
         val top = region[0]
         val bottom = region[1]
@@ -189,8 +189,7 @@ class CaptureEngine(
         st.finish()
         if (wantText && lastFooter.isNotEmpty()) acc.add(lastFooter, st.offset)
 
-        val rows = store?.rows ?: 0
-        return finish(id, dir, store, w, rows, acc, wantText, warnings, pages)
+        return finish(id, dir, store, w, acc, wantText, warnings, pages)
     }
 
     /** Text only for an app that blacks out screenshots: the words are still readable. */
@@ -210,7 +209,7 @@ class CaptureEngine(
             Thread.sleep(SETTLE_MS)
         }
         val warnings = arrayListOf("This app blocks screenshots, so only its own text was read. Some parts may be missing.")
-        return finish(id, dir, null, 0, 0, acc, true, warnings, pages)
+        return finish(id, dir, null, 0, acc, true, warnings, pages)
     }
 
     private fun finish(
@@ -218,13 +217,13 @@ class CaptureEngine(
         dir: File,
         store: StripStore?,
         w: Int,
-        rows: Int,
         acc: TextAccumulator,
         wantText: Boolean,
         warnings: MutableList<String>,
         pages: Int = 1,
     ): Outcome {
         store?.close()
+        val rows = store?.rows ?: 0
         val props = Properties()
         props["pages"] = pages.toString()
 

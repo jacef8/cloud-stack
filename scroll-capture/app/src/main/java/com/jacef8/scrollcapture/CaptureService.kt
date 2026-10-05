@@ -194,7 +194,7 @@ class CaptureService : AccessibilityService() {
         progressNotice(1)
         // A long capture shows its pill straight away, so it is clear it is working and not waiting on you.
         if (mode != Mode.SCREENSHOT) {
-            main.post { indicator.show("Scrolling…  ·  tap to stop") }
+            main.post { indicator.show("Scrolling…") }
         }
         Thread {
             val listener = object : CaptureListener {
@@ -207,7 +207,7 @@ class CaptureService : AccessibilityService() {
                     progressNotice(pages)
                     main.post {
                         if (running) {
-                            indicator.show("Scrolling… $pages  ·  tap to stop")
+                            indicator.show("Scrolling… $pages")
                         }
                     }
                 }

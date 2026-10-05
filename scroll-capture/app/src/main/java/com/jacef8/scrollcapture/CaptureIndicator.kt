@@ -8,6 +8,7 @@ import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.LinearLayout
 import android.widget.TextView
 
 /**
@@ -19,33 +20,54 @@ class CaptureIndicator(
     private val svc: AccessibilityService,
     private val onStop: () -> Unit,
 ) {
-    private var view: TextView? = null
+    private var view: LinearLayout? = null
+    private var label: TextView? = null
     private var hiddenForPicture = false
     private val wm get() = svc.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
     /** Shows the pill with [label], or changes its text if it is already up. */
     fun show(label: String) {
         view?.let {
-            it.text = label
+            this.label?.text = label
             it.visibility = if (hiddenForPicture) android.view.View.INVISIBLE else android.view.View.VISIBLE
             return
         }
         val ctx = ContextThemeWrapper(svc, android.R.style.Theme_DeviceDefault)
         val dp = { v: Float -> Ui.dp(ctx, v) }
-        val tv = TextView(ctx).apply {
-            text = label
+        val text = TextView(ctx).apply {
+            this.text = label
             textSize = 14f
             setTextColor(C.INK)
             typeface = android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.BOLD)
-            setPadding(dp(16f), dp(10f), dp(16f), dp(10f))
+        }
+        // A clear Done button: the capture ends when you say so, and everything so far is saved.
+        val done = TextView(ctx).apply {
+            this.text = "Done ✓"
+            textSize = 14f
+            setTextColor(0xFF0B0C0E.toInt())
+            typeface = android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.BOLD)
+            gravity = Gravity.CENTER
+            setPadding(dp(14f), dp(8f), dp(14f), dp(8f))
+            background = GradientDrawable().apply {
+                setColor(C.ACCENT)
+                cornerRadius = dp(18f).toFloat()
+            }
+            setOnClickListener { onStop() }
+        }
+        val tv = LinearLayout(ctx).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(16f), dp(6f), dp(6f), dp(6f))
             background = GradientDrawable().apply {
                 setColor(0xE6141518.toInt())
-                cornerRadius = dp(22f).toFloat()
+                cornerRadius = dp(24f).toFloat()
                 setStroke(dp(1f), C.ACCENT)
             }
             elevation = dp(6f).toFloat()
-            setOnClickListener { onStop() }
+            addView(text)
+            addView(done, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginStart = dp(14f) })
         }
+        label = text
         val lp = WindowManager.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -75,6 +97,7 @@ class CaptureIndicator(
     fun hide() {
         val v = view ?: return
         view = null
+        label = null
         try { wm.removeView(v) } catch (_: Exception) { }
     }
 }

@@ -20,11 +20,16 @@ class CaptureIndicator(
     private val onStop: () -> Unit,
 ) {
     private var view: TextView? = null
+    private var hiddenForPicture = false
     private val wm get() = svc.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
     /** Shows the pill with [label], or changes its text if it is already up. */
     fun show(label: String) {
-        view?.let { it.text = label; it.visibility = android.view.View.VISIBLE; return }
+        view?.let {
+            it.text = label
+            it.visibility = if (hiddenForPicture) android.view.View.INVISIBLE else android.view.View.VISIBLE
+            return
+        }
         val ctx = ContextThemeWrapper(svc, android.R.style.Theme_DeviceDefault)
         val dp = { v: Float -> Ui.dp(ctx, v) }
         val tv = TextView(ctx).apply {
@@ -63,6 +68,7 @@ class CaptureIndicator(
 
     /** Hide or show it without removing it, so it can be kept out of one picture. */
     fun setVisible(visible: Boolean) {
+        hiddenForPicture = !visible
         view?.visibility = if (visible) android.view.View.VISIBLE else android.view.View.INVISIBLE
     }
 

@@ -66,6 +66,9 @@ class CaptureEngine(
     private val ui = Handler(Looper.getMainLooper())
     private var lastApp = ""
     private var debugNote = ""
+    private var sessionSummary = ""
+    /** True while our buttons are already hidden for a whole swipe, so each picture need not hide them again. */
+    @Volatile private var uiHeldHidden = false
 
     fun run(): Outcome = try {
         runInner()
@@ -244,6 +247,10 @@ class CaptureEngine(
         if (control != null) {
             val pagesDone = runSession(control, st, px1, firstShift, words0, w, h, top, bottom, region, target, useAction)
             st.finish()
+            if (pagesDone <= 1) {
+                warnings += "No other screens were added, so this is just the first screen."
+                debugNote = "$sessionSummary; ${Rows.lastNote}"
+            }
             return finish(id, dir, store, w, acc, wantText, warnings, pagesDone)
         }
 
@@ -298,11 +305,6 @@ class CaptureEngine(
             if (shouldStop()) break
             if (pages >= MAX_PAGES) {
                 warnings += "Stopped after $MAX_PAGES screens. Capture again from where it ended to continue."
-                break
-            }
-            // Driven by the person: hold to keep scrolling, let go to pause, Done (or leaving it idle) to finish.
-            if (control != null && !control.waitForStep(IDLE_MS)) {
-                DebugLog.log("finished after $pages screens (done, or left idle)")
                 break
             }
             if (leftApp(pkg)) {
@@ -440,10 +442,12 @@ class CaptureEngine(
     // ---- screen and scrolling ----
 
     /**
-     * A person-driven scroll capture. It adds to the image whenever the page moves, however that happened:
-     * the scroll button asked for a step, or the person swiped by hand and the page then stopped. Nothing
-     * that goes wrong ends it (a step that moved nothing, a picture that would not line up, leaving the app):
-     * those just show a note. Only Done, or being left alone for a long time, finishes it.
+     * A person-driven scroll capture. While the page is moving (the person is swiping) it takes pictures
+     * one after another as fast as Android allows, so even a quick flick leaves overlap; it follows the
+     * page up as well as down and adds only what the image does not already have. The scroll button asks
+     * for extra steps. Nothing that goes wrong ends it (a step that moved nothing, a picture that would not
+     * line up, leaving the app): those just show a note. Only Done, or being left alone for a long time,
+     * finishes it.
      */
     private fun runSession(
         control: SessionControl, st: IncrementalStitcher, firstPx: IntArray, firstShift: Int?, words0: List<Line>,
@@ -451,34 +455,57 @@ class CaptureEngine(
     ): Int {
         var pages = 1
         var prevWords = words0
-        val first = if (firstShift != null) st.nextWith(firstPx, firstShift) else st.next(firstPx, true)
-        if (first is Step.Added) {
+        var stepFrames = 0
+        var motionFrames = 0
+        var joined = 0
+        var notJoined = 0
+        var backward = 0
+        val first = if (firstShift != null) st.nextWith(firstPx, firstShift) else st.next(firstPx, true, allowBack = true)
+        if (first is Step.Added && first.added > 0) {
             pages++
+            joined++
             prevWords = currentTree()
         } else {
             DebugLog.log("session: the first scroll did not join (${Rows.lastNote})")
-            listener.note("That first scroll went too far to join. Swipe the page a little at a time (less than a screen), or tap ● again.")
+            listener.note("That first scroll went too far to join. Swipe the page a little at a time, or tap ● again.")
         }
         listener.progress(pages)
-        control.clearScroll()
+        control.markGrab()
+        var hidden = false
         while (pages < MAX_PAGES) {
-            val trigger = control.awaitTrigger(SETTLE_EVENT_MS, SESSION_IDLE_MS)
+            val trigger = control.awaitTrigger(SESSION_IDLE_MS)
             if (trigger == Trigger.DONE || trigger == Trigger.IDLE) {
                 DebugLog.log("session finished by $trigger after $pages screens")
                 break
             }
             var viaCommand = false
-            if (trigger == Trigger.STEP) {
-                // While the button is held a finger is on the screen, and Android cancels a swipe we send then,
-                // so use the scroll command (which needs no touch). Otherwise a swipe, which can be checked.
-                viaCommand = target != null && (control.holding || useAction)
-                scrollOnce(if (viaCommand) target else null, region, w, h)
+            when (trigger) {
+                Trigger.STEP -> {
+                    stepFrames++
+                    // While the button is held a finger is on the screen, and Android cancels a swipe we send then,
+                    // so use the scroll command (which needs no touch). Otherwise a swipe, which can be checked.
+                    viaCommand = target != null && (control.holding || useAction)
+                    scrollOnce(if (viaCommand) target else null, region, w, h)
+                }
+                Trigger.MOTION -> {
+                    motionFrames++
+                    // The person is swiping: keep our buttons and pill out of the pictures for the whole swipe,
+                    // not just one picture at a time, so pictures can follow each other quickly.
+                    if (!hidden) {
+                        listener.beforeGrab()
+                        Thread.sleep(UI_HIDE_MS)
+                        hidden = true
+                        uiHeldHidden = true
+                    }
+                }
+                else -> Unit
             }
+            val startedAt = control.now()
             val px = grabPixels(w, h)
-            control.clearScroll()
-            if (px == null) { Thread.sleep(300); continue }
+            control.markGrab(startedAt)
+            if (px == null) { Thread.sleep(200); continue }
             val words = currentTree()
-            var step: Step = st.next(px, true)
+            var step: Step = st.next(px, true, allowBack = true)
             if (step is Step.Lost) {
                 val s = TreeAlign.shift(prevWords, words, top, bottom, 12, (bottom - top) - 40)
                 step = when {
@@ -489,20 +516,42 @@ class CaptureEngine(
             }
             when (step) {
                 is Step.Added -> {
-                    pages++
                     prevWords = words
-                    DebugLog.log("session screen $pages: moved ${step.shift} by $trigger (${Rows.lastNote})")
-                    listener.progress(pages)
+                    if (step.shift < 0) backward++
+                    if (step.added > 0) {
+                        pages++
+                        joined++
+                        DebugLog.log("session screen $pages: moved ${step.shift}, added ${step.added} by $trigger (${Rows.lastNote})")
+                        listener.progress(pages)
+                    }
                 }
                 is Step.End -> {
                     if (trigger == Trigger.STEP) listener.note("Nothing more moved. If this is the end of the page, tap ✓ to save.")
                 }
                 else -> {
+                    notJoined++
                     DebugLog.log("session: could not join a picture (${Rows.lastNote}) by $trigger")
-                    listener.note("Couldn't join that picture. Scroll a little less each time, then try again.")
+                    if (trigger == Trigger.STEP || !control.motionPending()) {
+                        listener.note("Couldn't join that picture. Scroll a little less each time, then try again.")
+                    }
+                }
+            }
+            // Bring the buttons back once the page has stopped moving.
+            if (hidden && !control.motionPending()) {
+                Thread.sleep(250)
+                if (!control.motionPending()) {
+                    uiHeldHidden = false
+                    hidden = false
+                    listener.afterGrab()
                 }
             }
         }
+        if (hidden) {
+            uiHeldHidden = false
+            listener.afterGrab()
+        }
+        sessionSummary = "$stepFrames button steps, $motionFrames swipe pictures, $joined added, $backward back up, $notJoined not joined, ${control.scrollEvents} scroll events"
+        DebugLog.log("session summary: $sessionSummary")
         return pages
     }
 
@@ -642,7 +691,7 @@ class CaptureEngine(
     /** One screenshot of the whole display, as a normal bitmap. Android allows about one per second. */
     private fun grab(): Bitmap? {
         // Anything of ours on screen (the buttons, the status pill) goes invisible for the picture, so it is never in it.
-        val hide = mode != Mode.SCREENSHOT
+        val hide = mode != Mode.SCREENSHOT && !uiHeldHidden
         if (hide) {
             listener.beforeGrab()
             Thread.sleep(UI_HIDE_MS)
@@ -679,7 +728,7 @@ class CaptureEngine(
             })
             latch.await(5, TimeUnit.SECONDS)
             holder[0]?.let { return it }
-            Thread.sleep(if (err[0] == AccessibilityService.ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT) 500 else 250)
+            Thread.sleep(if (err[0] == AccessibilityService.ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT) 120 else 250)
         }
         return null
     }
@@ -691,6 +740,5 @@ class CaptureEngine(
         const val UI_HIDE_MS = 150L
         const val IDLE_MS = 25_000L
         const val SESSION_IDLE_MS = 60_000L
-        const val SETTLE_EVENT_MS = 500L
     }
 }

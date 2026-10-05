@@ -25,13 +25,15 @@ sooner. Touches anywhere else go straight to the app.
 | White circle (Scroll) | One tall image of the whole scrolling section |
 
 **Scroll is a session you control.** Tap the white circle and the page scrolls and is added to one tall
-image. Tap it again for another step; hold it to keep going. **Or swipe the page yourself:** whenever it stops
-moving, what is new is added. Letting go never ends it, and nothing that goes wrong ends it either (a step
-that moved nothing, a picture that would not join, leaving the app): those just show a note in the status
-pill. Only the tick (Done) saves it, or leaving it alone for a minute, or the 250-screen limit. The buttons
-and the status pill go invisible for each picture, so none of them ends up in the image. A scroll that works
-replaces the first screenshot, so there is one continuous image; one that does not keeps the original and
-adds no duplicate.
+image. Then either tap it again for another step (hold it to keep going), **or swipe the page yourself.**
+While the page is moving, pictures are taken one after another as fast as Android allows, so even a quick
+flick overlaps; the buttons and the status pill stay invisible for the whole swipe and come back when you stop.
+It follows you up as well as down and only adds what the image does not already have, so scrolling back and
+forth never repeats or misses anything. Letting go never ends it, and nothing that goes wrong ends it either
+(a picture that would not join, leaving the app): those just show a note in the status pill. Only the tick
+(Done) saves it, or leaving it alone for a minute, or the 250-screen limit. A scroll that works replaces the
+first screenshot, so there is one continuous image. If it ends up with only the first screen, the note beside
+the thumbnail says so, with the numbers behind it.
 
 If the page does not move with the slow drag, it tries a quick flick, then the scroll command. The scroll command moves exactly one screenful, so pictures taken that way follow on from each other with no overlap needed and are joined directly. If the
 pictures cannot be lined up row by row (a playing video, images still loading), it uses where the

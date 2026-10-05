@@ -273,30 +273,37 @@ class CoreTest {
         assertTrue(!c.done)
         now += 1_000
         c.press()                    // press again: one more step
-        assertTrue(c.waitForStep(10_000, 1))
+        assertEquals(Trigger.STEP, c.awaitTrigger(10_000, 1))
         c.release()
         now += 20_000                // left idle: saved rather than lost
-        assertTrue(!c.waitForStep(10_000, 1))
+        assertEquals(Trigger.IDLE, c.awaitTrigger(10_000, 1))
     }
 
     @Test fun holdingKeepsStepsComingAndDoneStopsThem() {
         val c = SessionControl()
         c.press()
         c.consumeInitial()
-        repeat(5) { assertTrue(c.waitForStep(10_000, 1)) }
+        repeat(5) { assertEquals(Trigger.STEP, c.awaitTrigger(10_000, 1)) }
         c.finish()
-        assertTrue(!c.waitForStep(10_000, 1))
+        assertEquals(Trigger.DONE, c.awaitTrigger(10_000, 1))
     }
 
-    @Test fun aHandScrollIsPickedUpOnceThePageStopsMoving() {
-        var now = 0L
+    @Test fun swipingByHandKeepsTakingPicturesWhileThePageMoves() {
+        var now = 1_000L
         val c = SessionControl { now }
         c.press(); c.consumeInitial(); c.release()
-        c.noteScroll()                         // the person swipes
-        now += 200
-        c.noteScroll()                         // still moving
-        now += 600                             // ... and has now been still long enough
-        assertEquals(Trigger.SETTLED, c.awaitTrigger(500, 60_000, 1))
+        c.markGrab(now)                          // nothing is waiting
+        now += 100
+        c.noteScroll()                           // the person swipes
+        assertEquals(Trigger.MOTION, c.awaitTrigger(60_000, 1))
+        val startedAt = now
+        now += 150                               // a picture takes a moment ...
+        c.noteScroll()                           // ... and the page is still moving
+        c.markGrab(startedAt)
+        assertEquals(Trigger.MOTION, c.awaitTrigger(60_000, 1))   // so take another straight away
+        c.markGrab(now)
+        assertTrue(!c.motionPending())           // once it has stopped there is nothing more to catch
+        assertEquals(2, c.scrollEvents)
     }
 
     @Test fun nothingEndsTheSessionExceptDoneOrBeingLeftIdle() {
@@ -305,12 +312,41 @@ class CoreTest {
         c.press(); c.consumeInitial(); c.release()
         now += 10_000
         c.press()
-        assertEquals(Trigger.STEP, c.awaitTrigger(500, 60_000, 1))
+        assertEquals(Trigger.STEP, c.awaitTrigger(60_000, 1))
         c.release()
         now += 61_000
-        assertEquals(Trigger.IDLE, c.awaitTrigger(500, 60_000, 1))
+        assertEquals(Trigger.IDLE, c.awaitTrigger(60_000, 1))
         c.finish()
-        assertEquals(Trigger.DONE, c.awaitTrigger(500, 60_000, 1))
+        assertEquals(Trigger.DONE, c.awaitTrigger(60_000, 1))
+    }
+
+    /** Down, down, back up, then down further: nothing is repeated and nothing is missed. */
+    @Test fun scrollingBackAndForthNeverRepeatsOrMissesAnything() {
+        val docRows = 3000
+        val doc = makeDoc(docRows, 21)
+        val regionH = bottom - top
+        val file = File.createTempFile("raw", ".bin")
+        val store = StripStore(file, w)
+        val st = IncrementalStitcher(w, h, top, bottom, store)
+        st.start(frameAt(doc, docRows, 0))
+        var maxReach = regionH
+        for (pos in listOf(400, 800, 400, 150, 500, 900, 1300, 1000, 1500, 1900)) {
+            val step = st.next(frameAt(doc, docRows, pos), true, allowBack = true)
+            assertTrue("position $pos should join, got $step", step is Step.Added)
+            maxReach = maxOf(maxReach, pos + regionH)
+        }
+        st.finish()
+        store.close()
+        val got = RawRows.read(file, w, 0, store.rows)
+        file.delete()
+        val expected = IntArray((headerRows + maxReach + footerRows) * w)
+        val f0 = frameAt(doc, docRows, 0)
+        System.arraycopy(f0, 0, expected, 0, headerRows * w)
+        System.arraycopy(doc, 0, expected, headerRows * w, maxReach * w)
+        val last = frameAt(doc, docRows, 1900)
+        System.arraycopy(last, bottom * w, expected, (headerRows + maxReach) * w, footerRows * w)
+        assertEquals(expected.size, got.size)
+        assertTrue("stitched image differs from the page", rgb(expected).contentEquals(rgb(got)))
     }
 
     // ---- fallback: how far did it scroll, from where the words sit ----

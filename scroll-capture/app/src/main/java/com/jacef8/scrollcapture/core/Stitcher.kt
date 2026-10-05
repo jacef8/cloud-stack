@@ -6,9 +6,12 @@ interface RowSink {
 }
 
 sealed class Step {
-    /** New content was found; [offset] is the total scrolled distance so far. */
-    data class Added(val shift: Int, val offset: Int) : Step()
-    /** The screen did not change: the end of the content. */
+    /**
+     * The picture joined. [shift] is how far the page moved (negative: scrolled back up), [offset] is where
+     * this picture now sits, and [added] is how many new rows it brought (0 when it showed nothing new).
+     */
+    data class Added(val shift: Int, val offset: Int, val added: Int) : Step()
+    /** The screen did not change. */
     object End : Step()
     /** Frames could not be lined up (the screen changed in some other way). Nothing was added. */
     data class Lost(val offset: Int) : Step()
@@ -18,9 +21,11 @@ sealed class Step {
 
 /**
  * Builds one tall image from frames of a scrolling region [top, bottom).
- * The first frame contributes everything down to [bottom] (so a fixed header is
- * kept once), each later frame only its newly revealed rows, and the last
- * frame's rows below [bottom] close the image (a fixed footer, kept once).
+ *
+ * The first frame contributes everything down to [bottom] (so a fixed header is kept once). Every
+ * later frame is lined up with the one before it, and only the rows BELOW what the image already
+ * reaches are added, so scrolling back up and down again never repeats anything. The last frame's rows
+ * below [bottom] close the image (a fixed footer, kept once).
  */
 class IncrementalStitcher(
     private val w: Int,
@@ -29,12 +34,16 @@ class IncrementalStitcher(
     private val bottom: Int,
     private val sink: RowSink?,
 ) {
+    private val regionH = bottom - top
     private var prevPx: IntArray? = null
     private var prevSig: RowSig? = null
-    private var hint = (bottom - top) * 3 / 4
+    private var hint = regionH * 3 / 4
 
+    /** Where the latest picture sits, measured from where the first one was. */
     var offset = 0
         private set
+    /** The content position just below the last row added to the image. */
+    private var reach = regionH
     var lost = 0
         private set
     var consecutiveLost = 0
@@ -46,38 +55,51 @@ class IncrementalStitcher(
         sink?.append(px, w, 0, bottom)
     }
 
-    fun next(px: IntArray, allowLost: Boolean): Step {
+    /** [allowBack]: also line the picture up when the page was scrolled back UP since the last one. */
+    fun next(px: IntArray, allowLost: Boolean, allowBack: Boolean = false): Step {
         val sig = Rows.signature(px, w, h)
+        val before = prevPx
+        var s: Int? = null
+
         var sh = Rows.findShift(prevSig!!, sig, top, bottom, hint)
-        if (sh == null) {
-            val before = prevPx
-            if (before != null) sh = Rows.findShiftFuzzy(Rows.profile(before, w, h), Rows.profile(px, w, h), top, bottom, hint)
+        if (sh == null && before != null) {
+            sh = Rows.findShiftFuzzy(Rows.profile(before, w, h), Rows.profile(px, w, h), top, bottom, hint)
         }
-        if (sh == null) {
+        if (sh != null) s = sh.s
+
+        if (s == null && allowBack && before != null) {
+            // Scrolled back up: this picture shows content ABOVE the last one, so it is the last one that
+            // has moved up relative to this one.
+            var back = Rows.findShift(sig, prevSig!!, top, bottom, hint)
+            if (back == null) back = Rows.findShiftFuzzy(Rows.profile(px, w, h), Rows.profile(before, w, h), top, bottom, hint)
+            if (back != null && back.s > 0) s = -back.s
+        }
+
+        if (s == null) {
             if (!allowLost) return Step.Retry
             lost++
             consecutiveLost++
             return Step.Lost(offset)
         }
-        if (sh.s == 0) return Step.End
-        consecutiveLost = 0
-        sink?.append(px, w, bottom - sh.s, bottom)
-        offset += sh.s
-        hint = sh.s
-        prevPx = px
-        prevSig = sig
-        return Step.Added(sh.s, offset)
+        if (s == 0) return Step.End
+        return accept(px, sig, s)
     }
 
-    /** Adds [px] when the scrolled distance [shift] is already known (found from the words on screen). */
-    fun nextWith(px: IntArray, shift: Int): Step {
+    /** Adds [px] when the scrolled distance [shift] is already known (found another way). */
+    fun nextWith(px: IntArray, shift: Int): Step = accept(px, Rows.signature(px, w, h), shift)
+
+    private fun accept(px: IntArray, sig: RowSig, s: Int): Step {
         consecutiveLost = 0
-        sink?.append(px, w, bottom - shift, bottom)
-        offset += shift
-        hint = shift
+        offset += s
+        val add = (offset + regionH - reach).coerceIn(0, regionH)
+        if (add > 0) {
+            sink?.append(px, w, bottom - add, bottom)
+            reach = offset + regionH
+        }
+        if (s > 0) hint = s
         prevPx = px
-        prevSig = Rows.signature(px, w, h)
-        return Step.Added(shift, offset)
+        prevSig = sig
+        return Step.Added(s, offset, add)
     }
 
     fun finish() {

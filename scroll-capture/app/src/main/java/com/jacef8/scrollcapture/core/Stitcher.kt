@@ -48,7 +48,11 @@ class IncrementalStitcher(
 
     fun next(px: IntArray, allowLost: Boolean): Step {
         val sig = Rows.signature(px, w, h)
-        val sh = Rows.findShift(prevSig!!, sig, top, bottom, hint)
+        var sh = Rows.findShift(prevSig!!, sig, top, bottom, hint)
+        if (sh == null) {
+            val before = prevPx
+            if (before != null) sh = Rows.findShiftFuzzy(Rows.profile(before, w, h), Rows.profile(px, w, h), top, bottom, hint)
+        }
         if (sh == null) {
             if (!allowLost) return Step.Retry
             lost++

@@ -118,6 +118,24 @@ class CoreTest {
         assertEquals(380, sh!!.s)
     }
 
+    /** Every pixel is a shade off (as with sub-pixel drawing): exact matching finds nothing, the looser pass does. */
+    @Test fun aPageThatRedrawsSlightlyDifferentlyStillLinesUp() {
+        val doc = makeDoc(3000, 13)
+        val a = frameAt(doc, 3000, 0)
+        val b = frameAt(doc, 3000, 400)
+        val rnd = Random(5)
+        for (i in b.indices) {
+            val p = b[i]
+            val d = rnd.nextInt(5) - 2
+            fun c(v: Int) = (v + d).coerceIn(0, 255)
+            b[i] = 0xFF000000.toInt() or (c((p shr 16) and 255) shl 16) or (c((p shr 8) and 255) shl 8) or c(p and 255)
+        }
+        assertTrue("exact matching should fail here", Rows.findShift(Rows.signature(a, w, h), Rows.signature(b, w, h), top, bottom, 300) == null)
+        val loose = Rows.findShiftFuzzy(Rows.profile(a, w, h), Rows.profile(b, w, h), top, bottom, 300)
+        assertNotNull(loose)
+        assertEquals(400, loose!!.s)
+    }
+
     @Test fun stitchesSmallScrollSteps() {
         val (got, expected) = stitch(1500, 120, 3)
         assertEquals(expected.size, got.size)

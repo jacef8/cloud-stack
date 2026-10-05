@@ -39,8 +39,7 @@ page's own words sit to work out how far it scrolled. Notes about a capture (sto
 to scroll) show beside the thumbnail, where nothing covers them.
 
 Text and Both (from the full-screen viewer) scroll by themselves to the end, with a "tap to stop" pill.
-Scrolling is a finger drag of under half the area that pauses before lifting, so the list does not
-coast on and each picture overlaps the last.
+Scrolling is a slow finger drag (about 400 px a second) of under half the area that pauses before lifting, so the list barely coasts and each picture overlaps the last. If the pictures are not pixel-identical (sub-pixel drawing), a looser row match is tried before giving up.
 
 Images are saved to `DCIM/Screenshots`, the folder Samsung phones use for their own screenshots, so they appear
 in Gallery with the other screenshots. Text goes to `Documents/ScrollCapture`.

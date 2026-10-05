@@ -32,6 +32,7 @@ import java.util.Properties
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import kotlin.math.abs
 
 class Outcome(val id: String?, val error: String?)
 
@@ -210,8 +211,15 @@ class CaptureEngine(
             region = cand
             firstShift = cand[1] - cand[0]
         }
+        if (region == null && control != null) {
+            // A person-driven session does not end because the first picture would not join: it starts from
+            // the first screen, says so, and lets the person swipe on from there.
+            val fallback = treeRegion ?: intArrayOf(0, h)
+            DebugLog.log("session starts without a join; scroll area ${fallback[0]}-${fallback[1]}")
+            region = fallback
+        }
         if (region == null) {
-            debugNote = "moved by $movedBy; unchanged ${"%.2f".format(Rows.unchangedShare(sig0, sig1, stillTop, stillBottom))}; ${Rows.lastNote.ifEmpty { "no candidate shift" }}; words ${words0.size}/${words1.size}"
+            debugNote = "moved by $movedBy; unchanged ${"%.2f".format(Rows.unchangedShare(sig0, sig1, stillTop, stillBottom))}; tree area ${treeRegion?.joinToString("-") ?: "none"}; ${Rows.lastNote.ifEmpty { "no candidate shift" }}; words ${words0.size}/${words1.size}"
             warnings += "Couldn't line the scrolled screens up, so only the first screen was captured."
             store?.append(px0, w, 0, h)
             if (wantText) acc.add(split(tree0, 0, h, px0, w).body, 0)
@@ -447,6 +455,9 @@ class CaptureEngine(
         if (first is Step.Added) {
             pages++
             prevWords = currentTree()
+        } else {
+            DebugLog.log("session: the first scroll did not join (${Rows.lastNote})")
+            listener.note("That first scroll went too far to join. Swipe the page a little at a time (less than a screen), or tap ● again.")
         }
         listener.progress(pages)
         control.clearScroll()
@@ -580,10 +591,13 @@ class CaptureEngine(
             moveTo(x.toFloat(), y1.toFloat())
             lineTo(x.toFloat(), y2.toFloat())
         }
-        val first = GestureDescription.StrokeDescription(drag, 0, 420, true)
+        // Slow on purpose: how far a list coasts depends on how fast the finger was going when it lifted, so a
+        // drag at about 400 px a second leaves almost no coast and the pictures overlap.
+        val moveMs = (abs(y1 - y2) / 0.42f).toLong().coerceIn(600L, 2800L)
+        val first = GestureDescription.StrokeDescription(drag, 0, moveMs, true)
         if (!dispatch(first)) return
         val stay = Path().apply { moveTo(x.toFloat(), y2.toFloat()) }
-        dispatch(first.continueStroke(stay, 0, 280, false))
+        dispatch(first.continueStroke(stay, 0, 300, false))
     }
 
     private fun dispatch(stroke: GestureDescription.StrokeDescription): Boolean {

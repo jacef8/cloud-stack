@@ -10,6 +10,9 @@ class RowSig(val hash: LongArray, val info: BooleanArray) {
 /** Content moved up by [s] rows: next[r] == prev[r + s]. */
 data class Shift(val s: Int, val matches: Int, val informative: Int)
 
+/** A short fingerprint of each row (average brightness across 24 slices), for matching that tolerates small differences. */
+class RowProfile(val data: ByteArray, val info: BooleanArray, val buckets: Int)
+
 object Rows {
     /** Details of the latest alignment attempt, for the log when it fails. */
     @Volatile var lastNote: String = ""
@@ -83,6 +86,81 @@ object Rows {
         // position stands clearly apart from every other one.
         val ok = bestM >= maxOf(12, h / 25) && bestM >= runnerUp * 1.5
         return if (ok) Shift(bestS, bestM, overlapInfo) else null
+    }
+
+    fun profile(px: IntArray, width: Int, height: Int): RowProfile {
+        val buckets = 24
+        val x0 = width / 50
+        val x1 = width - width / 25
+        val bw = (x1 - x0) / buckets
+        val data = ByteArray(height * buckets)
+        val info = BooleanArray(height)
+        for (y in 0 until height) {
+            var mn = 255
+            var mx = 0
+            val base = y * width + x0
+            for (k in 0 until buckets) {
+                var sum = 0
+                val start = base + k * bw
+                for (i in 0 until bw) {
+                    val p = px[start + i]
+                    sum += (((p shr 16) and 255) * 77 + ((p shr 8) and 255) * 150 + (p and 255) * 29) shr 8
+                }
+                val v = sum / bw
+                data[y * buckets + k] = v.toByte()
+                if (v < mn) mn = v
+                if (v > mx) mx = v
+            }
+            info[y] = mx - mn > 12
+        }
+        return RowProfile(data, info, buckets)
+    }
+
+    /**
+     * Like [findShift] but a row counts as the same when its brightness profile is close (about 3 levels on
+     * average), so a page that redraws slightly differently when it moves (sub-pixel positions, smoothing)
+     * can still be lined up.
+     */
+    fun findShiftFuzzy(a: RowProfile, b: RowProfile, top: Int, bottom: Int, hint: Int): Shift? {
+        val h = bottom - top
+        if (h < 40) return null
+        val nb = a.buckets
+        val tolerance = nb * 3
+        val minOverlap = maxOf(40, h / 8)
+        val counts = IntArray(h - minOverlap + 1)
+        var bestS = -1
+        var bestM = -1
+        for (s in 1..(h - minOverlap)) {
+            var m = 0
+            var r = top
+            val end = bottom - s
+            while (r < end) {
+                if (b.info[r] && a.info[r + s]) {
+                    var d = 0
+                    var k = 0
+                    val ib = r * nb
+                    val ia = (r + s) * nb
+                    while (k < nb) {
+                        d += abs((b.data[ib + k].toInt() and 255) - (a.data[ia + k].toInt() and 255))
+                        if (d > tolerance) break
+                        k++
+                    }
+                    if (d <= tolerance) m++
+                }
+                r++
+            }
+            counts[s] = m
+            if (m > bestM || (m == bestM && abs(s - hint) < abs(bestS - hint))) {
+                bestM = m
+                bestS = s
+            }
+        }
+        if (bestS < 0) return null
+        var runnerUp = 0
+        for (s in 1..(h - minOverlap)) if (abs(s - bestS) > 2 && counts[s] > runnerUp) runnerUp = counts[s]
+        lastNote += "; loose: shift=$bestS matches=$bestM runnerUp=$runnerUp"
+        val ok = bestM >= maxOf(12, h / 25) && bestM >= runnerUp * 1.5
+        return if (ok) Shift(bestS, bestM, bestM) else null
     }
 
     /**

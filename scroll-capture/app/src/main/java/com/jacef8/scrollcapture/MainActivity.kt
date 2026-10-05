@@ -206,7 +206,7 @@ class MainActivity : Activity() {
             Toast.makeText(this, "Log copied. Paste it to Claude.", Toast.LENGTH_SHORT).show()
         }.apply { secondary() }, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 46f)).apply { topMargin = Ui.dp(this@MainActivity, 14f) })
 
-        col.addView(Ui.text(this, "Images save to Pictures/Screenshots next to Samsung's. Text saves to Documents/ScrollCapture. Nothing is uploaded.", 13f, C.INK3).apply {
+        col.addView(Ui.text(this, "Images save to DCIM/Screenshots, where Samsung keeps its own. Text saves to Documents/ScrollCapture. Nothing is uploaded.", 13f, C.INK3).apply {
             setPadding(0, dp(14f), 0, 0)
         })
 

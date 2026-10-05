@@ -23,7 +23,7 @@ looking at it and scrolling it:
 | Share, Edit | The usual actions (Edit opens your normal image editor) |
 | Close | Hides the buttons (they also hide after 15 seconds) |
 
-Images are saved to `Pictures/Screenshots`, the same album as Samsung's own, so they appear
+Images are saved to `DCIM/Screenshots`, the folder Samsung phones use for their own screenshots, so they appear
 in Gallery with the other screenshots. Text goes to `Documents/ScrollCapture`.
 
 Some screens cannot be captured at all: Android blocks screenshots on Settings pages and in

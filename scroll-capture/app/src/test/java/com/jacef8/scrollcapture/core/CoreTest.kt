@@ -287,6 +287,13 @@ class CoreTest {
         assertTrue(TreeAlign.shift(prev, cur, 0, 1900, 20, 1500) == null)
     }
 
+    @Test fun tallPostsThatRunOffTheScreenStillGiveTheDistance() {
+        // Two long posts: only their top edges are on screen in the first picture, only their bottoms are in the second.
+        val prev = listOf(Line("long post one", 1500, 3200, 20), Line("long post two", 2100, 4200, 20))
+        val cur = listOf(Line("long post one", 1100, 2800, 20), Line("long post two", 1700, 3800, 20))
+        assertEquals(400, TreeAlign.shift(prev, cur, 0, 2300, 20, 2000))
+    }
+
     @Test fun aSteadyTabBarIsNotMistakenForScrolling() {
         val prev = listOf(l("For you", 90), l("Following", 90, 300), l("post one", 500), l("post two", 800), l("post three", 1100))
         val cur = listOf(l("For you", 90), l("Following", 90, 300), l("post two", 380), l("post three", 680), l("post four", 980))

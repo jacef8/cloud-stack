@@ -39,6 +39,7 @@ class ResultBar(
     private val svc: AccessibilityService,
     private val id: String,
     private val message: String,
+    private val detail: String,
     private val onMore: (Mode) -> Unit,
     private val onScrollPress: () -> Unit,
     private val onScrollRelease: () -> Unit,
@@ -178,7 +179,15 @@ class ResultBar(
         // where nothing covers it. It stays up a little longer than the bar.
         if (message.isNotBlank()) {
             val chip = android.widget.TextView(ctx).apply {
-                text = message
+                // The note, then (smaller, dimmer) the numbers behind it, so a screenshot of it says what happened.
+                text = android.text.SpannableStringBuilder(message).also { sb ->
+                    if (detail.isNotBlank()) {
+                        val start = sb.length + 1
+                        sb.append("\n").append("Details: ").append(detail)
+                        sb.setSpan(android.text.style.RelativeSizeSpan(0.82f), start, sb.length, 0)
+                        sb.setSpan(android.text.style.ForegroundColorSpan(C.INK3), start, sb.length, 0)
+                    }
+                }
                 textSize = 14f
                 setTextColor(C.INK)
                 setPadding(dp(14f), dp(10f), dp(14f), dp(10f))

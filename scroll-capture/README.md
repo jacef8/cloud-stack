@@ -9,7 +9,7 @@ word, so a transcript or a long post can be pasted somewhere else.
 Press **Volume Up + Volume Down** together (or use the Quick Settings tile, or set
 the side button's double press to open the app). It takes a screenshot **at once**.
 
-The instant the picture is taken there is a **camera shutter click and a short, sharp buzz**.
+The instant the picture is taken there is a **camera shutter click and a short, sharp buzz**. The click is quiet by default; Off / Quiet / Normal is in the app's settings.
 
 Then, laid out like Samsung's, a thumbnail (bottom-left) and a wide dark bar of icons (bottom-centre)
 float over the live app. They fade in, then **fade away by themselves after about five seconds**;
@@ -31,7 +31,7 @@ saves by itself. While it works, the buttons and a status pill at the top go inv
 picture, so none of them ends up in the image. A scroll that works replaces the first screenshot,
 so there is one continuous image; one that does not keeps the original and adds no duplicate.
 
-If the page does not move with the slow drag, it tries a quick flick, then the scroll command. If the
+If the page does not move with the slow drag, it tries a quick flick, then the scroll command. The scroll command moves exactly one screenful, so pictures taken that way follow on from each other with no overlap needed and are joined directly. If the
 pictures cannot be lined up row by row (a playing video, images still loading), it uses where the
 page's own words sit to work out how far it scrolled. Notes about a capture (stopped early, nothing
 to scroll) show beside the thumbnail, where nothing covers them.

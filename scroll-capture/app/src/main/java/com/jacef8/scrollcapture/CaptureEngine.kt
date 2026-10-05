@@ -61,6 +61,7 @@ class CaptureEngine(
     private val exec = Executors.newSingleThreadExecutor()
     private val ui = Handler(Looper.getMainLooper())
     private var lastApp = ""
+    private var debugNote = ""
 
     fun run(): Outcome = try {
         runInner()
@@ -138,6 +139,7 @@ class CaptureEngine(
         val sig0 = Rows.signature(px0, w, h)
         val words0 = currentTree()          // the words on screen now: for text, and to line pictures up when pixels cannot
         var useAction = false
+        var movedBy = "drag"
 
         // Scroll once to learn how this screen moves. Scrolling is a finger drag of under half the area that
         // pauses before lifting (so the list does not coast on): the built-in "scroll down" command moves a
@@ -155,11 +157,13 @@ class CaptureEngine(
         if (stillPage(px1)) {
             // Nothing moved. Some pages ignore a slow drag: try a quick flick, then the scroll command.
             DebugLog.log("the drag moved nothing; trying a quick flick")
+            movedBy = "flick"
             flickOnce(treeRegion, w, h)
             px1 = grabPixels(w, h)
             words1 = currentTree()
             if (stillPage(px1) && target != null) {
                 DebugLog.log("the flick moved nothing; trying the scroll command")
+                movedBy = "command"
                 scrollOnce(target, treeRegion, w, h)
                 px1 = grabPixels(w, h)
                 words1 = currentTree()
@@ -195,7 +199,16 @@ class CaptureEngine(
                 firstShift = s
             }
         }
+        if (region == null && movedBy == "command") {
+            // The scroll command moves exactly one screenful, so there is no overlap to match on; the pictures
+            // simply follow one another. Join them directly.
+            val cand = treeRegion ?: intArrayOf(0, h)
+            DebugLog.log("a whole-screen jump: joining the pictures end to end (${cand[1] - cand[0]})")
+            region = cand
+            firstShift = cand[1] - cand[0]
+        }
         if (region == null) {
+            debugNote = "moved by $movedBy; unchanged ${"%.2f".format(Rows.unchangedShare(sig0, sig1, stillTop, stillBottom))}; ${Rows.lastNote.ifEmpty { "no candidate shift" }}; words ${words0.size}/${words1.size}"
             warnings += "Couldn't line the scrolled screens up, so only the first screen was captured."
             store?.append(px0, w, 0, h)
             if (wantText) acc.add(split(tree0, 0, h, px0, w).body, 0)
@@ -236,6 +249,10 @@ class CaptureEngine(
                     if (s != null) {
                         DebugLog.log("lined up from the words on screen: moved $s")
                         step = st.nextWith(px, s)
+                    } else if (useAction) {
+                        // Whole-screenful jumps do not overlap: the next picture simply follows on.
+                        DebugLog.log("whole-screen jump: following on directly")
+                        step = st.nextWith(px, bottom - top)
                     }
                 }
             }
@@ -253,6 +270,7 @@ class CaptureEngine(
                 }
                 is Step.Lost -> {
                     DebugLog.log("page ${pages + 1}: could not line up (${Rows.lastNote})")
+                    debugNote = "page ${pages + 1}; ${Rows.lastNote.ifEmpty { "no candidate shift" }}; words ${prevWords.size}/${tree.size}"
                     warnings += "Stopped: the screen changed in a way that couldn't be followed (did something move or open?). Everything captured up to that point is kept."
                     break
                 }
@@ -342,6 +360,7 @@ class CaptureEngine(
             return Outcome(null, warnings.firstOrNull() ?: "Nothing was captured.")
         }
         props["warnings"] = warnings.joinToString("\n")
+        if (warnings.isNotEmpty() && debugNote.isNotEmpty()) props["debug"] = debugNote
         File(dir, "meta.properties").outputStream().use { props.store(it, null) }
         return Outcome(id, null)
     }

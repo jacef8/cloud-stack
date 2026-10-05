@@ -196,6 +196,28 @@ class MainActivity : Activity() {
         opts.addView(Ui.toggleRow(this, "Volume Up + Down", "Press both together to take a screenshot at once", prefs.volumeTrigger) { prefs.volumeTrigger = it })
         opts.addView(Ui.toggleRow(this, "Open app takes a screenshot", "For the side button: Settings, Advanced features, Side button, Double press, Open app", prefs.startOnOpen) { prefs.startOnOpen = it })
         opts.addView(Ui.label(this, "Results").apply { setPadding(0, dp(10f), 0, 0) })
+        // Camera sound: Off / Quiet / Normal, as a segmented control sunk into a well.
+        opts.addView(Ui.text(this, "Camera sound", 16f, C.INK, true).apply { setPadding(0, dp(12f), 0, dp(6f)) })
+        val soundWell = LinearLayout(this).apply {
+            background = Ui.well(context)
+            setPadding(dp(3f), dp(3f), dp(3f), dp(3f))
+        }
+        val soundPills = listOf("Off", "Quiet", "Normal").map { label ->
+            Ui.text(this, label, 15f, C.INK3, true).apply { gravity = Gravity.CENTER }
+        }
+        fun paintSound() {
+            soundPills.forEachIndexed { i, v ->
+                val on = prefs.shutterLevel == i
+                v.setTextColor(if (on) C.ON_ACCENT else C.INK3)
+                v.background = if (on) Ui.accentFill(this, 999f) else null
+            }
+        }
+        soundPills.forEachIndexed { i, v ->
+            v.setOnClickListener { prefs.shutterLevel = i; paintSound() }
+            soundWell.addView(v, Ui.lp(0, dp(40f), 1f))
+        }
+        paintSound()
+        opts.addView(soundWell, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(4f) })
         opts.addView(Ui.toggleRow(this, "Copy text automatically", "Text captures are ready to paste right away", prefs.autoCopyText) { prefs.autoCopyText = it })
         opts.addView(Ui.toggleRow(this, "Start long captures at the top", "Scrolls back up first so nothing is missed", prefs.startFromTop) { prefs.startFromTop = it })
         col.addView(opts, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))

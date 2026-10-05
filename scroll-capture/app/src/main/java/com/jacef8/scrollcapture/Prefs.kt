@@ -24,4 +24,9 @@ class Prefs(ctx: Context) {
     var volumeTrigger: Boolean
         get() = sp.getBoolean("volume", true)
         set(v) = sp.edit().putBoolean("volume", v).apply()
+
+    /** Camera sound: 0 off, 1 quiet, 2 normal. Quiet by default. */
+    var shutterLevel: Int
+        get() = sp.getInt("shutter", 1)
+        set(v) = sp.edit().putInt("shutter", v).apply()
 }

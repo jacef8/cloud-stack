@@ -9,7 +9,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
+import android.media.AudioAttributes
 import android.media.MediaActionSound
+import android.media.SoundPool
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -38,6 +40,9 @@ class CaptureService : AccessibilityService() {
     @Volatile private var replaceId: String? = null
     @Volatile private var control: SessionControl? = null
     private var shutterSound: MediaActionSound? = null
+    private var clickPool: SoundPool? = null
+    private var clickId = 0
+    @Volatile private var clickReady = false
     private val indicator by lazy { CaptureIndicator(this) { stopRequested = true } }
 
     @Volatile private var running = false
@@ -59,6 +64,25 @@ class CaptureService : AccessibilityService() {
         DebugLog.log("service connected")
         // Load the camera shutter now so it plays instantly later.
         shutterSound = MediaActionSound().also { it.load(MediaActionSound.SHUTTER_CLICK) }
+        // The phone's own click, played through a sound pool so its volume can be set (MediaActionSound is always loud).
+        try {
+            val file = File("/system/media/audio/ui/camera_click.ogg")
+            if (file.exists()) {
+                val pool = SoundPool.Builder()
+                    .setMaxStreams(1)
+                    .setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build()
+                    ).build()
+                pool.setOnLoadCompleteListener { _, _, status -> clickReady = status == 0 }
+                clickId = pool.load(file.path, 1)
+                clickPool = pool
+            }
+        } catch (e: Exception) {
+            DebugLog.error("click sound", e)
+        }
         createChannel()
         ContextCompat.registerReceiver(
             this, stopReceiver, IntentFilter(ACTION_STOP), ContextCompat.RECEIVER_NOT_EXPORTED
@@ -71,6 +95,8 @@ class CaptureService : AccessibilityService() {
         try { unregisterReceiver(stopReceiver) } catch (_: Exception) { }
         shutterSound?.release()
         shutterSound = null
+        clickPool?.release()
+        clickPool = null
         super.onDestroy()
     }
 
@@ -192,6 +218,7 @@ class CaptureService : AccessibilityService() {
             var shownId = outcome.id
             val replaced = replaceId
             replaceId = null
+            val detail = outcome.id?.let { id -> CaptureStore.meta(this, id).getProperty("debug", "") }.orEmpty()
             var warning = outcome.id?.let { id ->
                 try {
                     java.util.Properties().also { p ->
@@ -226,7 +253,7 @@ class CaptureService : AccessibilityService() {
                     // A floating toolbar over the live app, not a new screen, so the app stays in front.
                     val shown: String = shownId
                     bar = ResultBar(
-                        this, shown, warning,
+                        this, shown, warning, detail,
                         onMore = { requestCapture(it, 350, shown) },
                         onScrollPress = { scrollPress(shown) },
                         onScrollRelease = { control?.release() },
@@ -269,7 +296,19 @@ class CaptureService : AccessibilityService() {
     /** The camera shutter click and a quick, sharp buzz, together. */
     private fun captureFeedback() {
         sharpBuzz()
-        try { shutterSound?.play(MediaActionSound.SHUTTER_CLICK) } catch (_: Exception) { }
+        when (prefs.shutterLevel) {
+            0 -> Unit
+            else -> {
+                // Quiet is a quarter of the phone's system volume for touch sounds; Normal is about two thirds.
+                val volume = if (prefs.shutterLevel == 1) 0.22f else 0.65f
+                val pool = clickPool
+                if (pool != null && clickReady) {
+                    pool.play(clickId, volume, volume, 1, 0, 1f)
+                } else if (prefs.shutterLevel == 2) {
+                    try { shutterSound?.play(MediaActionSound.SHUTTER_CLICK) } catch (_: Exception) { }
+                }
+            }
+        }
     }
 
     /** A short buzz at full strength, so it feels like a click. Marked as accessibility feedback so it is not muted with touch feedback. */

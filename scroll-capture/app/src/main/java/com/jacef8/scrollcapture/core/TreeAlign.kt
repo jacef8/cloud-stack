@@ -10,14 +10,20 @@ import kotlin.math.abs
 object TreeAlign {
     /** Returns how far the content moved up, or null when the words do not agree on one distance. */
     fun shift(prev: List<Line>, cur: List<Line>, top: Int, bottom: Int, minShift: Int, maxShift: Int): Int? {
-        val before = prev.filter { it.text.length >= 3 && it.top >= top && it.bottom <= bottom }.groupBy { it.text }
+        val before = prev.filter { it.text.length >= 3 }.groupBy { it.text }
         val votes = HashMap<Int, Int>()
         for (c in cur) {
-            if (c.text.length < 3 || c.top < top || c.bottom > bottom) continue
+            if (c.text.length < 3) continue
             val matches = before[c.text] ?: continue
             for (p in matches) {
-                val d = p.top - c.top
-                if (d in minShift..maxShift && abs(p.left - c.left) <= 6) votes.merge(d, 1, Int::plus)
+                if (abs(p.left - c.left) > 6) continue
+                // A tall post can run off the screen: use whichever of its edges is inside the area in both pictures.
+                val d = when {
+                    p.top in top..bottom && c.top in top..bottom -> p.top - c.top
+                    p.bottom in top..bottom && c.bottom in top..bottom -> p.bottom - c.bottom
+                    else -> continue
+                }
+                if (d in minShift..maxShift) votes.merge(d, 1, Int::plus)
             }
         }
         if (votes.isEmpty()) return null

@@ -43,7 +43,7 @@ class CaptureService : AccessibilityService() {
     private var clickPool: SoundPool? = null
     private var clickId = 0
     @Volatile private var clickReady = false
-    private val indicator by lazy { CaptureIndicator(this) { stopRequested = true } }
+    private val indicator by lazy { CaptureIndicator(this) { control?.finish(); stopRequested = true } }
 
     @Volatile private var running = false
     @Volatile private var stopRequested = false
@@ -174,9 +174,14 @@ class CaptureService : AccessibilityService() {
 
     /** The white scroll circle was pressed: begin a person-driven scroll capture, or take another step of it. */
     private fun scrollPress(id: String) {
-        // The tool scrolls the page itself, so nothing needs to be swiped by hand.
+        // You scroll the page by hand; the tool captures as it moves. Tapping the circle gives one automatic step.
         if (running) return
-        requestCapture(Mode.SCROLL, 250, id)
+        val fresh = SessionControl().also { it.press() }
+        control = fresh
+        replaceId = id
+        bar?.dismiss()
+        bar = null
+        startCapture(Mode.SCROLL, fresh)
     }
 
     private fun startCapture(mode: Mode, session: SessionControl? = null) {
@@ -194,7 +199,7 @@ class CaptureService : AccessibilityService() {
         progressNotice(1)
         // A long capture shows its pill straight away, so it is clear it is working and not waiting on you.
         if (mode != Mode.SCREENSHOT) {
-            main.post { indicator.show("Scrolling…") }
+            main.post { indicator.show(if (session != null) "Scroll the page" else "Scrolling…") }
         }
         Thread {
             val listener = object : CaptureListener {
@@ -207,7 +212,7 @@ class CaptureService : AccessibilityService() {
                     progressNotice(pages)
                     main.post {
                         if (running) {
-                            indicator.show("Scrolling… $pages")
+                            indicator.show(if (session != null) "Scroll the page · $pages" else "Scrolling… $pages")
                         }
                     }
                 }

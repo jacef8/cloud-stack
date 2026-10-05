@@ -560,7 +560,7 @@ class CaptureEngine(
                 }
                 else -> {
                     notJoined++
-                    if (trigger == Trigger.MOTION) slowDown()
+                    slowDown()
                     DebugLog.log("session: could not join a picture (${Rows.lastNote}) by $trigger")
                     if (trigger == Trigger.STEP || !control.motionPending()) {
                         listener.note("Couldn't join that picture. Scroll a little less each time, then try again.")

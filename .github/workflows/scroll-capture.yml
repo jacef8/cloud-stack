@@ -12,6 +12,11 @@ on:
 permissions:
   contents: write
 
+# Builds take turns, so two pushes close together cannot clash while publishing.
+concurrency:
+  group: scroll-capture-build
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest

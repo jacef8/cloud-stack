@@ -102,6 +102,22 @@ class CoreTest {
         assertTrue(st.next(frameAt(doc, 3000, bottom - top), true) is Step.Lost)
     }
 
+    /** A feed with autoplaying video: a block of rows is different in every frame, yet the shift is still found. */
+    @Test fun findsTheShiftWhileAVideoBlockKeepsChanging() {
+        val doc = makeDoc(3000, 11)
+        fun noisy(offset: Int, seed: Long): IntArray {
+            val f = frameAt(doc, 3000, offset)
+            val rnd = Random(seed)
+            for (y in top + 150 until top + 480) for (x in 0 until w) f[y * w + x] = 0xFF000000.toInt() or rnd.nextInt(0xFFFFFF)
+            return f
+        }
+        val a = Rows.signature(noisy(0, 1), w, h)
+        val b = Rows.signature(noisy(380, 2), w, h)
+        val sh = Rows.findShift(a, b, top, bottom, 300)
+        assertNotNull("no shift found: ${Rows.lastNote}", sh)
+        assertEquals(380, sh!!.s)
+    }
+
     @Test fun stitchesSmallScrollSteps() {
         val (got, expected) = stitch(1500, 120, 3)
         assertEquals(expected.size, got.size)

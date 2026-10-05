@@ -160,6 +160,7 @@ class CaptureEngine(
         val sig1 = Rows.signature(px1, w, h)
         val region = pickRegion(sig0, sig1, treeRegion)
         if (region == null) {
+            DebugLog.log("could not line up the first two screens: ${Rows.lastNote}")
             warnings += if (sig0.hash.contentEquals(sig1.hash)) {
                 "Nothing more to scroll here, so this is the whole screen."
             } else {
@@ -200,7 +201,7 @@ class CaptureEngine(
                 is Step.End -> { DebugLog.log("reached the end after $pages screens"); break }
                 is Step.Added -> {
                     pages++
-                    DebugLog.log("page $pages: moved ${step.shift}")
+                    DebugLog.log("page $pages: moved ${step.shift} (${Rows.lastNote})")
                     if (wantText) {
                         val ft = split(tree, top, bottom, px, w)
                         acc.add(ft.body, step.offset)
@@ -208,7 +209,7 @@ class CaptureEngine(
                     }
                 }
                 is Step.Lost -> {
-                    DebugLog.log("page ${pages + 1}: the screen changed and could not be followed")
+                    DebugLog.log("page ${pages + 1}: could not line up (${Rows.lastNote})")
                     warnings += "Stopped: the screen changed in a way that couldn't be followed (did something move or open?). Everything captured up to that point is kept."
                     break
                 }
@@ -413,24 +414,36 @@ class CaptureEngine(
         val t = region?.get(0) ?: 0
         val b = region?.get(1) ?: h
         val span = b - t
-        swipe(w / 2, t + (span * 0.78f).toInt(), t + (span * 0.28f).toInt())
-        Thread.sleep(SETTLE_MS + 350)
+        swipe(w / 2, t + (span * 0.75f).toInt(), t + (span * 0.30f).toInt())
+        Thread.sleep(SETTLE_MS - 100)
     }
 
+    /**
+     * Drag up, then hold still for a moment before lifting. A finger that lifts at speed makes a
+     * list coast on by a screenful or more, leaving nothing to line the pictures up on.
+     */
     private fun swipe(x: Int, y1: Int, y2: Int) {
-        val path = Path().apply {
+        val drag = Path().apply {
             moveTo(x.toFloat(), y1.toFloat())
             lineTo(x.toFloat(), y2.toFloat())
         }
-        val gesture = GestureDescription.Builder()
-            .addStroke(GestureDescription.StrokeDescription(path, 0, 450))
-            .build()
+        val first = GestureDescription.StrokeDescription(drag, 0, 420, true)
+        if (!dispatch(first)) return
+        val stay = Path().apply { moveTo(x.toFloat(), y2.toFloat()) }
+        dispatch(first.continueStroke(stay, 0, 280, false))
+    }
+
+    private fun dispatch(stroke: GestureDescription.StrokeDescription): Boolean {
         val latch = CountDownLatch(1)
-        svc.dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
-            override fun onCompleted(g: GestureDescription?) = latch.countDown()
-            override fun onCancelled(g: GestureDescription?) = latch.countDown()
-        }, ui)
-        latch.await(3, TimeUnit.SECONDS)
+        val ok = BooleanArray(1)
+        val accepted = svc.dispatchGesture(GestureDescription.Builder().addStroke(stroke).build(),
+            object : AccessibilityService.GestureResultCallback() {
+                override fun onCompleted(g: GestureDescription?) { ok[0] = true; latch.countDown() }
+                override fun onCancelled(g: GestureDescription?) { latch.countDown() }
+            }, ui)
+        if (!accepted) return false
+        latch.await(4, TimeUnit.SECONDS)
+        return ok[0]
     }
 
     private fun grabPixels(w: Int, h: Int): IntArray? {

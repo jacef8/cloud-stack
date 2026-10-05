@@ -292,7 +292,7 @@ class ResultActivity : Activity() {
     private fun captureMore(mode: Mode) {
         val svc = CaptureService.instance
         if (svc == null) { toast("Scroll Capture is off in Accessibility"); return }
-        svc.requestCapture(mode, 900)
+        svc.requestCapture(mode, 900, dir.name)
         finish()
     }
 

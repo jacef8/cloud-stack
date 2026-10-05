@@ -34,6 +34,7 @@ class CaptureService : AccessibilityService() {
     private lateinit var prefs: Prefs
 
     private var bar: ResultBar? = null
+    @Volatile private var replaceId: String? = null
     private var shutterSound: MediaActionSound? = null
     private val indicator by lazy { CaptureIndicator(this) { stopRequested = true } }
 
@@ -126,8 +127,13 @@ class CaptureService : AccessibilityService() {
     // ---- capture ----
 
     /** Starts a capture after [delayMs]. A screenshot from the shortcut starts at once. */
-    fun requestCapture(mode: Mode, delayMs: Long) {
-        main.postDelayed({ if (!running) startCapture(mode) }, delayMs)
+    fun requestCapture(mode: Mode, delayMs: Long, replacesId: String? = null) {
+        main.postDelayed({
+            if (!running) {
+                replaceId = replacesId
+                startCapture(mode)
+            }
+        }, delayMs)
     }
 
     private fun startCapture(mode: Mode) {
@@ -158,20 +164,41 @@ class CaptureService : AccessibilityService() {
             val outcome = engine.run()
             running = false
             // Anything the capture wants to tell you (stopped early, nothing to scroll, ...).
-            val warning = outcome.id?.let { id ->
+            var shownId = outcome.id
+            val replaced = replaceId
+            replaceId = null
+            var warning = outcome.id?.let { id ->
                 try {
                     java.util.Properties().also { p ->
                         File(cacheDir, "cap/$id/meta.properties").inputStream().use { p.load(it) }
                     }.getProperty("warnings", "").lines().firstOrNull().orEmpty()
                 } catch (_: Exception) { "" }
             }.orEmpty()
+            // Like Samsung's, ONE continuous image: a scroll that worked replaces the first screenshot of
+            // that screen; one that did not keeps the original and adds no duplicate.
+            if (outcome.id != null && replaced != null && mode != Mode.SCREENSHOT && mode != Mode.TEXT) {
+                val meta = CaptureStore.meta(this, outcome.id)
+                val pages = meta.getProperty("pages", "1").toIntOrNull() ?: 1
+                val hasText = File(CaptureStore.dir(this, outcome.id), "text.txt").exists()
+                if (meta.getProperty("imageUri") != null) {
+                    if (pages > 1) {
+                        CaptureStore.deleteGalleryImage(this, replaced)
+                        CaptureStore.deleteDir(this, replaced)
+                    } else if (!hasText) {
+                        CaptureStore.deleteGalleryImage(this, outcome.id)
+                        CaptureStore.deleteDir(this, outcome.id)
+                        shownId = replaced
+                    }
+                }
+            }
             NotificationManagerCompat.from(this).cancel(NOTE_PROGRESS)
             if (outcome.id != null) { if (mode != Mode.SCREENSHOT) captureFeedback() } else sharpBuzz(120)
             main.post {
                 indicator.hide()
-                if (outcome.id != null) {
+                if (shownId != null) {
                     // A floating toolbar over the live app, not a new screen, so the app stays in front.
-                    bar = ResultBar(this, outcome.id, warning) { requestCapture(it, 350) }.also { it.show() }
+                    val shown: String = shownId
+                    bar = ResultBar(this, shown, warning) { requestCapture(it, 350, shown) }.also { it.show() }
                 } else {
                     DebugLog.log("capture failed: ${outcome.error}")
                     Toast.makeText(this, outcome.error ?: "Capture failed", Toast.LENGTH_LONG).show()

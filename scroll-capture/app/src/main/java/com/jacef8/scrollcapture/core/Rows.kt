@@ -11,6 +11,9 @@ class RowSig(val hash: LongArray, val info: BooleanArray) {
 data class Shift(val s: Int, val matches: Int, val informative: Int)
 
 object Rows {
+    /** Details of the latest alignment attempt, for the log when it fails. */
+    @Volatile var lastNote: String = ""
+
     /** Signature of a full frame (row-major ARGB). The scrollbar edge is left out. */
     fun signature(px: IntArray, width: Int, height: Int): RowSig {
         val x0 = width / 50
@@ -52,6 +55,7 @@ object Rows {
         if (same >= totalInfo * 0.97) return Shift(0, same, totalInfo)
 
         val minOverlap = maxOf(40, h / 8)
+        val counts = IntArray(h - minOverlap + 1)
         var bestS = -1
         var bestM = -1
         for (s in 1..(h - minOverlap)) {
@@ -62,14 +66,22 @@ object Rows {
                 if (b.info[r] && b.hash[r] == a.hash[r + s]) m++
                 r++
             }
+            counts[s] = m
             if (m > bestM || (m == bestM && abs(s - hint) < abs(bestS - hint))) {
                 bestM = m
                 bestS = s
             }
         }
         if (bestS < 0) return null
+        // The best match must clearly beat every other position (not just the one next to it).
+        var runnerUp = 0
+        for (s in 1..(h - minOverlap)) if (abs(s - bestS) > 2 && counts[s] > runnerUp) runnerUp = counts[s]
         val overlapInfo = pref[h - bestS]
-        val ok = bestM >= 6 && bestM >= overlapInfo * 0.85
+        lastNote = "shift=$bestS matches=$bestM of $overlapInfo runnerUp=$runnerUp region=$top-$bottom"
+        // A video, ad or counter animating on screen costs matches (and its rows still count as detail),
+        // so the share of rows is not used. What matters is how many rows lined up and that this
+        // position stands clearly apart from every other one.
+        val ok = bestM >= maxOf(12, h / 25) && bestM >= runnerUp * 1.5
         return if (ok) Shift(bestS, bestM, overlapInfo) else null
     }
 

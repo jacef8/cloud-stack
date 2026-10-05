@@ -241,9 +241,17 @@ class CaptureEngine(
             if (wantText) acc.add(split(tree0, 0, h, px0, w).body, 0)
             return finish(id, dir, store, w, acc, wantText, warnings)
         }
-        val top = region[0]
-        val bottom = region[1]
-        DebugLog.log("scroll region $top-$bottom")
+        // The status and navigation bars do not scroll. Left in the area, they would repeat at every join,
+        // so the area stops short of them: the first picture keeps the top bar once, the last keeps the bottom one.
+        val statusH = systemBarHeight("status_bar_height")
+        val navH = systemBarHeight("navigation_bar_height")
+        var top = region[0]
+        var bottom = region[1]
+        if (top < statusH) top = statusH
+        if (bottom > h - navH) bottom = h - navH
+        if (bottom - top < h * 0.4) { top = region[0]; bottom = region[1] }
+        region = intArrayOf(top, bottom)
+        DebugLog.log("scroll region $top-$bottom (bars $statusH/$navH)")
         listener.progress(1)   // from here on the status pill is shown, above the scroll area so it never lands in the image
 
         val st = IncrementalStitcher(w, h, top, bottom, store)
@@ -585,6 +593,12 @@ class CaptureEngine(
         val ignorable = now == "com.android.systemui" || now.contains("inputmethod") ||
             now.contains("honeyboard") || now.contains("keyboard")
         return !ignorable
+    }
+
+    private fun systemBarHeight(name: String): Int {
+        val r = svc.resources
+        val id = r.getIdentifier(name, "dimen", "android")
+        return if (id > 0) r.getDimensionPixelSize(id) else 0
     }
 
     private fun regionOf(node: AccessibilityNodeInfo, h: Int): IntArray? {

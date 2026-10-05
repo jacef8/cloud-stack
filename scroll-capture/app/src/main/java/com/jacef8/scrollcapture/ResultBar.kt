@@ -38,6 +38,7 @@ import kotlin.math.abs
 class ResultBar(
     private val svc: AccessibilityService,
     private val id: String,
+    private val message: String,
     private val onMore: (Mode) -> Unit,
 ) {
     private val views = ArrayList<View>()
@@ -142,13 +143,40 @@ class ResultBar(
         pill.layoutParams = pillLp
         thumb.updateSize(dp(65f), dp(126f))
 
+        // A note about the capture (stopped early, nothing to scroll, ...) sits beside the thumbnail,
+        // where nothing covers it. It stays up a little longer than the bar.
+        if (message.isNotBlank()) {
+            val chip = android.widget.TextView(ctx).apply {
+                text = message
+                textSize = 14f
+                setTextColor(C.INK)
+                setPadding(dp(14f), dp(10f), dp(14f), dp(10f))
+                background = GradientDrawable().apply {
+                    setColor(0xEB252C38.toInt())
+                    cornerRadius = dp(18f).toFloat()
+                }
+                elevation = dp(6f).toFloat()
+            }
+            val left = dp(24f + 65f + 8f)
+            val chipLp = overlayParams().apply {
+                width = screenW - left - dp(24f)
+                gravity = Gravity.BOTTOM or Gravity.START
+                x = left
+                y = dp(128f)
+            }
+            wm.addView(chip, chipLp)
+            views += chip
+            chip.layoutParams = chipLp
+            holdWhileTouched(chip)
+        }
+
         // Fade in and rise a little, like Samsung's.
         for (v in views) {
             v.alpha = 0f
             v.translationY = dp(16f).toFloat()
             v.animate().alpha(1f).translationY(0f).setDuration(220).start()
         }
-        ui.postDelayed(fade, SHOW_MS)
+        ui.postDelayed(fade, if (message.isNotBlank()) NOTE_MS else SHOW_MS)
     }
 
     private fun overlayParams() = WindowManager.LayoutParams(
@@ -273,6 +301,7 @@ class ResultBar(
     }
 
     private companion object {
+        const val NOTE_MS = 9_000L      // a note needs time to be read
         const val SHOW_MS = 5_000L      // how long it stays before fading, like Samsung's
         const val TOUCH_MS = 3_000L     // extra time after a finger lifts
     }

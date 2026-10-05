@@ -141,11 +141,20 @@ class CaptureService : AccessibilityService() {
         // capture buzzes now to say it has started, and clicks when it is done.
         if (mode != Mode.SCREENSHOT) sharpBuzz()
         progressNotice(1)
+        // A long capture shows its pill straight away, so it is clear it is working and not waiting on you.
+        if (mode != Mode.SCREENSHOT) main.post { indicator.show("Getting ready…  ·  tap to stop") }
         Thread {
-            val engine = CaptureEngine(this, mode, prefs, { stopRequested }, { if (mode == Mode.SCREENSHOT) captureFeedback() }) { pages ->
-                progressNotice(pages)
-                main.post { if (running) indicator.showOrUpdate(pages) }
+            val listener = object : CaptureListener {
+                override fun beforeFirstFrame() { main.post { indicator.setVisible(false) } }
+                override fun firstFrameTaken() {
+                    if (mode == Mode.SCREENSHOT) captureFeedback() else main.post { indicator.setVisible(true) }
+                }
+                override fun progress(pages: Int) {
+                    progressNotice(pages)
+                    main.post { if (running) indicator.show("Capturing… screen $pages  ·  tap to stop") }
+                }
             }
+            val engine = CaptureEngine(this, mode, prefs, { stopRequested }, listener)
             val outcome = engine.run()
             running = false
             // Anything the capture wants to tell you (stopped early, nothing to scroll, ...).
@@ -160,10 +169,9 @@ class CaptureService : AccessibilityService() {
             if (outcome.id != null) { if (mode != Mode.SCREENSHOT) captureFeedback() } else sharpBuzz(120)
             main.post {
                 indicator.hide()
-                if (warning.isNotBlank()) Toast.makeText(this, warning, Toast.LENGTH_LONG).show()
                 if (outcome.id != null) {
                     // A floating toolbar over the live app, not a new screen, so the app stays in front.
-                    bar = ResultBar(this, outcome.id) { requestCapture(it, 350) }.also { it.show() }
+                    bar = ResultBar(this, outcome.id, warning) { requestCapture(it, 350) }.also { it.show() }
                 } else {
                     DebugLog.log("capture failed: ${outcome.error}")
                     Toast.makeText(this, outcome.error ?: "Capture failed", Toast.LENGTH_LONG).show()

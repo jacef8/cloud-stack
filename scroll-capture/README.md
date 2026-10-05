@@ -24,8 +24,8 @@ sooner. Touches anywhere else go straight to the app.
 | Share | The usual share sheet |
 | White circle (Scroll) | One tall image of the whole scrolling section |
 
-While a scroll capture runs, a **"Capturing… screen N · tap to stop"** pill shows near the top
-(the phone buzzes when it starts, and clicks and buzzes when it is done). It stops by itself if the screen changes in a way it
+The moment you tap Scroll, a **"Getting ready… · tap to stop"** pill appears near the top, then "Capturing… screen N · tap to stop" while it runs
+(the phone buzzes when it starts, and clicks and buzzes when it is done). Scrolling is done like a finger swipe of about half the area, so each picture overlaps the last and they can be lined up. Notes about a capture (stopped early, nothing to scroll) show beside the thumbnail, where nothing covers them. It stops by itself if the screen changes in a way it
 cannot follow, or if you leave the app, and tells you why. Everything captured up to that point is kept.
 
 Images are saved to `DCIM/Screenshots`, the folder Samsung phones use for their own screenshots, so they appear

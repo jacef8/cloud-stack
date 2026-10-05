@@ -13,7 +13,7 @@ import android.widget.TextView
 /**
  * A small "Capturing…" pill shown near the top while a scroll capture runs, so it is obvious
  * something is happening. Tap it to stop. It sits above the scrolling area and is only added after
- * the first frame, so it never ends up in the finished image.
+ * the first frame (it is hidden while that picture is taken), so it never ends up in the finished image.
  */
 class CaptureIndicator(
     private val svc: AccessibilityService,
@@ -22,9 +22,9 @@ class CaptureIndicator(
     private var view: TextView? = null
     private val wm get() = svc.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
-    fun showOrUpdate(pages: Int) {
-        val label = "Capturing… screen $pages  ·  tap to stop"
-        view?.let { it.text = label; return }
+    /** Shows the pill with [label], or changes its text if it is already up. */
+    fun show(label: String) {
+        view?.let { it.text = label; it.visibility = android.view.View.VISIBLE; return }
         val ctx = ContextThemeWrapper(svc, android.R.style.Theme_DeviceDefault)
         val dp = { v: Float -> Ui.dp(ctx, v) }
         val tv = TextView(ctx).apply {
@@ -59,6 +59,11 @@ class CaptureIndicator(
         } catch (e: Exception) {
             DebugLog.error("indicator", e)
         }
+    }
+
+    /** Hide or show it without removing it, so it can be kept out of one picture. */
+    fun setVisible(visible: Boolean) {
+        view?.visibility = if (visible) android.view.View.VISIBLE else android.view.View.INVISIBLE
     }
 
     fun hide() {

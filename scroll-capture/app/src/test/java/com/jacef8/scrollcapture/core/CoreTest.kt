@@ -87,6 +87,21 @@ class CoreTest {
         assertTrue(rgb(expected).contentEquals(rgb(got)))
     }
 
+    /** A swipe of about half the scroll area, as the app now scrolls. */
+    @Test fun stitchesHalfScreenSwipes() {
+        val (got, expected) = stitch(3500, 410, 7)
+        assertEquals(expected.size, got.size)
+        assertTrue(rgb(expected).contentEquals(rgb(got)))
+    }
+
+    /** Why the app no longer uses the built-in "scroll down": it jumps a whole screen, leaving nothing to line up on. */
+    @Test fun aWholeScreenJumpHasNothingToLineUpOn() {
+        val doc = makeDoc(3000, 8)
+        val st = IncrementalStitcher(w, h, top, bottom, null)
+        st.start(frameAt(doc, 3000, 0))
+        assertTrue(st.next(frameAt(doc, 3000, bottom - top), true) is Step.Lost)
+    }
+
     @Test fun stitchesSmallScrollSteps() {
         val (got, expected) = stitch(1500, 120, 3)
         assertEquals(expected.size, got.size)

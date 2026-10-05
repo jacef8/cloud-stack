@@ -32,6 +32,16 @@ import java.util.concurrent.TimeUnit
 
 class Outcome(val id: String?, val error: String?)
 
+/** What the engine tells the service while it works, so the service can show feedback. */
+interface CaptureListener {
+    /** About to take the first picture: hide anything of ours that must not be in it. */
+    fun beforeFirstFrame()
+    /** The first picture is taken (the shutter click for a plain screenshot). */
+    fun firstFrameTaken()
+    /** A long capture has [pages] screens so far. */
+    fun progress(pages: Int)
+}
+
 /**
  * Takes the frames, scrolls between them, and turns them into one tall image
  * and/or one block of text. Runs on a background thread.
@@ -41,8 +51,7 @@ class CaptureEngine(
     private val mode: Mode,
     private val prefs: Prefs,
     private val shouldStop: () -> Boolean,
-    private val onFirstFrame: () -> Unit,
-    private val onProgress: (Int) -> Unit,
+    private val listener: CaptureListener,
 ) {
     private val exec = Executors.newSingleThreadExecutor()
     private val ui = Handler(Looper.getMainLooper())
@@ -87,11 +96,15 @@ class CaptureEngine(
         DebugLog.log("scroll area: ${if (target != null) "found" else "none"}")
         if (scrolling && target != null && prefs.startFromTop) scrollToTop(target)
 
+        if (scrolling) {
+            listener.beforeFirstFrame()   // hide the "Getting ready" pill so it is not in the picture
+            Thread.sleep(170)
+        }
         val bmp0 = grab() ?: return Outcome(
             null,
             "Couldn't take a screenshot. Check that Scroll Capture is still turned on in Accessibility."
         )
-        onFirstFrame()   // the picture is taken: the shutter sound and buzz fire now, before anything is saved
+        listener.firstFrameTaken()   // the picture is taken: feedback fires now, before anything is saved
         val w = bmp0.width
         val h = bmp0.height
         val px0 = pixels(bmp0)
@@ -118,20 +131,22 @@ class CaptureEngine(
             return finish(id, dir, store, w, acc, wantText, warnings)
         }
 
-        // Scroll once to learn how this screen moves.
+        // Scroll once to learn how this screen moves. Scrolling is done like a finger swipe of about half
+        // the area: the built-in "scroll down" command moves a whole screenful, which leaves no overlap
+        // between pictures to line them up on.
         val treeRegion = target?.let { regionOf(it, h) }
         val sig0 = Rows.signature(px0, w, h)
-        var useSwipe = false
-        scrollOnce(target, treeRegion, w, h)
+        var useAction = false
+        scrollOnce(null, treeRegion, w, h)
         var px1 = grabPixels(w, h)
         if (px1 != null && target != null && Rows.signature(px1, w, h).hash.contentEquals(sig0.hash)) {
-            // Some pages (web content) say they scrolled but did not move: try a finger swipe instead.
-            DebugLog.log("the scroll action moved nothing; trying a swipe instead")
-            scrollOnce(null, treeRegion, w, h)
+            // The swipe moved nothing (gestures blocked?): try the scroll command instead.
+            DebugLog.log("the swipe moved nothing; trying the scroll command instead")
+            scrollOnce(target, treeRegion, w, h)
             val second = grabPixels(w, h)
             if (second != null) {
                 px1 = second
-                useSwipe = true
+                useAction = true
             }
         }
         if (px1 == null) {
@@ -157,7 +172,7 @@ class CaptureEngine(
         val top = region[0]
         val bottom = region[1]
         DebugLog.log("scroll region $top-$bottom")
-        onProgress(1)   // from here on the "Capturing…" pill is shown, above the scroll area so it never lands in the image
+        listener.progress(1)   // from here on the "Capturing…" pill is shown, above the scroll area so it never lands in the image
 
         val st = IncrementalStitcher(w, h, top, bottom, store)
         st.start(px0)
@@ -199,7 +214,7 @@ class CaptureEngine(
                 }
                 is Step.Retry -> break
             }
-            onProgress(pages)
+            listener.progress(pages)
             if (shouldStop()) break
             if (pages >= MAX_PAGES) {
                 warnings += "Stopped after $MAX_PAGES screens. Capture again from where it ended to continue."
@@ -210,7 +225,7 @@ class CaptureEngine(
                 warnings += "Stopped because you left the app. Everything captured up to that point is kept."
                 break
             }
-            scrollOnce(if (useSwipe) null else target, region, w, h)
+            scrollOnce(if (useAction) target else null, region, w, h)
             px = grabPixels(w, h) ?: break
             tree = if (wantText) currentTree() else emptyList()
         }
@@ -232,7 +247,7 @@ class CaptureEngine(
             acc.add(lines, null)
             prevKey = key
             pages++
-            onProgress(pages)
+            listener.progress(pages)
             if (target == null || !ScrollTarget.scrollDown(target)) break
             Thread.sleep(SETTLE_MS)
         }
@@ -398,7 +413,7 @@ class CaptureEngine(
         val t = region?.get(0) ?: 0
         val b = region?.get(1) ?: h
         val span = b - t
-        swipe(w / 2, t + (span * 0.8f).toInt(), t + (span * 0.28f).toInt())
+        swipe(w / 2, t + (span * 0.78f).toInt(), t + (span * 0.28f).toInt())
         Thread.sleep(SETTLE_MS + 350)
     }
 
@@ -408,7 +423,7 @@ class CaptureEngine(
             lineTo(x.toFloat(), y2.toFloat())
         }
         val gesture = GestureDescription.Builder()
-            .addStroke(GestureDescription.StrokeDescription(path, 0, 380))
+            .addStroke(GestureDescription.StrokeDescription(path, 0, 450))
             .build()
         val latch = CountDownLatch(1)
         svc.dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
@@ -477,7 +492,7 @@ class CaptureEngine(
 
     private companion object {
         const val TAG = "ScrollCapture"
-        const val MAX_PAGES = 150
+        const val MAX_PAGES = 250
         const val SETTLE_MS = 750L
     }
 }

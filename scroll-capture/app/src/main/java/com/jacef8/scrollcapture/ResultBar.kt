@@ -118,7 +118,6 @@ class ResultBar(
                     scrollCircle.alpha = 0.7f
                     scrollCircle.scaleX = 0.92f
                     scrollCircle.scaleY = 0.92f
-                    ui.removeCallbacks(fade)
                     onScrollPress()
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
@@ -359,8 +358,8 @@ class ResultBar(
     }
 
     private companion object {
-        const val NOTE_MS = 9_000L      // a note needs time to be read
-        const val SHOW_MS = 5_000L      // how long it stays before fading, like Samsung's
-        const val TOUCH_MS = 3_000L     // extra time after a finger lifts
+        const val NOTE_MS = 5_000L      // a note needs time to be read
+        const val SHOW_MS = 3_500L      // how long it stays before fading, like Samsung's
+        const val TOUCH_MS = 1_500L     // extra time after a finger lifts
     }
 }

@@ -48,6 +48,8 @@ interface CaptureListener {
     fun progress(pages: Int)
     /** Something the person should know right now (shown in the status pill). */
     fun note(text: String)
+    /** Slow down: a swipe is close to, or past, the speed where pictures can still be joined. Felt as a double buzz. */
+    fun warn()
 }
 
 /**
@@ -460,6 +462,12 @@ class CaptureEngine(
         var joined = 0
         var notJoined = 0
         var backward = 0
+        var lastWarn = 0L
+        val tooFastAt = (bottom - top) * 6 / 10        // beyond this per picture there is little overlap left
+        fun slowDown() {
+            val t = control.now()
+            if (t - lastWarn > 900) { lastWarn = t; listener.warn() }
+        }
         val first = if (firstShift != null) st.nextWith(firstPx, firstShift) else st.next(firstPx, true, allowBack = true)
         if (first is Step.Added && first.added > 0) {
             pages++
@@ -518,6 +526,7 @@ class CaptureEngine(
                 is Step.Added -> {
                     prevWords = words
                     if (step.shift < 0) backward++
+                    if (trigger == Trigger.MOTION && kotlin.math.abs(step.shift) > tooFastAt) slowDown()
                     if (step.added > 0) {
                         pages++
                         joined++
@@ -530,6 +539,7 @@ class CaptureEngine(
                 }
                 else -> {
                     notJoined++
+                    if (trigger == Trigger.MOTION) slowDown()
                     DebugLog.log("session: could not join a picture (${Rows.lastNote}) by $trigger")
                     if (trigger == Trigger.STEP || !control.motionPending()) {
                         listener.note("Couldn't join that picture. Scroll a little less each time, then try again.")

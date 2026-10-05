@@ -206,6 +206,7 @@ class CaptureService : AccessibilityService() {
                 override fun beforeGrab() { main.post { indicator.setVisible(false); bar?.setGrabHidden(true) } }
                 override fun afterGrab() { main.post { indicator.setVisible(true); bar?.setGrabHidden(false) } }
                 override fun firstFrameTaken() { if (mode == Mode.SCREENSHOT) captureFeedback() }
+                override fun warn() { doubleBuzz() }
                 override fun note(text: String) { main.post { if (running) indicator.show(text) } }
                 override fun progress(pages: Int) {
                     progressNotice(pages)
@@ -322,11 +323,18 @@ class CaptureService : AccessibilityService() {
 
     /** A short buzz at full strength, so it feels like a click. Marked as accessibility feedback so it is not muted with touch feedback. */
     private fun sharpBuzz(ms: Long = 30) {
+        val v = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        vibrate(VibrationEffect.createOneShot(ms, if (v.hasAmplitudeControl()) 255 else VibrationEffect.DEFAULT_AMPLITUDE))
+    }
+
+    /** Two quick buzzes: "slow down", felt in the middle of a swipe. */
+    private fun doubleBuzz() {
+        vibrate(VibrationEffect.createWaveform(longArrayOf(0, 35, 70, 35), -1))
+    }
+
+    private fun vibrate(effect: VibrationEffect) {
         try {
             val v = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-            val effect = VibrationEffect.createOneShot(
-                ms, if (v.hasAmplitudeControl()) 255 else VibrationEffect.DEFAULT_AMPLITUDE
-            )
             if (Build.VERSION.SDK_INT >= 33) {
                 v.vibrate(effect, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ACCESSIBILITY))
             } else {

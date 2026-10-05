@@ -31,7 +31,7 @@ flick overlaps; the buttons and the status pill stay invisible for the whole swi
 It follows you up as well as down and only adds what the image does not already have, so scrolling back and
 forth never repeats or misses anything. Letting go never ends it, and nothing that goes wrong ends it either
 (a picture that would not join, leaving the app): those just show a note in the status pill. Only the tick
-(Done) saves it, or leaving it alone for a minute, or the 250-screen limit. A scroll that works replaces the
+(Done) saves it, or leaving it alone for a minute, or the 250-screen limit. **A double buzz means slow down:** a swipe is close to, or past, the speed where pictures can still be joined (an app cannot slow a real finger, so it tells you instead). A scroll that works replaces the
 first screenshot, so there is one continuous image. If it ends up with only the first screen, the note beside
 the thumbnail says so, with the numbers behind it.
 

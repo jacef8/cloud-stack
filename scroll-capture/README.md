@@ -24,9 +24,21 @@ sooner. Touches anywhere else go straight to the app.
 | Share | The usual share sheet |
 | White circle (Scroll) | One tall image of the whole scrolling section |
 
-The moment you tap Scroll, a **"Getting ready… · tap to stop"** pill appears near the top, then "Capturing… screen N · tap to stop" while it runs
-(the phone buzzes when it starts, and clicks and buzzes when it is done). Scrolling is done like a finger drag of under half the area that pauses before lifting (so the list does not coast on), so each picture overlaps the last and they can be lined up. A busy page with a playing video still lines up as long as one position clearly matches. A scroll that works **replaces** the first screenshot, so there is one continuous image; one that does not keeps the original and adds no duplicate. Notes about a capture (stopped early, nothing to scroll) show beside the thumbnail, where nothing covers them. It stops by itself if the screen changes in a way it
-cannot follow, or if you leave the app, and tells you why. Everything captured up to that point is kept.
+**Scroll is hold-to-scroll, like Samsung's.** Press and hold the white circle and the page scrolls and
+is added to one tall image. Let go to pause (that is *not* the end), press again to keep going, and
+tap the tick (Done) to save. Leave it for 25 seconds and it saves what it has. If the page ends it
+saves by itself. While it works, the buttons and a status pill at the top go invisible for each
+picture, so none of them ends up in the image. A scroll that works replaces the first screenshot,
+so there is one continuous image; one that does not keeps the original and adds no duplicate.
+
+If the page does not move with the slow drag, it tries a quick flick, then the scroll command. If the
+pictures cannot be lined up row by row (a playing video, images still loading), it uses where the
+page's own words sit to work out how far it scrolled. Notes about a capture (stopped early, nothing
+to scroll) show beside the thumbnail, where nothing covers them.
+
+Text and Both (from the full-screen viewer) scroll by themselves to the end, with a "tap to stop" pill.
+Scrolling is a finger drag of under half the area that pauses before lifting, so the list does not
+coast on and each picture overlaps the last.
 
 Images are saved to `DCIM/Screenshots`, the folder Samsung phones use for their own screenshots, so they appear
 in Gallery with the other screenshots. Text goes to `Documents/ScrollCapture`.

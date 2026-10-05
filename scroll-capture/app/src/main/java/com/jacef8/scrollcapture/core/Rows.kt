@@ -86,6 +86,22 @@ object Rows {
     }
 
     /**
+     * How much of the middle of the region is exactly the same in both pictures, 0..1. The top and
+     * bottom tenth are left out (headers, bars and our own small pill change without the page moving).
+     */
+    fun unchangedShare(a: RowSig, b: RowSig, top: Int, bottom: Int): Float {
+        val margin = (bottom - top) / 10
+        var info = 0
+        var same = 0
+        for (r in top + margin until bottom - margin) {
+            if (!b.info[r]) continue
+            info++
+            if (b.hash[r] == a.hash[r]) same++
+        }
+        return if (info == 0) 1f else same.toFloat() / info
+    }
+
+    /**
      * The band of rows that changed between two frames (the part that scrolled).
      * Used when the app gives no scroll area. Returns [top, bottom) or null.
      */

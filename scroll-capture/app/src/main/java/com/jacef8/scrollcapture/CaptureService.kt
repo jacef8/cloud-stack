@@ -22,6 +22,7 @@ import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.jacef8.scrollcapture.core.SessionControl
 import java.io.File
 
 /**
@@ -35,6 +36,7 @@ class CaptureService : AccessibilityService() {
 
     private var bar: ResultBar? = null
     @Volatile private var replaceId: String? = null
+    @Volatile private var control: SessionControl? = null
     private var shutterSound: MediaActionSound? = null
     private val indicator by lazy { CaptureIndicator(this) { stopRequested = true } }
 
@@ -136,10 +138,24 @@ class CaptureService : AccessibilityService() {
         }, delayMs)
     }
 
-    private fun startCapture(mode: Mode) {
+    /** The white scroll circle was pressed: begin a person-driven scroll capture, or take another step of it. */
+    private fun scrollPress(id: String) {
+        val c = control
+        if (c != null) { c.press(); return }
         if (running) return
-        bar?.dismiss()
-        bar = null
+        val fresh = SessionControl().also { it.press() }
+        control = fresh
+        replaceId = id
+        bar?.enterSession()
+        startCapture(Mode.SCROLL, fresh)
+    }
+
+    private fun startCapture(mode: Mode, session: SessionControl? = null) {
+        if (running) return
+        if (session == null) {
+            bar?.dismiss()
+            bar = null
+        }
         running = true
         stopRequested = false
         DebugLog.log("capture requested: $mode")
@@ -148,21 +164,30 @@ class CaptureService : AccessibilityService() {
         if (mode != Mode.SCREENSHOT) sharpBuzz()
         progressNotice(1)
         // A long capture shows its pill straight away, so it is clear it is working and not waiting on you.
-        if (mode != Mode.SCREENSHOT) main.post { indicator.show("Getting ready…  ·  tap to stop") }
+        if (mode != Mode.SCREENSHOT) {
+            main.post { indicator.show(if (session != null) "Scrolling…  ·  hold ● for more, ✓ to save" else "Getting ready…  ·  tap to stop") }
+        }
         Thread {
             val listener = object : CaptureListener {
-                override fun beforeFirstFrame() { main.post { indicator.setVisible(false) } }
-                override fun firstFrameTaken() {
-                    if (mode == Mode.SCREENSHOT) captureFeedback() else main.post { indicator.setVisible(true) }
-                }
+                override fun beforeGrab() { main.post { indicator.setVisible(false); bar?.setGrabHidden(true) } }
+                override fun afterGrab() { main.post { indicator.setVisible(true); bar?.setGrabHidden(false) } }
+                override fun firstFrameTaken() { if (mode == Mode.SCREENSHOT) captureFeedback() }
                 override fun progress(pages: Int) {
                     progressNotice(pages)
-                    main.post { if (running) indicator.show("Capturing… screen $pages  ·  tap to stop") }
+                    main.post {
+                        if (running) {
+                            indicator.show(
+                                if (session != null) "Scrolling… $pages screens  ·  hold ● for more, ✓ to save"
+                                else "Capturing… screen $pages  ·  tap to stop"
+                            )
+                        }
+                    }
                 }
             }
-            val engine = CaptureEngine(this, mode, prefs, { stopRequested }, listener)
+            val engine = CaptureEngine(this, mode, prefs, { stopRequested || session?.done == true }, listener, session)
             val outcome = engine.run()
             running = false
+            control = null
             // Anything the capture wants to tell you (stopped early, nothing to scroll, ...).
             var shownId = outcome.id
             val replaced = replaceId
@@ -195,10 +220,18 @@ class CaptureService : AccessibilityService() {
             if (outcome.id != null) { if (mode != Mode.SCREENSHOT) captureFeedback() } else sharpBuzz(120)
             main.post {
                 indicator.hide()
+                bar?.dismiss()
+                bar = null
                 if (shownId != null) {
                     // A floating toolbar over the live app, not a new screen, so the app stays in front.
                     val shown: String = shownId
-                    bar = ResultBar(this, shown, warning) { requestCapture(it, 350, shown) }.also { it.show() }
+                    bar = ResultBar(
+                        this, shown, warning,
+                        onMore = { requestCapture(it, 350, shown) },
+                        onScrollPress = { scrollPress(shown) },
+                        onScrollRelease = { control?.release() },
+                        onDone = { control?.finish() },
+                    ).also { it.show() }
                 } else {
                     DebugLog.log("capture failed: ${outcome.error}")
                     Toast.makeText(this, outcome.error ?: "Capture failed", Toast.LENGTH_LONG).show()

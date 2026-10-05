@@ -243,4 +243,62 @@ class CoreTest {
         acc.add(listOf(l("b", 0), l("c", 30), l("d", 60)), null)
         assertEquals("a\nb\nc\nd", acc.render())
     }
+
+    // ---- the person-driven session ----
+
+    @Test fun releasingTheButtonDoesNotEndTheCapture() {
+        var now = 0L
+        val c = SessionControl { now }
+        c.press()                    // the press that starts the session
+        c.consumeInitial()           // ... which the first step answered
+        c.release()                  // let go: pause, not finish
+        assertTrue(!c.done)
+        now += 1_000
+        c.press()                    // press again: one more step
+        assertTrue(c.waitForStep(10_000, 1))
+        c.release()
+        now += 20_000                // left idle: saved rather than lost
+        assertTrue(!c.waitForStep(10_000, 1))
+    }
+
+    @Test fun holdingKeepsStepsComingAndDoneStopsThem() {
+        val c = SessionControl()
+        c.press()
+        c.consumeInitial()
+        repeat(5) { assertTrue(c.waitForStep(10_000, 1)) }
+        c.finish()
+        assertTrue(!c.waitForStep(10_000, 1))
+    }
+
+    // ---- fallback: how far did it scroll, from where the words sit ----
+
+    private fun l(t: String, y: Int, x: Int = 20) = Line(t, y, y + 40, x)
+
+    @Test fun wordsGiveTheScrolledDistance() {
+        val prev = listOf(l("Home", 10), l("first post here", 400), l("second post here", 700), l("third post here", 1000), l("fourth post", 1300))
+        val cur = listOf(l("Home", 10), l("second post here", 300), l("third post here", 600), l("fourth post", 900), l("fifth post", 1200))
+        assertEquals(400, TreeAlign.shift(prev, cur, 100, 1900, 20, 1500))
+    }
+
+    @Test fun wordsThatDisagreeGiveNothing() {
+        val prev = listOf(l("same words", 200), l("same words", 500), l("same words", 800))
+        val cur = listOf(l("same words", 100), l("same words", 400), l("same words", 700))
+        // Every pairing is equally likely (100, 400 or 700 apart): no single answer.
+        assertTrue(TreeAlign.shift(prev, cur, 0, 1900, 20, 1500) == null)
+    }
+
+    @Test fun aSteadyTabBarIsNotMistakenForScrolling() {
+        val prev = listOf(l("For you", 90), l("Following", 90, 300), l("post one", 500), l("post two", 800), l("post three", 1100))
+        val cur = listOf(l("For you", 90), l("Following", 90, 300), l("post two", 380), l("post three", 680), l("post four", 980))
+        assertEquals(420, TreeAlign.shift(prev, cur, 0, 1900, 20, 1500))
+    }
+
+    @Test fun aStillPageWithASmallPillStillCountsAsUnchanged() {
+        val doc = makeDoc(3000, 12)
+        val a = frameAt(doc, 3000, 400)
+        val b = frameAt(doc, 3000, 400)
+        for (y in top + 20 until top + 90) for (x in 10 until 110) b[y * w + x] = 0xFFFF00FF.toInt()   // a pill appears
+        val share = Rows.unchangedShare(Rows.signature(a, w, h), Rows.signature(b, w, h), top, bottom)
+        assertTrue("share=$share", share > 0.9f)
+    }
 }

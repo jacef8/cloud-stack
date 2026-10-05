@@ -65,6 +65,17 @@ class IncrementalStitcher(
         return Step.Added(sh.s, offset)
     }
 
+    /** Adds [px] when the scrolled distance [shift] is already known (found from the words on screen). */
+    fun nextWith(px: IntArray, shift: Int): Step {
+        consecutiveLost = 0
+        sink?.append(px, w, bottom - shift, bottom)
+        offset += shift
+        hint = shift
+        prevPx = px
+        prevSig = Rows.signature(px, w, h)
+        return Step.Added(shift, offset)
+    }
+
     fun finish() {
         val p = prevPx ?: return
         sink?.append(p, w, bottom, h)

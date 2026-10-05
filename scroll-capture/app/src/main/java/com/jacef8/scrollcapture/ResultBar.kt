@@ -40,7 +40,16 @@ class ResultBar(
     private val id: String,
     private val message: String,
     private val onMore: (Mode) -> Unit,
+    private val onScrollPress: () -> Unit,
+    private val onScrollRelease: () -> Unit,
+    private val onDone: () -> Unit,
 ) {
+    private var sessionActive = false
+    private var editSlot: View? = null
+    private var textSlot: View? = null
+    private var shareSlot: View? = null
+    private var doneSlot: View? = null
+    private var chipView: View? = null
     private val views = ArrayList<View>()
     private val ui = Handler(Looper.getMainLooper())
     private val fade = Runnable { fadeOut() }
@@ -70,14 +79,15 @@ class ResultBar(
             elevation = dp(6f).toFloat()
         }
 
-        fun slot(content: View, label: String, onClick: () -> Unit) {
+        fun slot(content: View, label: String, onClick: (() -> Unit)?): FrameLayout {
             val slot = FrameLayout(ctx).apply {
                 contentDescription = label
                 tooltipText = label
-                setOnClickListener { onClick() }
+                if (onClick != null) setOnClickListener { onClick() }
             }
             slot.addView(content, FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER))
             pill.addView(slot, LinearLayout.LayoutParams(0, dp(43f), 1f))
+            return slot
         }
 
         fun plainIcon(icon: Int) = FrameLayout(ctx).apply {
@@ -85,10 +95,13 @@ class ResultBar(
             layoutParams = FrameLayout.LayoutParams(dp(43f), dp(43f))
         }
 
-        if (hasImage) slot(plainIcon(R.drawable.ic_edit), "Edit") { dismissNow(); Actions.edit(svc, dir) }
-        slot(plainIcon(R.drawable.ic_cap_text), "Text of the whole page") { dismissNow(); onMore(Mode.TEXT) }
-        slot(plainIcon(R.drawable.ic_share), "Share") { dismissNow(); Actions.share(svc, dir, hasImage) }
-        // Scroll capture is the main action: a white circle with a blue icon, as on Samsung's.
+        // Done only appears while a scroll capture is in progress.
+        doneSlot = slot(plainIcon(R.drawable.ic_cap_done), "Done: save the long image") { onDone() }.also { it.visibility = View.GONE }
+        if (hasImage) editSlot = slot(plainIcon(R.drawable.ic_edit), "Edit") { dismissNow(); Actions.edit(svc, dir) }
+        textSlot = slot(plainIcon(R.drawable.ic_cap_text), "Text of the whole page") { dismissNow(); onMore(Mode.TEXT) }
+        shareSlot = slot(plainIcon(R.drawable.ic_share), "Share") { dismissNow(); Actions.share(svc, dir, hasImage) }
+        // Scroll capture is the main action: a white circle with a blue icon, as on Samsung's. HOLD it to keep
+        // scrolling; let go to pause (that is NOT the end); press again to carry on; Done saves the image.
         val scrollCircle = FrameLayout(ctx).apply {
             background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0xFFFFFFFF.toInt()) }
             addView(ImageView(ctx).apply {
@@ -97,7 +110,25 @@ class ResultBar(
             }, FrameLayout.LayoutParams(dp(26f), dp(26f), Gravity.CENTER))
             layoutParams = FrameLayout.LayoutParams(dp(42f), dp(42f))
         }
-        slot(scrollCircle, "Scroll capture") { dismissNow(); onMore(Mode.SCROLL) }
+        val scrollSlot = slot(scrollCircle, "Scroll capture: hold to keep scrolling", null)
+        scrollSlot.setOnTouchListener { _, e ->
+            when (e.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    scrollCircle.alpha = 0.7f
+                    scrollCircle.scaleX = 0.92f
+                    scrollCircle.scaleY = 0.92f
+                    ui.removeCallbacks(fade)
+                    onScrollPress()
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    scrollCircle.alpha = 1f
+                    scrollCircle.scaleX = 1f
+                    scrollCircle.scaleY = 1f
+                    onScrollRelease()
+                }
+            }
+            true
+        }
 
         // ---- the thumbnail ----
         val thumb = ImageView(ctx).apply {
@@ -166,6 +197,7 @@ class ResultBar(
             }
             wm.addView(chip, chipLp)
             views += chip
+            chipView = chip
             chip.layoutParams = chipLp
             holdWhileTouched(chip)
         }
@@ -204,7 +236,7 @@ class ResultBar(
             when (e.actionMasked) {
                 MotionEvent.ACTION_DOWN -> ui.removeCallbacks(fade)
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    if (!gone) { ui.removeCallbacks(fade); ui.postDelayed(fade, TOUCH_MS) }
+                    if (!gone && !sessionActive) { ui.removeCallbacks(fade); ui.postDelayed(fade, TOUCH_MS) }
                 }
             }
             false
@@ -224,16 +256,16 @@ class ResultBar(
                 }
                 MotionEvent.ACTION_UP -> {
                     val dx = e.rawX - downX
-                    if (abs(dx) > limit) {
+                    if (abs(dx) > limit && !sessionActive) {
                         fadeOut(slide = if (dx > 0) 1 else -1)
                         return@setOnTouchListener true
                     }
                     view.translationX = 0f
-                    if (!gone) { ui.removeCallbacks(fade); ui.postDelayed(fade, TOUCH_MS) }
+                    if (!gone && !sessionActive) { ui.removeCallbacks(fade); ui.postDelayed(fade, TOUCH_MS) }
                 }
                 MotionEvent.ACTION_CANCEL -> {
                     view.translationX = 0f
-                    if (!gone) { ui.removeCallbacks(fade); ui.postDelayed(fade, TOUCH_MS) }
+                    if (!gone && !sessionActive) { ui.removeCallbacks(fade); ui.postDelayed(fade, TOUCH_MS) }
                 }
             }
             false
@@ -268,9 +300,26 @@ class ResultBar(
         )
     }
 
+    /** The scroll capture has begun: stay up, and show Done in place of Edit, Text and Share. */
+    fun enterSession() {
+        sessionActive = true
+        ui.removeCallbacks(fade)
+        for (v in views) { v.animate().cancel(); v.alpha = 1f; v.translationY = 0f; v.translationX = 0f }
+        editSlot?.visibility = View.GONE
+        textSlot?.visibility = View.GONE
+        shareSlot?.visibility = View.GONE
+        chipView?.visibility = View.GONE
+        doneSlot?.visibility = View.VISIBLE
+    }
+
+    /** Make everything invisible (but still touchable) while a picture is taken, so none of it is in the picture. */
+    fun setGrabHidden(hidden: Boolean) {
+        for (v in views) { v.animate().cancel(); v.alpha = if (hidden) 0f else 1f }
+    }
+
     /** Fade away, then remove the windows. */
     private fun fadeOut(slide: Int = 0) {
-        if (gone || views.isEmpty()) return
+        if (gone || views.isEmpty() || sessionActive) return
         gone = true
         ui.removeCallbacks(fade)
         val dist = Ui.dp(views[0].context, 80f).toFloat() * slide

@@ -18,6 +18,8 @@ import com.jacef8.scrollcapture.core.IncrementalStitcher
 import com.jacef8.scrollcapture.core.Line
 import com.jacef8.scrollcapture.core.Png
 import com.jacef8.scrollcapture.core.Rows
+import com.jacef8.scrollcapture.core.SessionControl
+import com.jacef8.scrollcapture.core.TreeAlign
 import com.jacef8.scrollcapture.core.Step
 import com.jacef8.scrollcapture.core.StripStore
 import com.jacef8.scrollcapture.core.TextAccumulator
@@ -34,8 +36,10 @@ class Outcome(val id: String?, val error: String?)
 
 /** What the engine tells the service while it works, so the service can show feedback. */
 interface CaptureListener {
-    /** About to take the first picture: hide anything of ours that must not be in it. */
-    fun beforeFirstFrame()
+    /** About to take a picture: make anything of ours that is on screen invisible so it is not in it. */
+    fun beforeGrab()
+    /** The picture is taken: show it again. */
+    fun afterGrab()
     /** The first picture is taken (the shutter click for a plain screenshot). */
     fun firstFrameTaken()
     /** A long capture has [pages] screens so far. */
@@ -52,6 +56,7 @@ class CaptureEngine(
     private val prefs: Prefs,
     private val shouldStop: () -> Boolean,
     private val listener: CaptureListener,
+    private val control: SessionControl? = null,
 ) {
     private val exec = Executors.newSingleThreadExecutor()
     private val ui = Handler(Looper.getMainLooper())
@@ -94,12 +99,9 @@ class CaptureEngine(
         }
         val target = if (scrolling && root0 != null) ScrollTarget.find(root0, screenH) else null
         DebugLog.log("scroll area: ${if (target != null) "found" else "none"}")
-        if (scrolling && target != null && prefs.startFromTop) scrollToTop(target)
+        // A person-driven session extends down from where they are; only a hands-off capture goes back to the top first.
+        if (scrolling && target != null && prefs.startFromTop && control == null) scrollToTop(target)
 
-        if (scrolling) {
-            listener.beforeFirstFrame()   // hide the "Getting ready" pill so it is not in the picture
-            Thread.sleep(170)
-        }
         val bmp0 = grab() ?: return Outcome(
             null,
             "Couldn't take a screenshot. Check that Scroll Capture is still turned on in Accessibility."
@@ -131,22 +133,37 @@ class CaptureEngine(
             return finish(id, dir, store, w, acc, wantText, warnings)
         }
 
-        // Scroll once to learn how this screen moves. Scrolling is done like a finger swipe of about half
-        // the area: the built-in "scroll down" command moves a whole screenful, which leaves no overlap
-        // between pictures to line them up on.
+        // ---- a scrolling capture ----
         val treeRegion = target?.let { regionOf(it, h) }
         val sig0 = Rows.signature(px0, w, h)
+        val words0 = currentTree()          // the words on screen now: for text, and to line pictures up when pixels cannot
         var useAction = false
+
+        // Scroll once to learn how this screen moves. Scrolling is a finger drag of under half the area that
+        // pauses before lifting (so the list does not coast on): the built-in "scroll down" command moves a
+        // whole screenful, which leaves no overlap between pictures to line them up on.
         scrollOnce(null, treeRegion, w, h)
+        control?.consumeInitial()
         var px1 = grabPixels(w, h)
-        if (px1 != null && target != null && Rows.signature(px1, w, h).hash.contentEquals(sig0.hash)) {
-            // The swipe moved nothing (gestures blocked?): try the scroll command instead.
-            DebugLog.log("the swipe moved nothing; trying the scroll command instead")
-            scrollOnce(target, treeRegion, w, h)
-            val second = grabPixels(w, h)
-            if (second != null) {
-                px1 = second
-                useAction = true
+        var words1 = currentTree()
+
+        val stillTop = treeRegion?.get(0) ?: 0
+        val stillBottom = treeRegion?.get(1) ?: h
+        fun stillPage(p: IntArray?): Boolean =
+            p != null && Rows.unchangedShare(sig0, Rows.signature(p, w, h), stillTop, stillBottom) > 0.92f
+
+        if (stillPage(px1)) {
+            // Nothing moved. Some pages ignore a slow drag: try a quick flick, then the scroll command.
+            DebugLog.log("the drag moved nothing; trying a quick flick")
+            flickOnce(treeRegion, w, h)
+            px1 = grabPixels(w, h)
+            words1 = currentTree()
+            if (stillPage(px1) && target != null) {
+                DebugLog.log("the flick moved nothing; trying the scroll command")
+                scrollOnce(target, treeRegion, w, h)
+                px1 = grabPixels(w, h)
+                words1 = currentTree()
+                useAction = !stillPage(px1)
             }
         }
         if (px1 == null) {
@@ -155,17 +172,31 @@ class CaptureEngine(
             if (wantText) acc.add(split(tree0, 0, h, px0, w).body, 0)
             return finish(id, dir, store, w, acc, wantText, warnings)
         }
-        var tree = if (wantText) currentTree() else emptyList()
+        if (stillPage(px1)) {
+            DebugLog.log("nothing moved after three tries")
+            warnings += "This screen didn't scroll (it may already be at the end), so only what was visible was captured."
+            store?.append(px0, w, 0, h)
+            if (wantText) acc.add(split(tree0, 0, h, px0, w).body, 0)
+            return finish(id, dir, store, w, acc, wantText, warnings)
+        }
+        var tree = words1
 
         val sig1 = Rows.signature(px1, w, h)
-        val region = pickRegion(sig0, sig1, treeRegion)
+        var region = pickRegion(sig0, sig1, treeRegion)
+        var firstShift: Int? = null
         if (region == null) {
-            DebugLog.log("could not line up the first two screens: ${Rows.lastNote}")
-            warnings += if (sig0.hash.contentEquals(sig1.hash)) {
-                "Nothing more to scroll here, so this is the whole screen."
-            } else {
-                "Couldn't line the scrolled screens up, so only the first screen was captured."
+            DebugLog.log("pictures did not line up: ${Rows.lastNote}")
+            // Fall back to where the words sit: the same words, lower or higher, give the distance.
+            val cand = treeRegion ?: Rows.movingRegion(sig0, sig1) ?: intArrayOf(0, h)
+            val s = TreeAlign.shift(words0, words1, cand[0], cand[1], 12, (cand[1] - cand[0]) - 40)
+            if (s != null) {
+                DebugLog.log("lined up from the words on screen: moved $s")
+                region = cand
+                firstShift = s
             }
+        }
+        if (region == null) {
+            warnings += "Couldn't line the scrolled screens up, so only the first screen was captured."
             store?.append(px0, w, 0, h)
             if (wantText) acc.add(split(tree0, 0, h, px0, w).body, 0)
             return finish(id, dir, store, w, acc, wantText, warnings)
@@ -173,7 +204,7 @@ class CaptureEngine(
         val top = region[0]
         val bottom = region[1]
         DebugLog.log("scroll region $top-$bottom")
-        listener.progress(1)   // from here on the "Capturing…" pill is shown, above the scroll area so it never lands in the image
+        listener.progress(1)   // from here on the status pill is shown, above the scroll area so it never lands in the image
 
         val st = IncrementalStitcher(w, h, top, bottom, store)
         st.start(px0)
@@ -187,15 +218,26 @@ class CaptureEngine(
 
         var pages = 1
         var px: IntArray = px1
+        var prevWords = words0
+        var forced: Int? = firstShift
         while (true) {
-            var step = st.next(px, false)
+            val known = forced
+            forced = null
+            var step: Step = if (known != null) st.nextWith(px, known) else st.next(px, false)
             if (step is Step.Retry) {
                 // The screen may still be settling; look once more.
                 Thread.sleep(650)
                 val again = grabPixels(w, h) ?: break
                 px = again
-                tree = if (wantText) currentTree() else emptyList()
+                tree = currentTree()
                 step = st.next(px, true)
+                if (step is Step.Lost) {
+                    val s = TreeAlign.shift(prevWords, tree, top, bottom, 12, (bottom - top) - 40)
+                    if (s != null) {
+                        DebugLog.log("lined up from the words on screen: moved $s")
+                        step = st.nextWith(px, s)
+                    }
+                }
             }
             when (step) {
                 is Step.End -> { DebugLog.log("reached the end after $pages screens"); break }
@@ -207,6 +249,7 @@ class CaptureEngine(
                         acc.add(ft.body, step.offset)
                         lastFooter = ft.footer
                     }
+                    prevWords = tree
                 }
                 is Step.Lost -> {
                     DebugLog.log("page ${pages + 1}: could not line up (${Rows.lastNote})")
@@ -221,6 +264,11 @@ class CaptureEngine(
                 warnings += "Stopped after $MAX_PAGES screens. Capture again from where it ended to continue."
                 break
             }
+            // Driven by the person: hold to keep scrolling, let go to pause, Done (or leaving it idle) to finish.
+            if (control != null && !control.waitForStep(IDLE_MS)) {
+                DebugLog.log("finished after $pages screens (done, or left idle)")
+                break
+            }
             if (leftApp(pkg)) {
                 DebugLog.log("left the app: now in ${svc.rootInActiveWindow?.packageName}")
                 warnings += "Stopped because you left the app. Everything captured up to that point is kept."
@@ -228,7 +276,7 @@ class CaptureEngine(
             }
             scrollOnce(if (useAction) target else null, region, w, h)
             px = grabPixels(w, h) ?: break
-            tree = if (wantText) currentTree() else emptyList()
+            tree = currentTree()
         }
         st.finish()
         if (wantText && lastFooter.isNotEmpty()) acc.add(lastFooter, st.offset)
@@ -418,6 +466,18 @@ class CaptureEngine(
         Thread.sleep(SETTLE_MS - 100)
     }
 
+    private fun flickOnce(region: IntArray?, w: Int, h: Int) {
+        val t = region?.get(0) ?: 0
+        val b = region?.get(1) ?: h
+        val span = b - t
+        val path = Path().apply {
+            moveTo(w / 2f, t + span * 0.70f)
+            lineTo(w / 2f, t + span * 0.40f)
+        }
+        dispatch(GestureDescription.StrokeDescription(path, 0, 200))
+        Thread.sleep(SETTLE_MS + 500)
+    }
+
     /**
      * Drag up, then hold still for a moment before lifting. A finger that lifts at speed makes a
      * list coast on by a screenful or more, leaving nothing to line the pictures up on.
@@ -474,6 +534,20 @@ class CaptureEngine(
 
     /** One screenshot of the whole display, as a normal bitmap. Android allows about one per second. */
     private fun grab(): Bitmap? {
+        // Anything of ours on screen (the buttons, the status pill) goes invisible for the picture, so it is never in it.
+        val hide = mode != Mode.SCREENSHOT
+        if (hide) {
+            listener.beforeGrab()
+            Thread.sleep(UI_HIDE_MS)
+        }
+        try {
+            return grabRaw()
+        } finally {
+            if (hide) listener.afterGrab()
+        }
+    }
+
+    private fun grabRaw(): Bitmap? {
         repeat(8) {
             val latch = CountDownLatch(1)
             val holder = arrayOfNulls<Bitmap>(1)
@@ -507,5 +581,7 @@ class CaptureEngine(
         const val TAG = "ScrollCapture"
         const val MAX_PAGES = 250
         const val SETTLE_MS = 750L
+        const val UI_HIDE_MS = 150L
+        const val IDLE_MS = 25_000L
     }
 }

@@ -1,0 +1,53 @@
+name: Build Scroll Capture
+
+# Builds the Android app whenever it changes (or on demand from the Actions tab)
+# and publishes the APK, so installing is: open the release on your phone, tap the .apk.
+on:
+  push:
+    paths:
+      - 'scroll-capture/**'
+      - '.github/workflows/scroll-capture.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scroll-capture
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Test and build
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon testDebugUnitTest assembleRelease
+
+      - name: Name the APK
+        run: cp app/build/outputs/apk/release/app-release.apk ScrollCapture.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ScrollCapture-apk
+          path: scroll-capture/ScrollCapture.apk
+
+      # One release that always holds the newest build, at a fixed address:
+      # github.com/<owner>/<repo>/releases/tag/scroll-capture-latest
+      - name: Publish the newest build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete scroll-capture-latest --yes --cleanup-tag || true
+          gh release create scroll-capture-latest ScrollCapture.apk \
+            --title "Scroll Capture build ${{ github.run_number }}" \
+            --notes "Build ${{ github.run_number }} from ${GITHUB_SHA::7} on ${{ github.ref_name }}. Open on your phone and tap ScrollCapture.apk to install or update." \
+            --prerelease \
+            --target "$GITHUB_SHA"

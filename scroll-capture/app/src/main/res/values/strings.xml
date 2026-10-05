@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Scroll Capture</string>
+    <string name="a11y_description">Takes screenshots, scrolls the screen to capture long pages, reads the on-screen text, and listens for the Volume Up + Down shortcut. Nothing leaves your phone.</string>
+</resources>

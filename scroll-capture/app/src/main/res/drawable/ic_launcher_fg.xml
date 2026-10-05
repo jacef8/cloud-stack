@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Symbol stays inside the centre 66dp of the 108dp canvas so any launcher mask keeps it. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M38,30 L70,30 Q73,30 73,33 L73,75 Q73,78 70,78 L38,78 Q35,78 35,75 L35,33 Q35,30 38,30 Z"
+        android:strokeColor="#FF06141A"
+        android:strokeLineJoin="round"
+        android:strokeWidth="5" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M54,42 L54,64 M45,56 L54,65 L63,56"
+        android:strokeColor="#FF06141A"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="5" />
+</vector>

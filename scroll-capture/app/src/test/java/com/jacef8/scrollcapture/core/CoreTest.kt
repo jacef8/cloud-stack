@@ -270,6 +270,31 @@ class CoreTest {
         assertTrue(!c.waitForStep(10_000, 1))
     }
 
+    @Test fun aHandScrollIsPickedUpOnceThePageStopsMoving() {
+        var now = 0L
+        val c = SessionControl { now }
+        c.press(); c.consumeInitial(); c.release()
+        c.noteScroll()                         // the person swipes
+        now += 200
+        c.noteScroll()                         // still moving
+        now += 600                             // ... and has now been still long enough
+        assertEquals(Trigger.SETTLED, c.awaitTrigger(500, 60_000, 1))
+    }
+
+    @Test fun nothingEndsTheSessionExceptDoneOrBeingLeftIdle() {
+        var now = 0L
+        val c = SessionControl { now }
+        c.press(); c.consumeInitial(); c.release()
+        now += 10_000
+        c.press()
+        assertEquals(Trigger.STEP, c.awaitTrigger(500, 60_000, 1))
+        c.release()
+        now += 61_000
+        assertEquals(Trigger.IDLE, c.awaitTrigger(500, 60_000, 1))
+        c.finish()
+        assertEquals(Trigger.DONE, c.awaitTrigger(500, 60_000, 1))
+    }
+
     // ---- fallback: how far did it scroll, from where the words sit ----
 
     private fun l(t: String, y: Int, x: Int = 20) = Line(t, y, y + 40, x)

@@ -100,7 +100,15 @@ class CaptureService : AccessibilityService() {
         super.onDestroy()
     }
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) = Unit
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        // While a person-driven scroll capture is open, note whenever the page scrolls (by hand or by a step),
+        // so a picture is taken once it has stopped moving.
+        if (event?.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED && running &&
+            event.packageName?.toString() != packageName
+        ) {
+            control?.noteScroll()
+        }
+    }
     override fun onInterrupt() = Unit
 
     // ---- Volume Up + Volume Down ----
@@ -191,19 +199,20 @@ class CaptureService : AccessibilityService() {
         progressNotice(1)
         // A long capture shows its pill straight away, so it is clear it is working and not waiting on you.
         if (mode != Mode.SCREENSHOT) {
-            main.post { indicator.show(if (session != null) "Scrolling…  ·  hold ● for more, ✓ to save" else "Getting ready…  ·  tap to stop") }
+            main.post { indicator.show(if (session != null) "Scrolling…  ·  tap ● or swipe yourself, ✓ to save" else "Getting ready…  ·  tap to stop") }
         }
         Thread {
             val listener = object : CaptureListener {
                 override fun beforeGrab() { main.post { indicator.setVisible(false); bar?.setGrabHidden(true) } }
                 override fun afterGrab() { main.post { indicator.setVisible(true); bar?.setGrabHidden(false) } }
                 override fun firstFrameTaken() { if (mode == Mode.SCREENSHOT) captureFeedback() }
+                override fun note(text: String) { main.post { if (running) indicator.show(text) } }
                 override fun progress(pages: Int) {
                     progressNotice(pages)
                     main.post {
                         if (running) {
                             indicator.show(
-                                if (session != null) "Scrolling… $pages screens  ·  hold ● for more, ✓ to save"
+                                if (session != null) "Scrolling… $pages screens  ·  tap ● or swipe yourself, ✓ to save"
                                 else "Capturing… screen $pages  ·  tap to stop"
                             )
                         }

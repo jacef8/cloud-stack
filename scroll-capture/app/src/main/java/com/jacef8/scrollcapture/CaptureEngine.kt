@@ -19,6 +19,7 @@ import com.jacef8.scrollcapture.core.Line
 import com.jacef8.scrollcapture.core.Png
 import com.jacef8.scrollcapture.core.Rows
 import com.jacef8.scrollcapture.core.SessionControl
+import com.jacef8.scrollcapture.core.Trigger
 import com.jacef8.scrollcapture.core.TreeAlign
 import com.jacef8.scrollcapture.core.Step
 import com.jacef8.scrollcapture.core.StripStore
@@ -44,6 +45,8 @@ interface CaptureListener {
     fun firstFrameTaken()
     /** A long capture has [pages] screens so far. */
     fun progress(pages: Int)
+    /** Something the person should know right now (shown in the status pill). */
+    fun note(text: String)
 }
 
 /**
@@ -227,6 +230,13 @@ class CaptureEngine(
             acc.add(ft0.header, 0)
             acc.add(ft0.body, 0)
             lastFooter = ft0.footer
+        }
+
+        // A person-driven session runs its own loop and only ends when told to.
+        if (control != null) {
+            val pagesDone = runSession(control, st, px1, firstShift, words0, w, h, top, bottom, region, target, useAction)
+            st.finish()
+            return finish(id, dir, store, w, acc, wantText, warnings, pagesDone)
         }
 
         var pages = 1
@@ -421,6 +431,70 @@ class CaptureEngine(
 
     // ---- screen and scrolling ----
 
+    /**
+     * A person-driven scroll capture. It adds to the image whenever the page moves, however that happened:
+     * the scroll button asked for a step, or the person swiped by hand and the page then stopped. Nothing
+     * that goes wrong ends it (a step that moved nothing, a picture that would not line up, leaving the app):
+     * those just show a note. Only Done, or being left alone for a long time, finishes it.
+     */
+    private fun runSession(
+        control: SessionControl, st: IncrementalStitcher, firstPx: IntArray, firstShift: Int?, words0: List<Line>,
+        w: Int, h: Int, top: Int, bottom: Int, region: IntArray, target: AccessibilityNodeInfo?, useAction: Boolean,
+    ): Int {
+        var pages = 1
+        var prevWords = words0
+        val first = if (firstShift != null) st.nextWith(firstPx, firstShift) else st.next(firstPx, true)
+        if (first is Step.Added) {
+            pages++
+            prevWords = currentTree()
+        }
+        listener.progress(pages)
+        control.clearScroll()
+        while (pages < MAX_PAGES) {
+            val trigger = control.awaitTrigger(SETTLE_EVENT_MS, SESSION_IDLE_MS)
+            if (trigger == Trigger.DONE || trigger == Trigger.IDLE) {
+                DebugLog.log("session finished by $trigger after $pages screens")
+                break
+            }
+            var viaCommand = false
+            if (trigger == Trigger.STEP) {
+                // While the button is held a finger is on the screen, and Android cancels a swipe we send then,
+                // so use the scroll command (which needs no touch). Otherwise a swipe, which can be checked.
+                viaCommand = target != null && (control.holding || useAction)
+                scrollOnce(if (viaCommand) target else null, region, w, h)
+            }
+            val px = grabPixels(w, h)
+            control.clearScroll()
+            if (px == null) { Thread.sleep(300); continue }
+            val words = currentTree()
+            var step: Step = st.next(px, true)
+            if (step is Step.Lost) {
+                val s = TreeAlign.shift(prevWords, words, top, bottom, 12, (bottom - top) - 40)
+                step = when {
+                    s != null -> st.nextWith(px, s)
+                    viaCommand -> st.nextWith(px, bottom - top)     // a whole-screen jump has no overlap to match on
+                    else -> step
+                }
+            }
+            when (step) {
+                is Step.Added -> {
+                    pages++
+                    prevWords = words
+                    DebugLog.log("session screen $pages: moved ${step.shift} by $trigger (${Rows.lastNote})")
+                    listener.progress(pages)
+                }
+                is Step.End -> {
+                    if (trigger == Trigger.STEP) listener.note("Nothing more moved. If this is the end of the page, tap ✓ to save.")
+                }
+                else -> {
+                    DebugLog.log("session: could not join a picture (${Rows.lastNote}) by $trigger")
+                    listener.note("Couldn't join that picture. Scroll a little less each time, then try again.")
+                }
+            }
+        }
+        return pages
+    }
+
     /** True when a different app has come to the front since the capture began (not the keyboard or system bars). */
     private fun leftApp(start: String): Boolean {
         val now = svc.rootInActiveWindow?.packageName?.toString() ?: return false
@@ -602,5 +676,7 @@ class CaptureEngine(
         const val SETTLE_MS = 750L
         const val UI_HIDE_MS = 150L
         const val IDLE_MS = 25_000L
+        const val SESSION_IDLE_MS = 60_000L
+        const val SETTLE_EVENT_MS = 500L
     }
 }

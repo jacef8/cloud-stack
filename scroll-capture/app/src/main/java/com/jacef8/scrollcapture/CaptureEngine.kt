@@ -45,11 +45,13 @@ class CaptureEngine(
 ) {
     private val exec = Executors.newSingleThreadExecutor()
     private val ui = Handler(Looper.getMainLooper())
+    private var lastApp = ""
 
     fun run(): Outcome = try {
         runInner()
     } catch (e: Throwable) {
         Log.e(TAG, "capture failed", e)
+        DebugLog.error("capture failed", e)
         Outcome(null, e.message ?: e.javaClass.simpleName)
     } finally {
         exec.shutdown()
@@ -66,8 +68,22 @@ class CaptureEngine(
         val warnings = ArrayList<String>()
         val screenH = svc.resources.displayMetrics.heightPixels
 
-        val root0 = svc.rootInActiveWindow
+        // If our own viewer is still closing, wait for the app underneath to come back to the front.
+        var root0 = svc.rootInActiveWindow
+        var waited = 0
+        while (root0?.packageName == svc.packageName && mode != Mode.SCREENSHOT && waited < 8) {
+            Thread.sleep(250)
+            root0 = svc.rootInActiveWindow
+            waited++
+        }
+        val pkg = root0?.packageName?.toString().orEmpty()
+        lastApp = pkg
+        DebugLog.log("capture start mode=$mode app=$pkg waited=${waited * 250}ms")
+        if (pkg == svc.packageName && mode != Mode.SCREENSHOT) {
+            return Outcome(null, "Couldn't find the app to capture. Go to the screen you want, then press Volume Up + Down.")
+        }
         val target = if (scrolling && root0 != null) ScrollTarget.find(root0, screenH) else null
+        DebugLog.log("scroll area: ${if (target != null) "found" else "none"}")
         if (scrolling && target != null && prefs.startFromTop) scrollToTop(target)
 
         val bmp0 = grab() ?: return Outcome(
@@ -79,9 +95,12 @@ class CaptureEngine(
         val px0 = pixels(bmp0)
         bmp0.recycle()
 
+        DebugLog.log("first frame ${w}x$h")
         if (isBlank(px0)) {
+            DebugLog.log("first frame is all black: $pkg blocks screenshots")
             if (wantImage) {
-                return Outcome(null, "This app doesn't allow screenshots, so the screen came out black. Try Text only.")
+                val who = if (pkg.contains("settings")) "Settings pages" else "This screen"
+                return Outcome(null, "$who can't be captured: Android blocks screenshots there, so it came out black. Try a normal app screen.")
             }
             return textWithoutImages(id, dir, target)
         }
@@ -124,6 +143,7 @@ class CaptureEngine(
         }
         val top = region[0]
         val bottom = region[1]
+        DebugLog.log("scroll region $top-$bottom")
 
         val st = IncrementalStitcher(w, h, top, bottom, store)
         st.start(px0)
@@ -149,9 +169,10 @@ class CaptureEngine(
                 step = st.next(px, true)
             }
             when (step) {
-                is Step.End -> break
+                is Step.End -> { DebugLog.log("reached the end after $pages screens"); break }
                 is Step.Added -> {
                     pages++
+                    DebugLog.log("page $pages: moved ${step.shift}")
                     if (wantText) {
                         val ft = split(tree, top, bottom, px, w)
                         acc.add(ft.body, step.offset)
@@ -160,6 +181,7 @@ class CaptureEngine(
                 }
                 is Step.Lost -> {
                     pages++
+                    DebugLog.log("page $pages: lost track")
                     if (!warnedLost) {
                         warnings += "Some parts could not be lined up exactly. Check the join marked in the image."
                         warnedLost = true
@@ -232,7 +254,7 @@ class CaptureEngine(
             Png.write(File(dir, "image.raw"), w, rows, png)
             props["width"] = w.toString()
             props["rows"] = rows.toString()
-            val uri = Saver.saveImage(svc, png, "Screenshot_${id}_ScrollCapture.png")
+            val uri = Saver.saveImage(svc, png, imageName(id), w, rows)
             if (uri != null) props["imageUri"] = uri.toString() else warnings += "Couldn't save the image to Gallery."
         }
         if (wantText) {
@@ -255,6 +277,20 @@ class CaptureEngine(
     }
 
     // ---- text ----
+
+    /** Samsung-style: Screenshot_20261005_101800_Chrome.png */
+    private fun imageName(id: String): String {
+        val stamp = id.replace('-', '_')
+        val pkg = lastApp
+        val label = try {
+            val info = svc.packageManager.getApplicationInfo(pkg, 0)
+            svc.packageManager.getApplicationLabel(info).toString()
+        } catch (e: Exception) {
+            pkg.substringAfterLast('.')
+        }
+        val clean = label.filter { it.isLetterOrDigit() }.take(24).ifEmpty { "ScrollCapture" }
+        return "Screenshot_${stamp}_$clean.png"
+    }
 
     private fun currentTree(): List<Line> {
         val root = svc.rootInActiveWindow ?: return emptyList()

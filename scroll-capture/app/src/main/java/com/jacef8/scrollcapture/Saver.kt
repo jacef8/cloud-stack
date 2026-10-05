@@ -9,8 +9,14 @@ import java.io.File
 
 /** Puts finished captures where Samsung's own screenshots go, so they show up in Gallery. */
 object Saver {
-    fun saveImage(ctx: Context, png: File, name: String): Uri? {
+    fun saveImage(ctx: Context, png: File, name: String, width: Int, height: Int): Uri? {
+        val now = System.currentTimeMillis()
         val values = ContentValues().apply {
+            put(MediaStore.Images.Media.DATE_TAKEN, now)
+            put(MediaStore.Images.Media.DATE_ADDED, now / 1000)
+            put(MediaStore.Images.Media.DATE_MODIFIED, now / 1000)
+            put(MediaStore.Images.Media.WIDTH, width)
+            put(MediaStore.Images.Media.HEIGHT, height)
             put(MediaStore.Images.Media.DISPLAY_NAME, name)
             put(MediaStore.Images.Media.MIME_TYPE, "image/png")
             put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Screenshots")
@@ -23,8 +29,10 @@ object Saver {
             resolver.openOutputStream(uri)?.use { out -> png.inputStream().use { it.copyTo(out) } }
             val done = ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) }
             resolver.update(uri, done, null, null)
+            DebugLog.log("saved image $name ${width}x$height -> $uri")
             uri
         } catch (e: Exception) {
+            DebugLog.error("saving image", e)
             resolver.delete(uri, null, null)
             null
         }

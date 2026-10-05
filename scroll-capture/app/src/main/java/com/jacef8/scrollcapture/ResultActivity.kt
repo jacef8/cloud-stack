@@ -73,7 +73,6 @@ class ResultActivity : Activity() {
         hasText = File(dir, "text.txt").exists()
         tab = if (hasImage) TAB_IMAGE else TAB_TEXT
 
-        (getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).cancel(CaptureService.NOTE_READY)
         setContentView(buildUi())
         showTab(tab)
 
@@ -280,40 +279,20 @@ class ResultActivity : Activity() {
 
     // ---- actions ----
 
-    private fun imageUri(): Uri = FileProvider.getUriForFile(this, "$packageName.files", File(dir, "image.png"))
-    private fun textFileUri(): Uri = FileProvider.getUriForFile(this, "$packageName.files", File(dir, "text.txt"))
+    private fun imageUri(): Uri = Actions.fileUri(this, File(dir, "image.png"))
 
-    private fun share() {
-        val send = Intent(Intent.ACTION_SEND)
-        if (tab == TAB_IMAGE && hasImage) {
-            send.type = "image/png"
-            send.putExtra(Intent.EXTRA_STREAM, imageUri())
-        } else {
-            val text = File(dir, "text.txt").readText()
-            send.type = "text/plain"
-            if (text.length < 300_000) send.putExtra(Intent.EXTRA_TEXT, text)
-            else send.putExtra(Intent.EXTRA_STREAM, textFileUri())
-        }
-        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        startActivity(Intent.createChooser(send, "Share"))
-    }
+    private fun share() = Actions.share(this, dir, tab == TAB_IMAGE && hasImage)
 
     private fun edit() {
         if (!hasImage || tab != TAB_IMAGE) { toast("Editing is for images"); return }
-        val i = Intent(Intent.ACTION_EDIT).setDataAndType(imageUri(), "image/png")
-            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-        try {
-            startActivity(Intent.createChooser(i, "Edit with"))
-        } catch (e: Exception) {
-            toast("No editor found")
-        }
+        Actions.edit(this, dir)
     }
 
     /** Close this screen and capture the app underneath again, this time scrolling and/or reading its text. */
     private fun captureMore(mode: Mode) {
         val svc = CaptureService.instance
         if (svc == null) { toast("Scroll Capture is off in Accessibility"); return }
-        svc.requestCapture(mode, 700)
+        svc.requestCapture(mode, 900)
         finish()
     }
 

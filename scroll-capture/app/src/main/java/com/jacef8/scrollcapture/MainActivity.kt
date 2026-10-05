@@ -3,6 +3,7 @@ package com.jacef8.scrollcapture
 import android.Manifest
 import android.app.Activity
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -35,6 +36,7 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         prefs = Prefs(this)
+        DebugLog.init(this)
 
         val svc = CaptureService.instance
         val wantsCapture = intent.getBooleanExtra(EXTRA_CAPTURE_NOW, false) ||
@@ -197,6 +199,12 @@ class MainActivity : Activity() {
         opts.addView(Ui.toggleRow(this, "Copy text automatically", "Text captures are ready to paste right away", prefs.autoCopyText) { prefs.autoCopyText = it })
         opts.addView(Ui.toggleRow(this, "Start long captures at the top", "Scrolls back up first so nothing is missed", prefs.startFromTop) { prefs.startFromTop = it })
         col.addView(opts, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+
+        col.addView(button("Copy log (for troubleshooting)") {
+            val cm = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            cm.setPrimaryClip(android.content.ClipData.newPlainText("Scroll Capture log", DebugLog.read().ifBlank { "(empty)" }))
+            Toast.makeText(this, "Log copied. Paste it to Claude.", Toast.LENGTH_SHORT).show()
+        }.apply { secondary() }, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 46f)).apply { topMargin = Ui.dp(this@MainActivity, 14f) })
 
         col.addView(Ui.text(this, "Images save to Pictures/Screenshots next to Samsung's. Text saves to Documents/ScrollCapture. Nothing is uploaded.", 13f, C.INK3).apply {
             setPadding(0, dp(14f), 0, 0)

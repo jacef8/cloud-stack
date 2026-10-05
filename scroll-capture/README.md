@@ -7,21 +7,27 @@ word, so a transcript or a long post can be pasted somewhere else.
 ## What it does
 
 Press **Volume Up + Volume Down** together (or use the Quick Settings tile, or set
-the side button's double press to open the app). It takes a screenshot **at once**
-and opens it fitted whole on the screen, with no scrolling. Tap the picture to hide
-the bars for a full-screen view.
+the side button's double press to open the app). It takes a screenshot **at once**.
 
-From the toolbar under the picture:
+A small thumbnail and a row of buttons then float over the live app. They have no
+background, and touches anywhere else go straight through to the app, so you can keep
+looking at it and scrolling it:
 
 | Button | Result |
 | --- | --- |
-| Share, Edit, Copy, Delete | The usual screenshot actions (Edit opens your normal image editor) |
-| Scroll | Goes back to that app and captures one tall image of the whole scrolling section |
-| Text | Goes back and reads every word, in order, copyable |
+| Thumbnail (tap) | Opens the screenshot fitted whole on the screen; tap it again for full screen |
+| Thumbnail (long-press) | Moves the buttons to the top or bottom |
+| Scroll | One tall image of the whole scrolling section |
+| Text | Every word of the whole page, in order, copyable |
 | Both | The long image and its words |
+| Share, Edit | The usual actions (Edit opens your normal image editor) |
+| Close | Hides the buttons (they also hide after 15 seconds) |
 
-Images are saved to `Pictures/Screenshots` next to Samsung's own; text goes to
-`Documents/ScrollCapture`. Very long captures scroll in the viewer.
+Images are saved to `Pictures/Screenshots`, the same album as Samsung's own, so they appear
+in Gallery with the other screenshots. Text goes to `Documents/ScrollCapture`.
+
+Some screens cannot be captured at all: Android blocks screenshots on Settings pages and in
+some banking and password apps. The app says so instead of failing silently.
 
 ## How it works
 

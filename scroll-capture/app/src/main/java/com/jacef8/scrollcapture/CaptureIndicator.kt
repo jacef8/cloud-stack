@@ -21,14 +21,14 @@ class CaptureIndicator(
     private val onStop: () -> Unit,
 ) {
     private var view: LinearLayout? = null
-    private var label: TextView? = null
+    private var labelView: TextView? = null
     private var hiddenForPicture = false
     private val wm get() = svc.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
     /** Shows the pill with [label], or changes its text if it is already up. */
     fun show(label: String) {
         view?.let {
-            this.label?.text = label
+            labelView?.text = label
             it.visibility = if (hiddenForPicture) android.view.View.INVISIBLE else android.view.View.VISIBLE
             return
         }
@@ -67,7 +67,7 @@ class CaptureIndicator(
             addView(text)
             addView(done, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginStart = dp(14f) })
         }
-        label = text
+        labelView = text
         val lp = WindowManager.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -97,7 +97,7 @@ class CaptureIndicator(
     fun hide() {
         val v = view ?: return
         view = null
-        label = null
+        labelView = null
         try { wm.removeView(v) } catch (_: Exception) { }
     }
 }

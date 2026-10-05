@@ -111,7 +111,7 @@ class ResultBar(
             }, FrameLayout.LayoutParams(dp(26f), dp(26f), Gravity.CENTER))
             layoutParams = FrameLayout.LayoutParams(dp(42f), dp(42f))
         }
-        val scrollSlot = slot(scrollCircle, "Scroll capture: hold to keep scrolling", null)
+        val scrollSlot = slot(scrollCircle, "Scroll capture", null)
         scrollSlot.setOnTouchListener { _, e ->
             when (e.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {

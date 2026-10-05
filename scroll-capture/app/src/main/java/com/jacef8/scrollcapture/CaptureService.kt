@@ -174,14 +174,9 @@ class CaptureService : AccessibilityService() {
 
     /** The white scroll circle was pressed: begin a person-driven scroll capture, or take another step of it. */
     private fun scrollPress(id: String) {
-        val c = control
-        if (c != null) { c.press(); return }
+        // The tool scrolls the page itself, so nothing needs to be swiped by hand.
         if (running) return
-        val fresh = SessionControl().also { it.press() }
-        control = fresh
-        replaceId = id
-        bar?.enterSession()
-        startCapture(Mode.SCROLL, fresh)
+        requestCapture(Mode.SCROLL, 250, id)
     }
 
     private fun startCapture(mode: Mode, session: SessionControl? = null) {
@@ -199,7 +194,7 @@ class CaptureService : AccessibilityService() {
         progressNotice(1)
         // A long capture shows its pill straight away, so it is clear it is working and not waiting on you.
         if (mode != Mode.SCREENSHOT) {
-            main.post { indicator.show(if (session != null) "Scrolling…  ·  tap ● or swipe yourself, ✓ to save" else "Getting ready…  ·  tap to stop") }
+            main.post { indicator.show("Scrolling…  ·  tap to stop") }
         }
         Thread {
             val listener = object : CaptureListener {
@@ -207,15 +202,12 @@ class CaptureService : AccessibilityService() {
                 override fun afterGrab() { main.post { indicator.setVisible(true); bar?.setGrabHidden(false) } }
                 override fun firstFrameTaken() { if (mode == Mode.SCREENSHOT) captureFeedback() }
                 override fun warn() { doubleBuzz() }
-                override fun note(text: String) { main.post { if (running) indicator.show(text) } }
+                override fun note(text: String) { DebugLog.log("note: $text") }
                 override fun progress(pages: Int) {
                     progressNotice(pages)
                     main.post {
                         if (running) {
-                            indicator.show(
-                                if (session != null) "Scrolling… $pages screens  ·  tap ● or swipe yourself, ✓ to save"
-                                else "Capturing… screen $pages  ·  tap to stop"
-                            )
+                            indicator.show("Scrolling… $pages  ·  tap to stop")
                         }
                     }
                 }
@@ -263,11 +255,11 @@ class CaptureService : AccessibilityService() {
                     // A floating toolbar over the live app, not a new screen, so the app stays in front.
                     val shown: String = shownId
                     bar = ResultBar(
-                        this, shown, warning, detail,
+                        this, shown, warning, "",
                         onMore = { requestCapture(it, 350, shown) },
                         onScrollPress = { scrollPress(shown) },
-                        onScrollRelease = { control?.release() },
-                        onDone = { control?.finish() },
+                        onScrollRelease = { },
+                        onDone = { },
                     ).also { it.show() }
                 } else {
                     DebugLog.log("capture failed: ${outcome.error}")

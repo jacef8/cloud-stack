@@ -180,22 +180,33 @@ class CaptureEngine(
             }
         }
         if (px1 == null) {
-            warnings += "Couldn't scroll this screen, so only what was visible was captured."
+            warnings += "This page wouldn't scroll."
             store?.append(px0, w, 0, h)
             if (wantText) acc.add(split(tree0, 0, h, px0, w).body, 0)
             return finish(id, dir, store, w, acc, wantText, warnings)
         }
         if (stillPage(px1)) {
             DebugLog.log("nothing moved after three tries")
-            warnings += "This screen didn't scroll (it may already be at the end), so only what was visible was captured."
+            warnings += "Nothing more to scroll here."
             store?.append(px0, w, 0, h)
             if (wantText) acc.add(split(tree0, 0, h, px0, w).body, 0)
             return finish(id, dir, store, w, acc, wantText, warnings)
         }
         var tree = words1
 
-        val sig1 = Rows.signature(px1, w, h)
+        var sig1 = Rows.signature(px1, w, h)
         var region = pickRegion(sig0, sig1, treeRegion)
+        if (region == null) {
+            // The page may still have been coasting when the picture was taken: look again once it has stopped.
+            Thread.sleep(900)
+            val settled = grabPixels(w, h)
+            if (settled != null) {
+                px1 = settled
+                words1 = currentTree()
+                sig1 = Rows.signature(px1, w, h)
+                region = pickRegion(sig0, sig1, treeRegion)
+            }
+        }
         var firstShift: Int? = null
         if (region == null) {
             DebugLog.log("pictures did not line up: ${Rows.lastNote}")
@@ -225,7 +236,7 @@ class CaptureEngine(
         }
         if (region == null) {
             debugNote = "moved by $movedBy; unchanged ${"%.2f".format(Rows.unchangedShare(sig0, sig1, stillTop, stillBottom))}; tree area ${treeRegion?.joinToString("-") ?: "none"}; ${Rows.lastNote.ifEmpty { "no candidate shift" }}; words ${words0.size}/${words1.size}"
-            warnings += "Couldn't line the scrolled screens up, so only the first screen was captured."
+            warnings += "This page wouldn't scroll in a way I could follow, so only the first screen was saved."
             store?.append(px0, w, 0, h)
             if (wantText) acc.add(split(tree0, 0, h, px0, w).body, 0)
             return finish(id, dir, store, w, acc, wantText, warnings)
@@ -264,13 +275,15 @@ class CaptureEngine(
             val known = forced
             forced = null
             var step: Step = if (known != null) st.nextWith(px, known) else st.next(px, false)
-            if (step is Step.Retry) {
-                // The screen may still be settling; look once more.
+            var tries = 0
+            while (step is Step.Retry || step is Step.Lost) {
+                // The screen may still be settling (or coasting): look again a couple of times before giving up.
+                if (++tries > 3) break
                 Thread.sleep(650)
                 val again = grabPixels(w, h) ?: break
                 px = again
                 tree = currentTree()
-                step = st.next(px, true)
+                step = st.next(px, tries >= 2, allowBack = true)
                 if (step is Step.Lost) {
                     val s = TreeAlign.shift(prevWords, tree, top, bottom, 12, (bottom - top) - 40)
                     if (s != null) {
@@ -298,7 +311,7 @@ class CaptureEngine(
                 is Step.Lost -> {
                     DebugLog.log("page ${pages + 1}: could not line up (${Rows.lastNote})")
                     debugNote = "page ${pages + 1}; ${Rows.lastNote.ifEmpty { "no candidate shift" }}; words ${prevWords.size}/${tree.size}"
-                    warnings += "Stopped: the screen changed in a way that couldn't be followed (did something move or open?). Everything captured up to that point is kept."
+                    warnings += "Stopped early: the page moved too much to follow. Everything up to there is kept."
                     break
                 }
                 is Step.Retry -> break

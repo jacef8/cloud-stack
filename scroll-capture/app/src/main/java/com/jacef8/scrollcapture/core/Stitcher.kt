@@ -10,7 +10,7 @@ sealed class Step {
     data class Added(val shift: Int, val offset: Int) : Step()
     /** The screen did not change: the end of the content. */
     object End : Step()
-    /** Frames could not be lined up. The region was appended as-is. */
+    /** Frames could not be lined up (the screen changed in some other way). Nothing was added. */
     data class Lost(val offset: Int) : Step()
     /** Could not line up yet; ask again after the screen settles. */
     object Retry : Step()
@@ -53,10 +53,6 @@ class IncrementalStitcher(
             if (!allowLost) return Step.Retry
             lost++
             consecutiveLost++
-            sink?.append(px, w, top, bottom)
-            offset += bottom - top
-            prevPx = px
-            prevSig = sig
             return Step.Lost(offset)
         }
         if (sh.s == 0) return Step.End

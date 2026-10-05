@@ -31,6 +31,7 @@ class CaptureService : AccessibilityService() {
     private lateinit var prefs: Prefs
 
     private var bar: ResultBar? = null
+    private val indicator by lazy { CaptureIndicator(this) { stopRequested = true } }
 
     @Volatile private var running = false
     @Volatile private var stopRequested = false
@@ -131,12 +132,25 @@ class CaptureService : AccessibilityService() {
         buzz(60)
         progressNotice(1)
         Thread {
-            val engine = CaptureEngine(this, mode, prefs, { stopRequested }) { progressNotice(it) }
+            val engine = CaptureEngine(this, mode, prefs, { stopRequested }) { pages ->
+                progressNotice(pages)
+                main.post { if (running) indicator.showOrUpdate(pages) }
+            }
             val outcome = engine.run()
             running = false
+            // Anything the capture wants to tell you (stopped early, nothing to scroll, ...).
+            val warning = outcome.id?.let { id ->
+                try {
+                    java.util.Properties().also { p ->
+                        File(cacheDir, "cap/$id/meta.properties").inputStream().use { p.load(it) }
+                    }.getProperty("warnings", "").lines().firstOrNull().orEmpty()
+                } catch (_: Exception) { "" }
+            }.orEmpty()
             NotificationManagerCompat.from(this).cancel(NOTE_PROGRESS)
             buzz(110)
             main.post {
+                indicator.hide()
+                if (warning.isNotBlank()) Toast.makeText(this, warning, Toast.LENGTH_LONG).show()
                 if (outcome.id != null) {
                     // A floating toolbar over the live app, not a new screen, so the app stays in front.
                     bar = ResultBar(this, outcome.id) { requestCapture(it, 350) }.also { it.show() }

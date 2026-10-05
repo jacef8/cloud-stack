@@ -101,6 +101,19 @@ class CoreTest {
         assertTrue(st.next(f.clone(), true) is Step.End)
     }
 
+    @Test fun aScreenThatChangesCompletelyIsNotGluedIn() {
+        val file = File.createTempFile("raw", ".bin")
+        val store = StripStore(file, w)
+        val st = IncrementalStitcher(w, h, top, bottom, store)
+        st.start(frameAt(makeDoc(2000, 10), 2000, 0))
+        val before = store.rows
+        // Something else entirely (another app opened): must stop, adding nothing.
+        val step = st.next(frameAt(makeDoc(2000, 99), 2000, 300), true)
+        assertTrue(step is Step.Lost)
+        assertEquals(before, store.rows)
+        store.close(); file.delete()
+    }
+
     @Test fun findsTheMovingBandWithoutKnowingTheScrollArea() {
         val doc = makeDoc(3000, 5)
         val a = Rows.signature(frameAt(doc, 3000, 0), w, h)

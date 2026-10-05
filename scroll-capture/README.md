@@ -9,19 +9,22 @@ word, so a transcript or a long post can be pasted somewhere else.
 Press **Volume Up + Volume Down** together (or use the Quick Settings tile, or set
 the side button's double press to open the app). It takes a screenshot **at once**.
 
-A small thumbnail and a row of buttons then float over the live app. They have no
-background, and touches anywhere else go straight through to the app, so you can keep
-looking at it and scrolling it:
+A thumbnail (bottom-left) and a rounded bar of icons (bottom-centre) then float over the live
+app, laid out like Samsung's. They fade in, then **fade away by themselves after about six
+seconds**; holding a finger on them keeps them a little longer, and swiping the thumbnail
+aside sends them away sooner. Touches anywhere else go straight to the app.
 
 | Button | Result |
 | --- | --- |
 | Thumbnail (tap) | Opens the screenshot fitted whole on the screen; tap it again for full screen |
-| Thumbnail (long-press) | Moves the buttons to the top or bottom |
 | Scroll | One tall image of the whole scrolling section |
 | Text | Every word of the whole page, in order, copyable |
 | Both | The long image and its words |
-| Share, Edit | The usual actions (Edit opens your normal image editor) |
-| Close | Hides the buttons (they also hide after 15 seconds) |
+| Edit, Share | The usual actions (Edit opens your normal image editor) |
+
+While a scroll capture runs, a **"Capturing… screen N · tap to stop"** pill shows near the top
+(and the phone buzzes at the start and the end). It stops by itself if the screen changes in a way it
+cannot follow, or if you leave the app, and tells you why. Everything captured up to that point is kept.
 
 Images are saved to `DCIM/Screenshots`, the folder Samsung phones use for their own screenshots, so they appear
 in Gallery with the other screenshots. Text goes to `Documents/ScrollCapture`.

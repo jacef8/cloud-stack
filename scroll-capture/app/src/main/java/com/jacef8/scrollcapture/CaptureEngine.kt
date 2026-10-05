@@ -118,8 +118,20 @@ class CaptureEngine(
 
         // Scroll once to learn how this screen moves.
         val treeRegion = target?.let { regionOf(it, h) }
+        val sig0 = Rows.signature(px0, w, h)
+        var useSwipe = false
         scrollOnce(target, treeRegion, w, h)
-        val px1 = grabPixels(w, h)
+        var px1 = grabPixels(w, h)
+        if (px1 != null && target != null && Rows.signature(px1, w, h).hash.contentEquals(sig0.hash)) {
+            // Some pages (web content) say they scrolled but did not move: try a finger swipe instead.
+            DebugLog.log("the scroll action moved nothing; trying a swipe instead")
+            scrollOnce(null, treeRegion, w, h)
+            val second = grabPixels(w, h)
+            if (second != null) {
+                px1 = second
+                useSwipe = true
+            }
+        }
         if (px1 == null) {
             warnings += "Couldn't scroll this screen, so only what was visible was captured."
             store?.append(px0, w, 0, h)
@@ -128,7 +140,6 @@ class CaptureEngine(
         }
         var tree = if (wantText) currentTree() else emptyList()
 
-        val sig0 = Rows.signature(px0, w, h)
         val sig1 = Rows.signature(px1, w, h)
         val region = pickRegion(sig0, sig1, treeRegion)
         if (region == null) {
@@ -144,6 +155,7 @@ class CaptureEngine(
         val top = region[0]
         val bottom = region[1]
         DebugLog.log("scroll region $top-$bottom")
+        onProgress(1)   // from here on the "Capturing…" pill is shown, above the scroll area so it never lands in the image
 
         val st = IncrementalStitcher(w, h, top, bottom, store)
         st.start(px0)
@@ -157,7 +169,6 @@ class CaptureEngine(
 
         var pages = 1
         var px: IntArray = px1
-        var warnedLost = false
         while (true) {
             var step = st.next(px, false)
             if (step is Step.Retry) {
@@ -180,21 +191,9 @@ class CaptureEngine(
                     }
                 }
                 is Step.Lost -> {
-                    pages++
-                    DebugLog.log("page $pages: lost track")
-                    if (!warnedLost) {
-                        warnings += "Some parts could not be lined up exactly. Check the join marked in the image."
-                        warnedLost = true
-                    }
-                    if (wantText) {
-                        val ft = split(tree, top, bottom, px, w)
-                        acc.add(ft.body, null)
-                        lastFooter = ft.footer
-                    }
-                    if (st.consecutiveLost >= 3) {
-                        warnings += "Stopped early: the screen kept changing too much to follow."
-                        break
-                    }
+                    DebugLog.log("page ${pages + 1}: the screen changed and could not be followed")
+                    warnings += "Stopped: the screen changed in a way that couldn't be followed (did something move or open?). Everything captured up to that point is kept."
+                    break
                 }
                 is Step.Retry -> break
             }
@@ -204,7 +203,12 @@ class CaptureEngine(
                 warnings += "Stopped after $MAX_PAGES screens. Capture again from where it ended to continue."
                 break
             }
-            scrollOnce(target, region, w, h)
+            if (leftApp(pkg)) {
+                DebugLog.log("left the app: now in ${svc.rootInActiveWindow?.packageName}")
+                warnings += "Stopped because you left the app. Everything captured up to that point is kept."
+                break
+            }
+            scrollOnce(if (useSwipe) null else target, region, w, h)
             px = grabPixels(w, h) ?: break
             tree = if (wantText) currentTree() else emptyList()
         }
@@ -331,6 +335,15 @@ class CaptureEngine(
     }
 
     // ---- screen and scrolling ----
+
+    /** True when a different app has come to the front since the capture began (not the keyboard or system bars). */
+    private fun leftApp(start: String): Boolean {
+        val now = svc.rootInActiveWindow?.packageName?.toString() ?: return false
+        if (start.isEmpty() || now == start || now == svc.packageName) return false
+        val ignorable = now == "com.android.systemui" || now.contains("inputmethod") ||
+            now.contains("honeyboard") || now.contains("keyboard")
+        return !ignorable
+    }
 
     private fun regionOf(node: AccessibilityNodeInfo, h: Int): IntArray? {
         node.refresh()

@@ -756,7 +756,7 @@ function adopt(d){
 const team=(n,s)=>((DATA.teams[n]||{})[String(s)])||'';
 const teamNow=n=>{const t=DATA.teams[n]||{};
   for(const y of DATA.seasons.slice().reverse())if(t[String(y)])return t[String(y)];return'';};
-const sub=(n,s)=>{const t=team(n,s);return t?t+' · ':'';};
+const sub=(n,s)=>{const t=team(n,s);return t?esc(t)+' · ':'';};
 
 /* ═══ helpers ═══ */
 const $=id=>document.getElementById(id);
@@ -764,6 +764,7 @@ const fmt=(s,v)=>(s.pre||'')+v.toFixed(s.dec).replace(/\B(?=(\d{3})+(?!\d))/g,',
 function entries(s,yr){return s.rows.filter(r=>yr==='ALL'||r[3]===yr).sort((a,b)=>s.asc?a[1]-b[1]:b[1]-a[1]);}
 function best(s,yr){return entries(s,yr)[0];}
 const pct=(s,v)=>{const p=s.invert?1-v/s.scale:v/s.scale;return Math.max(.04,Math.min(1,p));};
+const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const initial=n=>n[0];
 function fitNumber(el,cap){
   const box=el.parentElement.getBoundingClientRect().width;if(!box)return;
@@ -778,7 +779,7 @@ const ringSVG=(p,val,gold)=>`<svg viewBox="0 0 56 56" aria-hidden="true">
   <text class="dialv" x="28" y="33" text-anchor="middle">${val}</text></svg>`;
 const rowHTML=(s,r,i,ghost)=>`<div class="row${i===0&&!ghost?' top':''}"${ghost?' style="background:linear-gradient(160deg,rgba(255,255,255,.04),rgba(255,255,255,.014));box-shadow:none"':''}>
   <span class="rk">${i+1}</span>
-  <span class="rn">${r[0]}<span class="rc">${sub(r[0],r[3])}${r[2]} · ${r[3]}</span></span>
+  <span class="rn">${esc(r[0])}<span class="rc">${sub(r[0],r[3])}${esc(r[2])} · ${r[3]}</span></span>
   <span class="rv"><b>${fmt(s,r[1])}</b></span>
   <span class="rwell"><i style="width:${(pct(s,r[1])*100).toFixed(1)}%"></i></span></div>`;
 
@@ -811,7 +812,7 @@ function renderHome(){
   const yrs=Object.keys(TITLES).map(Number).sort((a,b)=>a-b);
   $('champNote').textContent=yrs.length+(yrs.length===1?' title decided':' titles decided');
   $('htl').innerHTML=yrs.map(y=>
-    `<div class="tlx${y===CHAMP_YEAR?' now':''}"><div class="dot"></div><b>${TITLES[y]}</b><span>${y}</span></div>`)
+    `<div class="tlx${y===CHAMP_YEAR?' now':''}"><div class="dot"></div><b>${esc(TITLES[y])}</b><span>${y}</span></div>`)
     .concat([`<div class="tlx"><div class="dot"></div><b>—</b><span>${DATA.current}</span></div>`]).join('');
   const held={};NAMES.forEach(n=>held[n]=0);
   visible().forEach(s=>{const b=best(s,'ALL');if(b)held[b[0]]++;});
@@ -820,8 +821,8 @@ function renderHome(){
   $('hbarNote').textContent=owners+' of '+NAMES.length+' managers hold one';
   $('hbars').innerHTML=rank.slice(0,8).map((m,i)=>`
     <div class="hb${i===0?' lead':''}">
-      <span class="hav${m.titles.length?'':' none'}">${initial(m.name)}</span>
-      <span><span class="hn">${m.name}</span><span class="hs">${teamNow(m.name)||'no team name set'}</span></span>
+      <span class="hav${m.titles.length?'':' none'}">${esc(initial(m.name))}</span>
+      <span><span class="hn">${esc(m.name)}</span><span class="hs">${esc(teamNow(m.name))||'no team name set'}</span></span>
       <span class="hv">${m.held}</span>
       <span class="hw"><i style="width:${(m.held/Math.max(1,rank[0].held)*100).toFixed(0)}%"></i></span></div>`).join('');
   const standing=visible().map(s=>{const b=best(s,'ALL');return{s,b};}).filter(x=>x.b)
@@ -829,8 +830,8 @@ function renderHome(){
   $('hrecNote').textContent='newest first';
   $('hrecs').innerHTML=standing.map(({s,b})=>`
     <div class="ring"><div>${ringSVG(pct(s,b[1]),s.dec>1?b[1].toFixed(2):Math.round(b[1]))}</div>
-    <div><div class="rlab">${s.name}</div><div class="rman">${b[0]}</div>
-    <span class="rsub">${sub(b[0],b[3])}${fmt(s,b[1])} ${s.unit} · ${b[2]} · ${b[3]}</span></div></div>`).join('')
+    <div><div class="rlab">${s.name}</div><div class="rman">${esc(b[0])}</div>
+    <span class="rsub">${sub(b[0],b[3])}${fmt(s,b[1])} ${s.unit} · ${esc(b[2])} · ${b[3]}</span></div></div>`).join('')
     ||`<div class="empty">No stats showing. Turn some on in the stat filter.</div>`;
 }
 
@@ -887,11 +888,11 @@ function renderBoard(){
 function renderMgrs(){
   const maxW=MGR[0].w;
   $('mgrid').innerHTML=MGR.map(m=>`
-    <button class="mcard" data-m="${m.name}">
+    <button class="mcard" data-m="${esc(m.name)}">
       <div class="mtop">
-        <div class="mav${m.titles.length?'':' none'}">${initial(m.name)}</div>
-        <div style="min-width:0"><div class="mname">${m.name}</div>
-          <span class="mteam">${teamNow(m.name)||'no team name set'}</span></div>
+        <div class="mav${m.titles.length?'':' none'}">${esc(initial(m.name))}</div>
+        <div style="min-width:0"><div class="mname">${esc(m.name)}</div>
+          <span class="mteam">${esc(teamNow(m.name))||'no team name set'}</span></div>
       </div>
       <div class="mstats" style="grid-template-columns:repeat(3,1fr)">
         <div class="ms"><b>${m.w}–${m.l}</b><span>record</span></div>
@@ -909,10 +910,10 @@ function openMgr(name){
     .sort((a,b)=>(b.w/b.g)-(a.w/a.g)||b.g-a.g);
   $('mdlgBody').innerHTML=`
     <div class="mtop" style="margin-bottom:13px">
-      <div class="mav${m.titles.length?'':' none'}" style="width:48px;height:48px;font-size:17px">${initial(m.name)}</div>
-      <div style="min-width:0"><div class="mname" style="font-size:20px">${m.name}</div>
+      <div class="mav${m.titles.length?'':' none'}" style="width:48px;height:48px;font-size:17px">${esc(initial(m.name))}</div>
+      <div style="min-width:0"><div class="mname" style="font-size:20px">${esc(m.name)}</div>
         <span class="mrec">${m.w}–${m.l} all-time · ${m.ppg} points per game</span>
-        <span class="tname">${teamNow(m.name)||'no team name set'}</span></div>
+        <span class="tname">${esc(teamNow(m.name))||'no team name set'}</span></div>
     </div>
     <div class="mstats" style="grid-template-columns:repeat(3,1fr)">
       <div class="ms"><b>${m.titles.length}</b><span>titles</span></div>
@@ -923,20 +924,20 @@ function openMgr(name){
       :`<p class="hint" style="margin:12px 0 0">Still chasing a first title.</p>`}
     <div class="sechead" style="margin-top:13px"><h4>Team names by season</h4><em>${m.seasons.length} ${m.seasons.length===1?'season':'seasons'}</em></div>
     <div class="seasonlist">${m.seasons.map(y=>
-      `<div class="sl"><b>${y}</b><span>${team(m.name,y)||'<i>no team name set</i>'}</span></div>`).join('')}</div>
+      `<div class="sl"><b>${y}</b><span>${esc(team(m.name,y))||'<i>no team name set</i>'}</span></div>`).join('')}</div>
     <div class="sechead" style="margin-top:13px"><h4>Records held</h4><em>${held.length} of ${STATS.length}</em></div>
     ${held.length?`<div class="rows">${held.map(({s,b})=>`
       <div class="row"><span class="rk">★</span>
-      <span class="rn">${s.name}<span class="rc">${b[2]} · ${b[3]}</span></span>
+      <span class="rn">${s.name}<span class="rc">${esc(b[2])} · ${b[3]}</span></span>
       <span class="rv"><b>${fmt(s,b[1])}</b></span>
       <span class="rwell"><i style="width:${(pct(s,b[1])*100).toFixed(1)}%"></i></span></div>`).join('')}</div>`
       :`<div class="empty">Holds no league record yet.</div>`}
     <div class="sechead" style="margin-top:13px"><h4>Best and worst matchups</h4><em>${rivals.length} opponents faced</em></div>
     ${rivals.length?`<div class="rows">
-      <div class="row"><span class="rk">W</span><span class="rn">${rivals[0].o}<span class="rc">owns this matchup</span></span>
+      <div class="row"><span class="rk">W</span><span class="rn">${esc(rivals[0].o)}<span class="rc">owns this matchup</span></span>
         <span class="rv"><b>${rivals[0].w}–${rivals[0].g-rivals[0].w}</b></span>
         <span class="rwell"><i style="width:${(rivals[0].w/rivals[0].g*100).toFixed(0)}%"></i></span></div>
-      <div class="row"><span class="rk">L</span><span class="rn">${rivals[rivals.length-1].o}<span class="rc">worst matchup</span></span>
+      <div class="row"><span class="rk">L</span><span class="rn">${esc(rivals[rivals.length-1].o)}<span class="rc">worst matchup</span></span>
         <span class="rv"><b>${rivals[rivals.length-1].w}–${rivals[rivals.length-1].g-rivals[rivals.length-1].w}</b></span>
         <span class="rwell"><i style="width:${(rivals[rivals.length-1].w/rivals[rivals.length-1].g*100).toFixed(0)}%"></i></span></div>
     </div>`:`<div class="empty">No games played yet.</div>`}
@@ -952,10 +953,10 @@ function openMgr(name){
 /* ═══ MATCHUPS ═══ */
 function renderPickers(){
   const mk=(id,cur,other)=>$(id).innerHTML=MGR.map(m=>`
-    <button class="pk" data-pick="${id}" data-name="${m.name}" data-sel="${m.name===cur?1:0}"
+    <button class="pk" data-pick="${id}" data-name="${esc(m.name)}" data-sel="${m.name===cur?1:0}"
       ${m.name===other?'disabled style="opacity:.35;cursor:not-allowed"':''}>
-      <span class="pav">${initial(m.name)}</span>
-      <span>${m.name}<em class="pteam">${teamNow(m.name)||'no team name set'}</em></span>
+      <span class="pav">${esc(initial(m.name))}</span>
+      <span>${esc(m.name)}<em class="pteam">${esc(teamNow(m.name))||'no team name set'}</em></span>
       <em>${m.w}–${m.l}</em></button>`).join('');
   mk('pickA',pA,pB);mk('pickB',pB,pA);
 }
@@ -965,8 +966,8 @@ function renderH2H(){
   $('nmA').textContent=pA;$('nmB').textContent=pB;
   const mA=MGR.find(m=>m.name===pA),mB=MGR.find(m=>m.name===pB);
   const tl=n=>n+(n===1?' title':' titles');
-  $('sbA').innerHTML=`${teamNow(pA)||'no team name set'}<br>${mA.w}–${mA.l} all-time · ${tl(mA.titles.length)}`;
-  $('sbB').innerHTML=`${teamNow(pB)||'no team name set'}<br>${mB.w}–${mB.l} all-time · ${tl(mB.titles.length)}`;
+  $('sbA').innerHTML=`${esc(teamNow(pA))||'no team name set'}<br>${mA.w}–${mA.l} all-time · ${tl(mA.titles.length)}`;
+  $('sbB').innerHTML=`${esc(teamNow(pB))||'no team name set'}<br>${mB.w}–${mB.l} all-time · ${tl(mB.titles.length)}`;
   $('wA').textContent=wA;$('wB').textContent=wB;
   const den=GP||1;
   $('spA').style.width=(wA/den*100)+'%';$('spB').style.width=(wB/den*100)+'%';
@@ -980,7 +981,7 @@ function renderH2H(){
   $('h2hNote').textContent=mine.length+' entries on the books';
   $('h2hRows').innerHTML=mine.length?mine.slice(0,7).map(({s,r,i})=>`
     <div class="row${i===0?' top':''}"><span class="rk">${i+1}</span>
-    <span class="rn">${r[0]} · ${s.name}<span class="rc">${r[2]} · ${r[3]}</span></span>
+    <span class="rn">${esc(r[0])} · ${s.name}<span class="rc">${esc(r[2])} · ${r[3]}</span></span>
     <span class="rv"><b>${fmt(s,r[1])}</b></span>
     <span class="rwell"><i style="width:${(pct(s,r[1])*100).toFixed(1)}%"></i></span></div>`).join('')
     :`<div class="empty">Neither one has cracked a leaderboard.</div>`;
@@ -1001,7 +1002,7 @@ function renderAwards(){
       <div><div class="ahead"><div class="rlab">${s.award}</div>
         <button class="sw" type="button" data-sw="${s.id}" aria-pressed="${on}"
           aria-label="Count ${s.name} toward awards"><i></i></button></div>
-        <div class="rman">${w[0]}</div>
+        <div class="rman">${esc(w[0])}</div>
         <span class="rsub">${sub(w[0],w[3])}${fmt(s,w[1])} ${s.unit}</span></div></div>`;
   }).join('')||`<div class="empty" style="grid-column:1/-1">No stats showing. Turn some on in the stat filter, on the Book page.</div>`;
 }

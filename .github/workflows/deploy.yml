@@ -12,11 +12,25 @@ on:
       - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
+# The job only reads the repo; deploying uses the Firebase key, not GITHUB_TOKEN.
+permissions:
+  contents: read
+
+# One deploy at a time; a newer push waits rather than racing the live one.
+concurrency:
+  group: deploy-record-room
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/key.json
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
@@ -25,7 +39,7 @@ jobs:
       - name: Build the site
         run: |
           mkdir -p public
-          cp samples/record-room-standalone.html public/index.html
+          npm run build:site
           ls -l public/
 
       - name: Write the service account key
@@ -36,26 +50,27 @@ jobs:
             echo "::error::The FIREBASE_SERVICE_ACCOUNT secret is not set. See samples/SETUP.md."
             exit 1
           fi
-          printf '%s' "$KEY" > "$HOME/key.json"
-          node -e "JSON.parse(require('fs').readFileSync(process.env.HOME+'/key.json','utf8'))" \
+          umask 077
+          printf '%s' "$KEY" > "$GOOGLE_APPLICATION_CREDENTIALS"
+          node -e "JSON.parse(require('fs').readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS,'utf8'))" \
             || { echo "::error::The secret is not valid JSON. Paste the whole downloaded file, including the braces."; exit 1; }
 
       - name: Deploy
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: /home/runner/key.json
         run: |
           npm install -g firebase-tools@13
-          PROJECT=$(node -p "JSON.parse(require('fs').readFileSync(process.env.HOME+'/key.json','utf8')).project_id || ''")
+          PROJECT=$(node -p "JSON.parse(require('fs').readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS,'utf8')).project_id || ''")
           if [ -z "$PROJECT" ]; then
             PROJECT=$(node -p "JSON.parse(require('fs').readFileSync('.firebaserc','utf8')).projects.default")
           fi
           SITE=$(node -p "JSON.parse(require('fs').readFileSync('firebase.json','utf8')).hosting.site")
           echo "Deploying $SITE to project $PROJECT"
-          # Claim the site on the first run; harmless once it exists.
-          firebase hosting:sites:create "$SITE" --project "$PROJECT" || true
+          # Claim the site on the first run. Checking first, rather than
+          # ignoring the create's exit code, lets real errors fail the job.
+          firebase hosting:sites:get "$SITE" --project "$PROJECT" >/dev/null 2>&1 \
+            || firebase hosting:sites:create "$SITE" --project "$PROJECT"
           firebase deploy --only hosting --project "$PROJECT" --non-interactive
           echo "Live at https://$SITE.web.app"
 
       - name: Clean up
         if: always()
-        run: rm -f "$HOME/key.json"
+        run: rm -f "$GOOGLE_APPLICATION_CREDENTIALS"

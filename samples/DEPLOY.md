@@ -44,6 +44,15 @@ Record Room has its own Firebase project, named in `.firebaserc`
 (currently `record-room-32ef8`). It shares nothing with any other project.
 The first-time steps above create and select it.
 
+## Security policy
+
+`npm run build:site` adds a Content-Security-Policy to the page: only the
+page's own script may run, and it may only talk to `api.sleeper.app`. The
+script's hash is recomputed on every build. If you add a second `<script>`,
+an external script, or an inline `onclick=` handler, the build stops and says
+so, because the browser would block it. Other policy directives live in the
+headers block of `firebase.json`.
+
 ## Publishing a change
 
     npm run deploy

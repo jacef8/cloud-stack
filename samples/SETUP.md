@@ -69,6 +69,7 @@ hit **Run workflow** any time.
 | The site, source of truth | `samples/record-room-standalone.html` |
 | Same page without the HTML wrapper (for pasting as an artifact; keep in sync) | `samples/record-room.html` |
 | Built file that gets served | `public/index.html` (generated, not committed) |
+| Build step (adds the security policy) | `scripts/build-site.js` |
 | Which Firebase site | `site` in `firebase.json` |
 | Which Firebase project | the key in the GitHub secret |
 | The league it reads | `LEAGUE_ID` near the top of the script |

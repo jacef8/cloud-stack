@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "test": "echo \"no tests yet\"",
-    "build:site": "mkdir -p public && cp samples/record-room-standalone.html public/index.html",
+    "build:site": "node scripts/build-site.js",
     "deploy": "npm run build:site && firebase deploy --only hosting",
     "serve": "npm run build:site && firebase serve --only hosting",
     "site:create": "firebase hosting:sites:create record-room"

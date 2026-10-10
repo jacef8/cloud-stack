@@ -2,6 +2,8 @@ node_modules/
 .env
 .env.local
 .firebase/
+# Built from samples/record-room-standalone.html by `npm run build:site`
+public/index.html
 firebase-debug.log
 *.log
 key.json

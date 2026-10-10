@@ -20,8 +20,8 @@ this repo can only ever touch the record book.
 
     npm install -g firebase-tools        # once per computer
     firebase login                       # once, opens a browser
-    firebase projects:create record-room-app   # its own project, once
-    firebase use record-room-app
+    firebase projects:create <project-id>      # its own project, once
+    firebase use <project-id>                  # writes it to .firebaserc
     npm run site:create                  # claims record-room.web.app
     npm run deploy
 
@@ -40,11 +40,9 @@ across all of Firebase. These were unclaimed as of this writing:
     record-room   the-record-room   trophy-case
     the-ledger    etched
 
-Record Room has its own Firebase project, named in `.firebaserc`. It shares
-nothing with the allstars project. Create it once:
-
-    firebase projects:create record-room-app
-    firebase use record-room-app
+Record Room has its own Firebase project, named in `.firebaserc`
+(currently `record-room-32ef8`). It shares nothing with any other project.
+The first-time steps above create and select it.
 
 ## Publishing a change
 
@@ -56,13 +54,14 @@ picks up the new build rather than a stale copy.
 ## Pointing it at a different league
 
 Everything tying the build to one league is at the top of the script in
-`samples/record-room.html`:
+`samples/record-room-standalone.html` (and its wrapper-less twin,
+`samples/record-room.html`, if you keep that copy):
 
     const APP_NAME='Record Room';
     const LEAGUE_ID='1325921258503667712';
 
 Change `LEAGUE_ID`, regenerate the baked history with the scripts in
-`samples/tools/`, and rebuild. Nothing else in the file assumes a league, so
+`samples/tools/`, and rebuild (`npm run build:site`). Nothing else in the file assumes a league, so
 letting people enter their own ID later means reading `LEAGUE_ID` from the
 page instead of that constant.
 

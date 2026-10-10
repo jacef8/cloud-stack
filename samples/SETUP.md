@@ -1,7 +1,7 @@
 # Setting up Record Room — browser only
 
-Record Room gets its **own Firebase project**. Nothing it does touches the
-allstars project, and the two share no settings, quota or billing.
+Record Room gets its **own Firebase project**. Nothing it does touches any
+other project, and they share no settings, quota or billing.
 
 Two steps in a browser. No terminal, nothing to install.
 
@@ -10,7 +10,7 @@ Two steps in a browser. No terminal, nothing to install.
 1. Open <https://console.firebase.google.com/> and sign in.
 2. Click **Create a project** (not an existing one).
 3. Name it `Record Room`. Firebase suggests a project ID underneath, something
-   like `record-room-app` — whatever it lands on is fine, you don't have to
+   like `record-room-32ef8` — whatever it lands on is fine, you don't have to
    write it down.
 4. Google Analytics is not needed. Turn it off and click **Create project**.
 5. When it finishes, click the **gear** next to Project Overview, then
@@ -66,8 +66,9 @@ hit **Run workflow** any time.
 
 | What | Where |
 |---|---|
-| The site, source of truth | `samples/record-room.html` |
-| Built file that gets served | `public/index.html` |
+| The site, source of truth | `samples/record-room-standalone.html` |
+| Same page without the HTML wrapper (for pasting as an artifact; keep in sync) | `samples/record-room.html` |
+| Built file that gets served | `public/index.html` (generated, not committed) |
 | Which Firebase site | `site` in `firebase.json` |
 | Which Firebase project | the key in the GitHub secret |
 | The league it reads | `LEAGUE_ID` near the top of the script |

@@ -7,7 +7,6 @@ on:
     branches: [master]
     paths:
       - 'samples/record-room-standalone.html'
-      - 'public/**'
       - 'firebase.json'
       - '.github/workflows/deploy.yml'
   workflow_dispatch:
@@ -38,7 +37,6 @@ jobs:
 
       - name: Build the site
         run: |
-          mkdir -p public
           npm run build:site
           ls -l public/
 

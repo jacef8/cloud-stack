@@ -5,9 +5,9 @@
   "private": true,
   "scripts": {
     "test": "echo \"no tests yet\"",
-    "build:site": "cp samples/record-room-standalone.html public/index.html",
+    "build:site": "mkdir -p public && cp samples/record-room-standalone.html public/index.html",
     "deploy": "npm run build:site && firebase deploy --only hosting",
-    "serve": "firebase serve --only hosting",
+    "serve": "npm run build:site && firebase serve --only hosting",
     "site:create": "firebase hosting:sites:create record-room"
   },
   "keywords": [

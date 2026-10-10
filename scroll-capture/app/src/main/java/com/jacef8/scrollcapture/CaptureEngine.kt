@@ -219,7 +219,7 @@ class CaptureEngine(
                 firstShift = s
             }
         }
-        if (region == null && movedBy == "command") {
+        if (region == null && movedBy == "command" && control == null) {
             // The scroll command moves exactly one screenful, so there is no overlap to match on; the pictures
             // simply follow one another. Join them directly.
             val cand = treeRegion ?: intArrayOf(0, h)
@@ -501,6 +501,7 @@ class CaptureEngine(
         listener.progress(pages)
         control.markGrab()
         var hidden = false
+        var commandStepsOff = false
         while (pages < MAX_PAGES) {
             val trigger = control.awaitTrigger(SESSION_IDLE_MS)
             if (trigger == Trigger.DONE || trigger == Trigger.IDLE) {
@@ -508,9 +509,12 @@ class CaptureEngine(
                 break
             }
             var viaCommand = false
-            val eventsBefore = control.scrollEvents
             when (trigger) {
-                Trigger.STEP -> {
+                Trigger.STEP -> if (commandStepsOff) {
+                    control.release()
+                    Thread.sleep(150)
+                    continue
+                } else {
                     stepFrames++
                     // While the button is held a finger is on the screen, and Android cancels a swipe we send then,
                     // so use the scroll command (which needs no touch). Otherwise a swipe, which can be checked.
@@ -540,10 +544,6 @@ class CaptureEngine(
                 val s = TreeAlign.shift(prevWords, words, top, bottom, 12, (bottom - top) - 40)
                 step = when {
                     s != null -> st.nextWith(px, s)
-                    // A whole-screen jump has no overlap to match on. Only trust it when the page really reported
-                    // scrolling; otherwise something else happened (a tap opened another screen) and joining would
-                    // glue two unrelated screens together.
-                    viaCommand && control.scrollEvents > eventsBefore -> st.nextWith(px, bottom - top)
                     else -> step
                 }
             }
@@ -564,6 +564,13 @@ class CaptureEngine(
                 }
                 else -> {
                     notJoined++
+                    if (trigger == Trigger.STEP) {
+                        // The page did not continue (it was the end of this content, and the app moved on to a different
+                        // screen). Stop pushing "scroll" so it cannot carry on into something else.
+                        control.release()
+                        commandStepsOff = true
+                        listener.warn()
+                    }
                     slowDown()
                     DebugLog.log("session: could not join a picture (${Rows.lastNote}) by $trigger")
                     if (trigger == Trigger.STEP || !control.motionPending()) {

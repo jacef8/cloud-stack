@@ -29,7 +29,7 @@ class CaptureIndicator(
     fun show(label: String) {
         view?.let {
             labelView?.text = label
-            it.visibility = if (hiddenForPicture) android.view.View.INVISIBLE else android.view.View.VISIBLE
+            it.alpha = if (hiddenForPicture) 0f else 1f
             return
         }
         val ctx = ContextThemeWrapper(svc, android.R.style.Theme_DeviceDefault)
@@ -81,6 +81,7 @@ class CaptureIndicator(
             y = dp(44f)
         }
         try {
+            tv.alpha = if (hiddenForPicture) 0f else 1f
             wm.addView(tv, lp)
             view = tv
         } catch (e: Exception) {
@@ -91,7 +92,8 @@ class CaptureIndicator(
     /** Hide or show it without removing it, so it can be kept out of one picture. */
     fun setVisible(visible: Boolean) {
         hiddenForPicture = !visible
-        view?.visibility = if (visible) android.view.View.VISIBLE else android.view.View.INVISIBLE
+        // Transparent, not invisible: an invisible view stops taking touches, and Done must always work.
+        view?.alpha = if (visible) 1f else 0f
     }
 
     fun hide() {

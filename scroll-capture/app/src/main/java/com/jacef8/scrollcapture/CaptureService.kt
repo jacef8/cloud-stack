@@ -39,6 +39,7 @@ class CaptureService : AccessibilityService() {
     private var bar: ResultBar? = null
     @Volatile private var replaceId: String? = null
     @Volatile private var control: SessionControl? = null
+    @Volatile private var sessionPkg = ""
     private var shutterSound: MediaActionSound? = null
     private var clickPool: SoundPool? = null
     private var clickId = 0
@@ -103,10 +104,21 @@ class CaptureService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         // While a person-driven scroll capture is open, note whenever the page scrolls (by hand or by a step),
         // so a picture is taken once it has stopped moving.
-        if (event?.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED && running &&
-            event.packageName?.toString() != packageName
-        ) {
-            control?.noteScroll()
+        val c = control
+        if (event == null || c == null || !running) return
+        val pkg = event.packageName?.toString().orEmpty()
+        when (event.eventType) {
+            // Only the page being captured counts, not the launcher, a notification or another app.
+            AccessibilityEvent.TYPE_VIEW_SCROLLED -> if (pkg == sessionPkg || (sessionPkg.isEmpty() && pkg != packageName)) c.noteScroll()
+            // Going somewhere else (Recents, Home, Back out of the app) ends the capture and saves what it has.
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                val ignorable = pkg == "com.android.systemui" || pkg.contains("inputmethod") ||
+                    pkg.contains("honeyboard") || pkg.contains("keyboard")
+                if (sessionPkg.isNotEmpty() && pkg.isNotEmpty() && pkg != sessionPkg && pkg != packageName && !ignorable) {
+                    DebugLog.log("left $sessionPkg for $pkg: finishing the scroll capture")
+                    c.finish()
+                }
+            }
         }
     }
     override fun onInterrupt() = Unit
@@ -177,6 +189,7 @@ class CaptureService : AccessibilityService() {
         // You scroll the page by hand; the tool captures as it moves. Tapping the circle gives one automatic step.
         if (running) return
         val fresh = SessionControl().also { it.press() }
+        sessionPkg = rootInActiveWindow?.packageName?.toString().orEmpty().let { if (it == packageName) "" else it }
         control = fresh
         replaceId = id
         bar?.dismiss()

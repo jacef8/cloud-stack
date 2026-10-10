@@ -11,6 +11,7 @@ on:
     paths:
       - 'samples/record-room.html'
       - 'samples/tools/build-site.js'
+      - 'public/vendor/**'
       - 'public/**'
       - 'firebase.json'
       - '.firebaserc'
@@ -44,9 +45,11 @@ jobs:
           const html=fs.readFileSync('public/index.html','utf8');
           const must=[['doctype','<!doctype html>'],['title','<title>Record Room</title>'],
                       ['viewport','name="viewport"'],['league id','LEAGUE_ID'],['history','HIST='],
-                      ['manifest','manifest.webmanifest'],['service worker','/sw.js']];
+                      ['manifest','manifest.webmanifest'],['service worker','/sw.js'],
+                      ['lenis','/vendor/lenis.min.js'],['ambient','/vendor/ambient.js']];
           for(const f of ['manifest.webmanifest','sw.js','icon-192.png','icon-512.png',
-                          'apple-touch-icon.png']){
+                          'apple-touch-icon.png','vendor/lenis.min.js','vendor/smooth.js',
+                          'vendor/ambient.js','vendor/three.module.min.js']){
             if(!fs.existsSync('public/'+f)){console.error('::error::Missing public/'+f);process.exit(1);}
           }
           // An icon with transparent or white corners gets a black fill on iOS

@@ -53,6 +53,9 @@ button{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
 
 /* ═══ environment ═══ */
+.ambient3d{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.8}
+.ambient3d canvas{display:block;width:100%;height:100%}
+@media (prefers-reduced-motion:reduce){.ambient3d{display:none}}
 .amb{position:fixed;z-index:0;pointer-events:none;border-radius:50%;filter:blur(98px)}
 .a1{width:min(980px,104vw);height:min(700px,74vw);left:44%;top:34%;transform:translate(-50%,-50%);
   background:radial-gradient(circle,rgba(0,232,160,.17),rgba(0,217,255,.08) 46%,transparent 72%);
@@ -565,6 +568,10 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
 }
 @media (prefers-reduced-motion:reduce){.panel,.a1,.spin,.row,.stat,.mcard,.ring{animation:none!important;transition:none!important}}
 </style>
+<script src="/vendor/lenis.min.js" defer></script>
+<script src="/vendor/smooth.js" defer></script>
+<script type="module" src="/vendor/ambient.js"></script>
+
 </head>
 <body>
 

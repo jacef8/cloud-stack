@@ -508,6 +508,7 @@ class CaptureEngine(
                 break
             }
             var viaCommand = false
+            val eventsBefore = control.scrollEvents
             when (trigger) {
                 Trigger.STEP -> {
                     stepFrames++
@@ -539,7 +540,10 @@ class CaptureEngine(
                 val s = TreeAlign.shift(prevWords, words, top, bottom, 12, (bottom - top) - 40)
                 step = when {
                     s != null -> st.nextWith(px, s)
-                    viaCommand -> st.nextWith(px, bottom - top)     // a whole-screen jump has no overlap to match on
+                    // A whole-screen jump has no overlap to match on. Only trust it when the page really reported
+                    // scrolling; otherwise something else happened (a tap opened another screen) and joining would
+                    // glue two unrelated screens together.
+                    viaCommand && control.scrollEvents > eventsBefore -> st.nextWith(px, bottom - top)
                     else -> step
                 }
             }

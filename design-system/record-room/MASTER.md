@@ -52,6 +52,28 @@ uppercase labels. Figures use `tabular-nums`.
 
 ## 4. Layout
 
+**Three sections: Book, Teams, Awards.** The app opens on the Book, and the
+Book opens on the newest record in it, flagged as such. The one thing people
+come for — did anything just break? — is the biggest thing on screen and the
+first (§1).
+
+Cut in the overhaul:
+- **The Overview page.** Its biggest numbers were 3 Seasons / 13 Managers /
+  72 Entries — inventory about the app, not records (§2.5, §4.1 "filler").
+  Who-holds-what moved to Teams, the champions timeline to Awards, the
+  standing-records list was the book already, and the standings table is
+  something Sleeper does better.
+- **The masthead**, 32px block down to one 21px line. The dock names the
+  section. On the phone that put the record at y=307 instead of y=640.
+- **The Head-to-head page.** Picking two managers from two lists is ceremony;
+  the full series list now sits inside the manager card, where you were
+  already looking.
+
+Added: two shortcuts in the rail for what the book computes and never said —
+**Set most recently** and **Closest to falling**. "Closest" only counts a
+challenger who is a different manager, or the leader gets measured against
+their own second-best, which says nothing.
+
 The stat filter sits **beside** the board from 700px up — a 262px rail on the
 left. Directive §2.3 wants controls next to what they change, and §4.1 lists
 "scroll past filters to find results" as rejected, so it is never stacked above.

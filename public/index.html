@@ -109,7 +109,8 @@ button{font:inherit;color:inherit}
 /* content column */
 .col{display:grid;grid-template-rows:auto minmax(0,1fr);gap:13px;min-height:0}
 .bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:11px 16px}
-.bar h1{margin:0;min-width:0;font-family:var(--disp);font-weight:700;font-size:clamp(25px,2.3vw,32px);letter-spacing:-.03em;line-height:1.05}
+.bar h1{margin:0;min-width:0;font-family:var(--disp);font-weight:700;font-size:clamp(21px,1.7vw,26px);letter-spacing:-.03em;line-height:1.05}
+.bar .sub{font-size:14px;color:var(--ink-3);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bar h1 span{display:block;font-family:var(--mono);font-size:12px;letter-spacing:.08em;
   text-transform:uppercase;color:var(--ink-3);margin-top:3px;font-weight:400;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -340,6 +341,22 @@ button{font:inherit;color:inherit}
 .railfoot p{margin:0;font-family:var(--mono);font-size:12px;color:var(--ink-3);line-height:1.6}
 .railfoot b{color:var(--accent);font-weight:700}
 .rec-main{display:flex;flex-direction:column;gap:15px}
+/* Two things the book knows and never said: which record went in most
+   recently, and which one is closest to being taken. Both jump to that stat. */
+.signals{display:flex;flex-direction:column;gap:7px;margin-bottom:15px}
+.sig{display:block;width:100%;text-align:left;cursor:pointer;padding:10px 12px;
+  border:1px solid rgba(255,255,255,.09);border-radius:var(--r-s);
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));box-shadow:var(--raise);color:var(--ink)}
+.sig:hover{border-color:rgba(var(--accent-rgb),.45)}
+.sig .sigk{display:block;font-family:var(--mono);font-size:12px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--accent)}
+.sig .sigt{display:block;margin-top:3px;font-weight:700;font-size:15px;line-height:1.2}
+.sig .sigd{display:block;margin-top:2px;font-size:13px;color:var(--ink-3);
+  font-variant-numeric:tabular-nums}
+.flag{display:inline-block;margin:0 0 6px;padding:4px 10px;border-radius:999px;
+  font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--on-accent);
+  background:linear-gradient(150deg,var(--accent-hi),var(--accent))}
 /* The filter sits beside the board at every width that has room for it
    (directive 2.3). On the phone it moves into a drawer, so nobody has to
    scroll past the records to reach it. */
@@ -351,7 +368,7 @@ button{font:inherit;color:inherit}
 .filterbtn svg{width:20px;height:20px;flex:none;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round}
 .filterbtn span{flex:1;font-weight:700;font-size:16px}
 .filterbtn b{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--ink-3)}
-.railx{width:34px;height:34px;align-items:center;justify-content:center;cursor:pointer;
+.railx{width:44px;height:44px;align-items:center;justify-content:center;cursor:pointer;
   border:1px solid rgba(255,255,255,.1);border-radius:50%;background:var(--e2);color:var(--ink)}
 .railx svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
 .showbtn{position:sticky;bottom:0;width:100%;min-height:52px;margin-top:12px;cursor:pointer;border:none;
@@ -415,6 +432,12 @@ button{font:inherit;color:inherit}
 
 /* ═══ MANAGERS ═══ */
 #p-mgrs{grid-template-rows:minmax(0,1fr)}
+@media(min-width:900px){#p-mgrs{grid-template-columns:minmax(0,290px) minmax(0,1fr)}}
+@media(max-width:899px){#p-mgrs{grid-template-columns:minmax(0,1fr)}.mgr-rail{display:none}}
+.h2hrow .rk{font-family:var(--mono);font-weight:700}
+/* A 290px rail has no room for a heading and its note side by side. */
+.railhead{display:block}
+.railhead em{display:block;margin-top:3px}
 .mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:10px}
 .mcard{text-align:left;padding:13px;border-radius:var(--r-s);cursor:pointer;
   border:1px solid rgba(255,255,255,.055);
@@ -565,13 +588,20 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
   /* nothing tappable smaller than a fingertip */
   .nav{width:46px;height:46px}
   .nav svg{width:20px;height:20px}
-  .chk{width:26px;height:26px}
+  /* 44px of button around a 26px disc (directive 2.4) */
+  .chk{width:44px;height:44px;background:none;box-shadow:none;position:relative}
+  .chk::before{content:"";position:absolute;width:26px;height:26px;border-radius:50%;
+    background:var(--recess);box-shadow:var(--well-sh)}
+  .chk[aria-pressed="true"]{background:none;box-shadow:none}
+  .chk[aria-pressed="true"]::before{background:linear-gradient(150deg,var(--accent-hi),var(--accent));
+    box-shadow:0 3px 10px rgba(0,0,0,.72),inset 0 1px 0 rgba(255,255,255,.7)}
+  .chk svg{position:relative;width:15px;height:15px}
   .sw{width:44px;height:26px}
   .sw i{width:20px;height:20px;left:13px}
   .sw[aria-pressed="true"] i{left:31px}
   .xbtn{width:40px;height:40px}
-  .minibtn{padding:8px 14px}
-  .pills button{padding:9px 14px}
+  .minibtn{padding:8px 16px;min-height:44px;min-width:44px}
+  .pills button{padding:9px 14px;min-height:44px}
   .row,.ring,.st,.hb,.acard,.tlx,.mcard,.pk,.stat{min-height:48px}
   .sechead{flex-direction:column;align-items:flex-start;gap:4px}
   /* room is scarce, so let the detail wrap rather than cut it off */
@@ -590,6 +620,13 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
     border-radius:var(--r) var(--r) 0 0;padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));gap:4px;
     min-height:0;height:auto}
   .navlab,.dockspace{display:none}
+  /* The dock names the section, so the header stays one tight line and the
+     record is on screen without scrolling (directive 2.3). */
+  .bar{padding:9px 13px;gap:8px 10px}
+  .bar h1{font-size:21px}
+  .bar .sub{display:none}
+  .bar .pills{order:3;width:100%}
+  .bar .pills button{min-height:44px}
   .nav{width:46px;height:46px}
   .page[data-on="1"]{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:none!important}
   .col{grid-template-rows:auto auto}
@@ -627,14 +664,10 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
 
 <div class="site">
   <nav class="panel glass dock" aria-label="Sections">
-    <button class="nav" data-go="home" aria-current="page" aria-label="Overview"><svg viewBox="0 0 24 24"><path d="M4 11.5 12 5l8 6.5"/><path d="M6 11v8h12v-8"/></svg></button>
-    <span class="navlab">Home</span>
-    <button class="nav" data-go="records" aria-label="Records"><svg viewBox="0 0 24 24"><path d="M5 4h14v16l-7-4-7 4z"/><path d="M9 9h6"/></svg></button>
+    <button class="nav" data-go="records" aria-current="page" aria-label="The book"><svg viewBox="0 0 24 24"><path d="M5 4h14v16l-7-4-7 4z"/><path d="M9 9h6"/></svg></button>
     <span class="navlab">Book</span>
     <button class="nav" data-go="mgrs" aria-label="Managers"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.4"/><path d="M5 20c.8-4 3.6-6 7-6s6.2 2 7 6"/></svg></button>
     <span class="navlab">Teams</span>
-    <button class="nav" data-go="h2h" aria-label="Matchups"><svg viewBox="0 0 24 24"><path d="M4 8h5l2 8h5"/><path d="M16 5l4 3-4 3"/><path d="M20 16h-3"/></svg></button>
-    <span class="navlab">H2H</span>
     <button class="nav" data-go="awards" aria-label="Awards"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="5"/><path d="M8.5 13.5 7 21l5-2.6L17 21l-1.5-7.5"/></svg></button>
     <span class="navlab">Awards</span>
     <div class="dockspace"></div>
@@ -642,53 +675,18 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
 
   <div class="col">
     <header class="panel glass bar">
-      <h1>Record Room<span id="crumb"></span></h1>
+      <h1>Record Room</h1>
+      <span class="sub" id="crumb"></span>
       <div class="barspace"></div>
-      <button class="chip live" id="refreshBtn" type="button" title="Refresh from Sleeper"><i></i><span id="liveMsg">Loading</span></button>
       <div class="pills" id="seasons" role="group" aria-label="Season" hidden></div>
+      <button class="chip live" id="refreshBtn" type="button" title="Refresh from Sleeper"><i></i><span id="liveMsg">Loading</span></button>
     </header>
 
-    <!-- ══ OVERVIEW ══ -->
-    <section class="page" id="p-home" data-on="1">
-      <div class="panel glass pad home-a">
-        <div class="hero">
-          <div>
-            <div class="seasonhead">
-              <div>
-                <p class="kick" id="skick">Season</p>
-                <h2 id="hheadline"></h2>
-              </div>
-              <div class="seasonmeta" id="smeta"></div>
-            </div>
-          </div>
-        </div>
-        <section class="block">
-          <div class="sechead"><h4>Standings</h4><em id="stNote"></em></div>
-          <div class="standings" id="standings"></div>
-        </section>
-        <section class="block">
-          <div class="sechead"><h4>The book so far</h4><em>all seasons</em></div>
-          <div class="tiles" id="htiles"></div>
-        </section>
-        <section class="block">
-          <div class="sechead"><h4>Who holds the records</h4><em id="hbarNote"></em></div>
-          <div class="hbars" id="hbars"></div>
-        </section>
-      </div>
-      <div class="panel glass pad home-b">
-        <div class="sechead"><h4>Champions</h4><em id="champNote"></em></div>
-        <div class="tl" id="htl"></div>
-      </div>
-      <div class="panel glass pad scroll home-c">
-        <div class="sechead"><h4>Standing records</h4><em id="hrecNote"></em></div>
-        <div class="rows" id="hrecs" style="gap:8px"></div>
-      </div>
-    </section>
-
     <!-- ══ RECORDS ══ -->
-    <section class="page" id="p-records">
+    <section class="page" id="p-records" data-on="1">
       <div class="scrim" id="scrim" hidden></div>
       <aside class="panel glass pad scroll rec-rail" id="rail">
+        <div class="signals" id="signals"></div>
         <div class="filterhead">
           <p class="eyebrow" style="margin:0">Stat filter</p>
           <div class="filterbtns">
@@ -710,6 +708,7 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
         <section class="anchor">
           <div>
             <p class="kick" id="kicker">All-time leader</p>
+            <p class="flag" id="newFlag" hidden>Newest in the book</p>
             <h2 id="statTitle" style="margin:0;font-family:var(--disp);font-size:clamp(25px,3vw,35px);font-weight:700;letter-spacing:-.035em;line-height:1.04">Highest single game</h2>
             <div class="bignum"><b id="gval2">—</b><span id="gunit2">points</span></div>
             <div class="ahold">
@@ -737,46 +736,21 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
 
     <!-- ══ MANAGERS ══ -->
     <section class="page" id="p-mgrs">
-      <div class="panel glass pad scroll">
+      <aside class="panel glass pad scroll mgr-rail">
+        <div class="sechead railhead"><h4>Record holders</h4><em id="hbarNote"></em></div>
+        <div class="hbars" id="hbars"></div>
+      </aside>
+      <main class="panel glass pad scroll">
         <div class="sechead"><h4>Managers</h4><em id="mgrNote"></em></div>
         <div class="mgrid" id="mgrid"></div>
-      </div>
-    </section>
-
-    <!-- ══ MATCHUPS ══ -->
-    <section class="page" id="p-h2h">
-      <aside class="panel glass pad scroll">
-        <p class="eyebrow">Pick two</p>
-        <p class="hint">Choose a manager on each side to pull their all-time series.</p>
-        <div class="sechead" style="margin-top:4px"><h4>Side A</h4></div>
-        <div class="picker" id="pickA"></div>
-        <div class="sechead" style="margin-top:12px"><h4>Side B</h4></div>
-        <div class="picker" id="pickB"></div>
-      </aside>
-      <main class="panel glass pad scroll h2hwrap">
-        <div class="vs">
-          <div class="side a">
-            <div class="bav" id="avA"></div><h3 id="nmA"></h3><p id="sbA"></p><b id="wA">0</b>
-          </div>
-          <div class="vsmid">wins</div>
-          <div class="side b">
-            <div class="bav" id="avB"></div><h3 id="nmB"></h3><p id="sbB"></p><b id="wB">0</b>
-          </div>
-        </div>
-        <div>
-          <div class="split"><i class="sa" id="spA"></i><i class="sb" id="spB"></i></div>
-          <div class="splitlab"><span id="lbA"></span><span id="lbMid"></span><span id="lbB"></span></div>
-        </div>
-        <div>
-          <div class="sechead"><h4>Records between them</h4><em id="h2hNote"></em></div>
-          <div class="rows" id="h2hRows"></div>
-        </div>
       </main>
     </section>
 
     <!-- ══ AWARDS ══ -->
     <section class="page" id="p-awards">
       <div class="panel glass pad scroll">
+        <div class="sechead"><h4>Champions</h4><em id="champNote"></em></div>
+        <div class="tl" id="htl" style="margin-bottom:18px"></div>
         <div class="ahead" style="margin-bottom:10px">
           <div><p class="eyebrow" style="margin:0" id="awTitle">Award ballot</p>
             <p class="hint" style="margin:5px 0 0">One trophy per tracked stat, this season only. Switch a stat off to drop its trophy.</p></div>
@@ -1009,7 +983,7 @@ const rowHTML=(s,r,i,ghost)=>`<div class="row${i===0&&!ghost?' top':''}" role="b
   <span class="rwell"><i style="width:${(pct(s,r[1])*100).toFixed(1)}%"></i></span></div>`;
 
 /* ═══ state ═══ */
-let page='home', sel=STATS[0].id, season='ALL', pA=MGR[0].name, pB=MGR[1].name;
+let page='records', sel=STATS[0].id, firstOpen=true, season='ALL', pA=MGR[0].name, pB=MGR[1].name;
 /* Filter choices are per person and per league, kept in the browser so a
    refresh does not undo them. Hidden stats are stored rather than shown ones,
    so a stat added later shows up by default instead of silently missing. */
@@ -1030,82 +1004,14 @@ function savePrefs(){
 const visible=()=>STATS.filter(s=>shown.has(s.id));
 
 /* ═══ OVERVIEW ═══ */
-function renderHome(){
-  const pfs=STATS.find(s=>s.id==='pf');
-  const champRow=pfs.rows.find(r=>r[0]===CHAMP&&r[3]===CHAMP_YEAR)||pfs.rows.find(r=>r[0]===CHAMP);
-  const k=MGR.find(m=>m.name===CHAMP);
-  const cur=DATA.current, table=(DATA.bySeason||{})[cur]||[];
-  const done=TITLES[cur];
-  $('skick').textContent=done?cur+' final':cur+' season';
-  $('hheadline').textContent=done?done+' took it':'Week '+(DATA.currentWeek||1);
-  // the standings leader and the points leader are not the same thing
-  const topScorer=table.slice().sort((x,y)=>y.pf-x.pf)[0];
-  $('smeta').innerHTML=[
-    ['Teams',table.length],
-    ['Games played',table.reduce((n,r)=>n+r.g,0)/2|0],
-    ['Most points',topScorer?topScorer.name:'—']
-  ].map(([k,v])=>`<div class="sm"><span class="smk">${k}</span><span class="smv">${v}</span></div>`).join('');
-  $('stNote').textContent=done?'final':'through week '+(DATA.currentWeek||1);
-  const topPf=table.length?Math.max(...table.map(r=>r.pf)):1;
-  $('standings').innerHTML=table.length?table.map((r,i)=>`
-    <div class="st" role="button" tabindex="0" data-m="${r.name}">
-      <span class="stk">${i+1}</span>
-      <span class="stn">${r.name}<span class="stt">${team(r.name,cur)||'no team name'}</span></span>
-      <span class="stw">${r.w}–${r.l}</span>
-      <span class="stp">${r.pf.toFixed(1)}<em>points</em></span>
-      <span class="stbar"><i style="width:${(r.pf/topPf*100).toFixed(1)}%"></i></span>
-    </div>`).join('')
-    :`<div class="empty">No games played yet this season.</div>`;
-  $('htiles').innerHTML=[
-    ['Seasons',DATA.seasons.length,1],['Managers',NAMES.length,1],
-    ['Entries',visible().reduce((n,s)=>n+s.rows.length,0),1],
-    ['Showing',shown.size+'/'+STATS.length,shown.size/STATS.length]
-  ].map(([lab,v,f])=>`<div class="tile"><b>${v}</b><span>${lab}</span><div class="tb" style="width:${(f*100).toFixed(0)}%"></div></div>`).join('');
-  const yrs=Object.keys(TITLES).map(Number).sort((a,b)=>a-b);
-  $('champNote').textContent=DATA.current+' still playing';
-  $('htl').innerHTML=yrs.map(y=>
-    `<div class="tlx${y===CHAMP_YEAR?' now':''}" role="button" tabindex="0" data-m="${TITLES[y]}"
-       aria-label="Open ${TITLES[y]}, champion in ${y}"><div class="dot"></div>
-       <b>${TITLES[y]}</b><span>${y}</span></div>`)
-    .concat(TITLES[DATA.current]?[]:[`<div class="tlx pending"><div class="dot"></div>
-       <b>undecided</b><span>${DATA.current}</span></div>`]).join('');
-  const held={};NAMES.forEach(n=>held[n]=0);
-  visible().forEach(s=>{const b=best(s,'ALL');if(b)held[b[0]]++;});
-  const rank=MGR.map(m=>({...m,held:held[m.name]})).sort((a,b)=>b.held-a.held||b.titles.length-a.titles.length||b.w-a.w);
-  const owners=rank.filter(m=>m.held>0).length;
-  $('hbarNote').textContent='tap a name to see theirs';
-  $('hbars').innerHTML=rank.slice(0,8).map((m,i)=>`
-    <div class="hb${i===0?' lead':''}" role="button" tabindex="0" data-m="${m.name}"
-      aria-label="Open ${m.name}">
-      <span class="hav${m.titles.length?'':' none'}">${initial(m.name)}</span>
-      <span><span class="hn">${m.name}</span><span class="hs">${teamNow(m.name)||'no team name set'}</span></span>
-      <span class="hv">${m.held}<em>${m.held===1?'record':'records'}</em></span>
-      <span class="hw"><i style="width:${(m.held/Math.max(1,rank[0].held)*100).toFixed(0)}%"></i></span></div>`).join('');
-  const standing=visible().map(s=>{const b=best(s,'ALL');return{s,b};}).filter(x=>x.b)
-    .sort((a,b)=>b.b[3]-a.b[3]).slice(0,6);
-  $('hrecNote').textContent='newest first';
-  $('hrecs').innerHTML=standing.map(({s,b})=>{
-    const all=entries(s,'ALL'), second=all[1];
-    const gap=second?Math.abs(b[1]-second[1]).toFixed(s.dec):null;
-    const f=(k,v,sub)=>`<div class="rf"><span class="rfk">${k}</span>
-      <span class="rfv">${v}</span>${sub?`<span class="rfs">${sub}</span>`:''}</div>`;
-    return `<div class="ring" role="button" tabindex="0" data-stat="${s.id}"
-      aria-label="Open ${s.name}">
-      <div class="rtop">
-        <div class="rlab">${s.name}</div>
-        <div class="rvwrap"><span class="rval">${fmt(s,b[1])}</span><span class="rvalu">${s.unit}</span></div>
-      </div>
-      <div class="rmeta">
-        ${f('Holder',b[0],team(b[0],b[3])||'no team name')}
-        ${f('Set',b[2],'Season '+b[3])}
-        ${second?f('Next best',fmt(s,second[1]),second[0]):f('Next best','—','only entry')}
-        ${gap?f('Clear by',gap,s.unit):''}
-      </div>
-    </div>`;}).join('')
-    ||`<div class="empty">No stats showing. Turn some on in the stat filter.</div>`;
-}
 
 /* ═══ RECORDS ═══ */
+function markNewest(){
+  const {newest}=signals();
+  const f=$('newFlag');
+  if(!f)return;
+  f.hidden=!(newest&&newest.stat.id===sel);
+}
 function renderStats(){
   $('statlist').innerHTML=STATS.map(s=>`
    <div class="stat" data-id="${s.id}" data-sel="${s.id===sel?1:0}" data-off="${shown.has(s.id)?0:1}">
@@ -1118,6 +1024,48 @@ function renderStats(){
   $('recCount').textContent=entries;
   $('filterCount').textContent=shown.size+' of '+STATS.length;
   $('showCount').textContent=entries;
+}
+/* The newest record in the book, and the one closest to being taken.
+   "Closest" only counts a challenger who is a different manager — otherwise
+   the leader is measured against their own second-best, which says nothing. */
+function signals(){
+  const wkOf=r=>{const m=(r[2]||'').match(/Wk (\d+)/);return m?+m[1]:0;};
+  let newest=null, closest=null;
+  for(const s of visible()){
+    if(!s.rows||!s.rows.length)continue;
+    const top=s.rows[0];
+    if(!newest||top[3]>newest.row[3]||(top[3]===newest.row[3]&&wkOf(top)>wkOf(newest.row)))
+      newest={stat:s,row:top};
+    const rival=s.rows.slice(1).find(r=>r[0]!==top[0]);
+    if(rival){
+      const gap=Math.abs(top[1]-rival[1]);
+      const share=Math.abs(top[1])?gap/Math.abs(top[1]):1;
+      if(!closest||share<closest.share)closest={stat:s,row:top,rival,gap,share};
+    }
+  }
+  return {newest,closest};
+}
+function renderSignals(){
+  const {newest,closest}=signals();
+  const out=[];
+  if(newest&&newest.stat.id!==sel){
+    const [who,,ctx,yr]=newest.row;
+    out.push(`<button class="sig" type="button" data-sig="${newest.stat.id}">
+      <span class="sigk">Set most recently</span>
+      <span class="sigt">${newest.stat.name}</span>
+      <span class="sigd">${who} &middot; ${ctx} &middot; ${yr}</span></button>`);
+  }
+  if(closest&&closest.stat.id!==sel){
+    const tied=closest.gap<0.005;
+    out.push(`<button class="sig" type="button" data-sig="${closest.stat.id}">
+      <span class="sigk">${tied?'Tied at the top':'Closest to falling'}</span>
+      <span class="sigt">${closest.stat.name}</span>
+      <span class="sigd">${tied
+        ? closest.row[0]+' and '+closest.rival[0]+' both on '+fmt(closest.stat,closest.row[1])
+        : closest.row[0]+' only '+fmt(closest.stat,closest.gap)+' '+closest.stat.unit+' clear of '+closest.rival[0]
+      }</span></button>`);
+  }
+  $('signals').innerHTML=out.join('');
 }
 function renderBoard(){
   const s=STATS.find(x=>x.id===sel);
@@ -1168,6 +1116,29 @@ function renderBoard(){
 }
 
 /* ═══ MANAGERS ═══ */
+function renderChamps(){
+  const yrs=Object.keys(TITLES).map(Number).sort((a,b)=>a-b);
+  $('champNote').textContent=yrs.length+' decided';
+  $('htl').innerHTML=yrs.map(y=>
+    `<div class="tlx${y===CHAMP_YEAR?' now':''}" role="button" tabindex="0" data-m="${TITLES[y]}"
+       aria-label="Open ${TITLES[y]}, champion in ${y}"><div class="dot"></div>
+       <b>${TITLES[y]}</b><span>${y}</span></div>`)
+    .concat(TITLES[DATA.current]?[]:[`<div class="tlx pending"><div class="dot"></div>
+       <b>undecided</b><span>${DATA.current}</span></div>`]).join('');
+}
+function renderHolders(){
+  const held={};NAMES.forEach(n=>held[n]=0);
+  visible().forEach(s=>{const b=best(s,'ALL');if(b)held[b[0]]++;});
+  const rank=MGR.map(m=>({...m,held:held[m.name]})).sort((a,b)=>b.held-a.held||b.titles.length-a.titles.length||b.w-a.w);
+  $('hbarNote').textContent='tap a name to see theirs';
+  $('hbars').innerHTML=rank.slice(0,8).map((m,i)=>`
+    <div class="hb${i===0?' lead':''}" role="button" tabindex="0" data-m="${m.name}"
+      aria-label="Open ${m.name}">
+      <span class="hav${m.titles.length?'':' none'}">${initial(m.name)}</span>
+      <span><span class="hn">${m.name}</span><span class="hs">${teamNow(m.name)||'no team name set'}</span></span>
+      <span class="hv">${m.held}<em>${m.held===1?'record':'records'}</em></span>
+      <span class="hw"><i style="width:${(m.held/Math.max(1,rank[0].held)*100).toFixed(0)}%"></i></span></div>`).join('');
+}
 function renderMgrs(){
   const ys=DATA.seasons;
   $('mgrNote').textContent='all-time, '+ys[0]+'–'+ys[ys.length-1]+' · tap a card';
@@ -1219,15 +1190,14 @@ function openMgr(name){
       <span class="rv"><b>${fmt(s,b[1])}</b></span>
       <span class="rwell"><i style="width:${(pct(s,b[1])*100).toFixed(1)}%"></i></span></div>`).join('')}</div>`
       :`<div class="empty">Holds no league record yet.</div>`}
-    <div class="sechead" style="margin-top:13px"><h4>Best and worst matchups</h4><em>${rivals.length} opponents faced</em></div>
-    ${rivals.length?`<div class="rows">
-      <div class="row"><span class="rk">W</span><span class="rn">${rivals[0].o}<span class="rc">owns this matchup</span></span>
-        <span class="rv"><b>${rivals[0].w}–${rivals[0].g-rivals[0].w}</b></span>
-        <span class="rwell"><i style="width:${(rivals[0].w/rivals[0].g*100).toFixed(0)}%"></i></span></div>
-      <div class="row"><span class="rk">L</span><span class="rn">${rivals[rivals.length-1].o}<span class="rc">worst matchup</span></span>
-        <span class="rv"><b>${rivals[rivals.length-1].w}–${rivals[rivals.length-1].g-rivals[rivals.length-1].w}</b></span>
-        <span class="rwell"><i style="width:${(rivals[rivals.length-1].w/rivals[rivals.length-1].g*100).toFixed(0)}%"></i></span></div>
-    </div>`:`<div class="empty">No games played yet.</div>`}
+    <div class="sechead" style="margin-top:13px"><h4>Head to head</h4><em>${rivals.length} opponents faced</em></div>
+    ${rivals.length?`<div class="rows">${rivals.map(r=>{
+      const l=r.g-r.w, share=(r.w/r.g*100).toFixed(0);
+      return `<div class="row h2hrow"><span class="rk">${r.w>l?'W':r.w<l?'L':'='}</span>
+      <span class="rn">${r.o}<span class="rc">${r.g} ${r.g===1?'meeting':'meetings'} &middot; ${share}% won</span></span>
+      <span class="rv"><b>${r.w}&#8211;${l}</b></span>
+      <span class="rwell"><i style="width:${share}%"></i></span></div>`;}).join('')}</div>`
+      :`<div class="empty">No games played yet.</div>`}
     <button class="ghostbtn" id="mdlgClose" style="margin-top:14px;width:100%">Close</button>`;
   showDialog();
 }
@@ -1277,41 +1247,6 @@ addEventListener('keydown',e=>{if(e.key!=='Escape')return;
   closeMgr();});
 
 /* ═══ MATCHUPS ═══ */
-function renderPickers(){
-  const mk=(id,cur,other)=>$(id).innerHTML=MGR.map(m=>`
-    <button class="pk" data-pick="${id}" data-name="${m.name}" data-sel="${m.name===cur?1:0}"
-      ${m.name===other?'disabled style="opacity:.35;cursor:not-allowed"':''}>
-      <span class="pav">${initial(m.name)}</span>
-      <span>${m.name}<em class="pteam">${teamNow(m.name)||'no team name set'}</em></span>
-      <em>${m.w}–${m.l}</em></button>`).join('');
-  mk('pickA',pA,pB);mk('pickB',pB,pA);
-}
-function renderH2H(){
-  const wA=wins(pA,pB), wB=wins(pB,pA), GP=meetings(pA,pB)||(wA+wB);
-  $('avA').textContent=initial(pA);$('avB').textContent=initial(pB);
-  $('nmA').textContent=pA;$('nmB').textContent=pB;
-  const mA=MGR.find(m=>m.name===pA),mB=MGR.find(m=>m.name===pB);
-  const tl=n=>n+(n===1?' title':' titles');
-  $('sbA').innerHTML=`${teamNow(pA)||'no team name set'}<br>${mA.w}–${mA.l} all-time · ${tl(mA.titles.length)}`;
-  $('sbB').innerHTML=`${teamNow(pB)||'no team name set'}<br>${mB.w}–${mB.l} all-time · ${tl(mB.titles.length)}`;
-  $('wA').textContent=wA;$('wB').textContent=wB;
-  const den=GP||1;
-  $('spA').style.width=(wA/den*100)+'%';$('spB').style.width=(wB/den*100)+'%';
-  $('lbA').textContent=pA+' '+wA;
-  $('lbMid').textContent=GP?(GP+(GP===1?' meeting':' meetings')+' since '+DATA.seasons[0]):'never played each other';
-  $('lbB').textContent=wB+' '+pB;
-  const mine=[];
-  STATS.forEach(s=>entries(s,'ALL').forEach((r,i)=>{
-    if(r[0]===pA||r[0]===pB)mine.push({s,r,i});}));
-  mine.sort((a,b)=>a.i-b.i||b.r[3]-a.r[3]);
-  $('h2hNote').textContent=mine.length+' entries on the books';
-  $('h2hRows').innerHTML=mine.length?mine.slice(0,7).map(({s,r,i})=>`
-    <div class="row${i===0?' top':''}"><span class="rk">${i+1}</span>
-    <span class="rn">${r[0]} · ${s.name}<span class="rc">${r[2]} · ${r[3]}</span></span>
-    <span class="rv"><b>${fmt(s,r[1])}</b></span>
-    <span class="rwell"><i style="width:${(pct(s,r[1])*100).toFixed(1)}%"></i></span></div>`).join('')
-    :`<div class="empty">Neither one has cracked a leaderboard.</div>`;
-}
 
 /* ═══ AWARDS ═══ */
 function renderAwards(){
@@ -1338,7 +1273,7 @@ function renderAwards(){
 }
 
 /* ═══ routing ═══ */
-const CRUMB={home:'Overview',records:'Record book',mgrs:'Managers',h2h:'Head to head',awards:'Awards'};
+const CRUMB={records:'the book',mgrs:'managers',awards:'awards'};
 const CALM=matchMedia('(prefers-reduced-motion: reduce)');
 const GS=()=>!CALM.matches&&window.gsap;
 /* Rows arrive in sequence, bars grow from nothing, and figures count up to
@@ -1409,11 +1344,11 @@ function go(p){
       if(b.dataset.go===p)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
     $('crumb').textContent=DATA.league||'';
     $('seasons').hidden=p!=='records';
-    if(p==='home'){renderHome();}
-    if(p==='records'){renderStats();renderBoard();}
-    if(p==='mgrs')renderMgrs();
-    if(p==='h2h'){renderPickers();renderH2H();}
-    if(p==='awards')renderAwards();
+    if(p==='records'){
+      if(firstOpen){firstOpen=false;const n=signals().newest;if(n)sel=n.stat.id;}
+      renderStats();renderSignals();renderBoard();markNewest();}
+    if(p==='mgrs'){renderHolders();renderMgrs();}
+    if(p==='awards'){renderChamps();renderAwards();}
   };
   const reveal=()=>animateIn(document.querySelector('.page[data-on="1"]'));
   if(changing)swap(build).then(reveal); else {build();reveal();}
@@ -1428,29 +1363,30 @@ document.addEventListener('click',e=>{
   if(e.target.closest('#openFilter')){drawer(true);return;}
   if(e.target.closest('#railClose')||e.target.closest('#showResults')||e.target.closest('#scrim')){
     drawer(false);return;}
+  const sig=e.target.closest('.sig');if(sig){
+    sel=sig.dataset.sig;shown.add(sel);savePrefs();
+    renderStats();renderSignals();renderBoard();markNewest();
+    if(drawerOpen())drawer(false);return;}
   const nav=e.target.closest('.nav');if(nav){go(nav.dataset.go);return;}
   const yb=e.target.closest('#seasons button');if(yb){
     season=yb.dataset.y==='ALL'?'ALL':+yb.dataset.y;
     $('seasons').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b===yb));
-    renderBoard();return;}
+    renderBoard();markNewest();return;}
   const sw=e.target.closest('.sw');if(sw){
     const id=sw.dataset.sw;tracked.has(id)?tracked.delete(id):tracked.add(id);
-    savePrefs();renderAwards();return;}
+    savePrefs();renderChamps();renderAwards();return;}
   const chk=e.target.closest('.chk');if(chk){
     const id=chk.dataset.chk;shown.has(id)?shown.delete(id):shown.add(id);
     if(!shown.has(sel)&&visible().length)sel=visible()[0].id;
-    savePrefs();(()=>{renderStats();renderBoard();})();return;}
+    savePrefs();(()=>{renderStats();renderSignals();renderBoard();markNewest();})();return;}
   if(e.target.closest('#selAll')){STATS.forEach(s=>shown.add(s.id));savePrefs();
-    (()=>{renderStats();renderBoard();})();return;}
+    (()=>{renderStats();renderSignals();renderBoard();markNewest();})();return;}
   if(e.target.closest('#selNone')){shown.clear();savePrefs();
-    (()=>{renderStats();renderBoard();})();return;}
+    (()=>{renderStats();renderSignals();renderBoard();markNewest();})();return;}
   const nmOpen=e.target.closest('[data-open]');if(nmOpen){
-    sel=nmOpen.dataset.open;shown.add(sel);savePrefs();renderStats();renderBoard();return;}
+    sel=nmOpen.dataset.open;shown.add(sel);savePrefs();renderStats();renderSignals();renderBoard();markNewest();return;}
   const mc=e.target.closest('.mcard,.hb,.st,.tlx,.row');if(mc&&mc.dataset.m){openMgr(mc.dataset.m);return;}
   const rc=e.target.closest('.ring,.acard');if(rc&&rc.dataset.stat){openRecord(rc.dataset.stat);return;}
-  const pk=e.target.closest('.pk');if(pk&&!pk.disabled){
-    if(pk.dataset.pick==='pickA')pA=pk.dataset.name;else pB=pk.dataset.name;
-    renderPickers();renderH2H();return;}
 });
 document.addEventListener('keydown',e=>{
   if(e.key!=='Enter'&&e.key!==' ')return;

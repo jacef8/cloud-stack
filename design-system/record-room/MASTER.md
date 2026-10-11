@@ -63,13 +63,28 @@ highlight, a short shadow (blur ≤14px) and recessed tracks — never from a gl
   a neutral shadow, never a coloured halo.
 - Card radius 22px, controls 14px — one value each, project-wide.
 
-## 5. Motion
+## 5. Motion and extra tools (directive §6)
 
-- Rows stagger in 28ms apart; bars grow from zero; figures count up.
-- Lenis smooths the wheel on the window, the dialog and every scrolling panel
-  (fine pointers only — phones keep native momentum).
-- One slow ambient element: the Three.js particle field, tinted to the accent tokens.
-- Everything above is off under `prefers-reduced-motion`.
+**GSAP 3.15.0** (pinned `@3`) — rows stagger in 28ms apart, bars grow from zero,
+figures count up. One motion system instead of hand-rolled keyframes, and it
+cleans up its own inline styles, so tapping through sections quickly can't leave
+a card stranded mid-animation. 73KB, precached.
+
+**View Transitions** — the browser's own crossfade between the five sections.
+Nothing to load. `startViewTransition` updates the DOM asynchronously, so the
+reveal waits on `updateCallbackDone` before animating the new view.
+
+**three.js 0.186** — the ambient particle field, tinted to the accent tokens.
+Lazy-imported, left out of the offline precache, and it disposes itself if it
+measures under 28fps.
+
+Not used: **Lenis** (§6.3 — it never runs inside the fit-one-screen shell, and
+the panels that scroll on their own keep normal scrolling), and **Flip**, which
+was tried and removed: toggled-off stats and trophies dim in place rather than
+leaving the grid, so there was no layout change for it to carry.
+
+All of the above is skipped under `prefers-reduced-motion`, and the page renders
+complete with either extra script blocked.
 
 ## 6. Where this departs from the reference library
 
@@ -82,7 +97,7 @@ highlight, a short shadow (blur ≤14px) and recessed tracks — never from a gl
 
 ## 7. Still open
 
-The directive's **§2.10** says no heavy animation unless it does a real job. The
-Three.js field is decoration, and the module is 671KB. It stays because Jace asked
-for it twice; it is lazy-loaded, excluded from the offline precache, and disposes
-itself if it measures under 28fps.
+Directive **§6.2** now lists three.js as approved for Showpiece, which settles the
+old §2.10 question. **§6.3** still says three.js should load "only where 3D is the
+point" — here it is atmosphere, not the point. It stays because Jace asked for it
+twice and it costs nothing until it loads.

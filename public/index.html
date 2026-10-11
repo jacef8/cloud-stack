@@ -79,9 +79,11 @@ button{font:inherit;color:inherit}
   border:1px solid rgba(255,255,255,.09);box-shadow:var(--raise)}
 @keyframes rise{from{opacity:0;transform:translateY(16px)}}
 @keyframes rowin{from{opacity:0;transform:translateY(10px)}}
-@keyframes pagein{from{opacity:0;transform:translateY(8px)}}
+/* The browser's own section crossfade — short, no blur, off when asked. */
+::view-transition-old(root),::view-transition-new(root){animation-duration:.26s}
 @media (prefers-reduced-motion:reduce){
-  .page[data-on="1"],.st,.ring,.hb,.row,.mcard,.acard,.tlx,.stat,.pk{animation:none!important}
+  ::view-transition-group(*){animation:none}
+  .page[data-on="1"],.st,.hb,.row,.mcard,.acard,.tlx,.stat,.pk{animation:none!important}
 }
 
 /* dock */
@@ -578,8 +580,7 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
 }
 @media (prefers-reduced-motion:reduce){.panel,.amb,.spin,.row,.stat,.mcard,.ring{animation:none!important;transition:none!important}}
 </style>
-<script src="/vendor/lenis.min.js" defer></script>
-<script src="/vendor/smooth.js" defer></script>
+<script src="/vendor/gsap.min.js"></script>
 <script type="module" src="/vendor/ambient.js"></script>
 
 </head>
@@ -1298,28 +1299,22 @@ function renderAwards(){
 /* ═══ routing ═══ */
 const CRUMB={home:'Overview',records:'Record book',mgrs:'Managers',h2h:'Head to head',awards:'Awards'};
 const CALM=matchMedia('(prefers-reduced-motion: reduce)');
+const GS=()=>!CALM.matches&&window.gsap;
 /* Rows arrive in sequence, bars grow from nothing, and figures count up to
-   their value. Everything here is transform and opacity, and all of it is
-   skipped outright when the reader asks for less motion. */
+   their value. Everything here is transform, width and opacity — never blur —
+   and all of it is skipped outright when the reader asks for less motion. */
 function animateIn(root){
-  if(CALM.matches||!root)return;
-  const rows=[...root.querySelectorAll('.st,.ring,.hb,.row,.mcard,.acard,.tlx,.stat,.pk')].slice(0,26);
-  rows.forEach((el,i)=>{
-    el.style.animation='none';
-    el.getBoundingClientRect();
-    el.style.animation=`rowin .42s cubic-bezier(.2,.8,.2,1) ${Math.min(i*28,420)}ms both`;
-  });
-  root.querySelectorAll('.stbar i,.rwell i,.sbtrack i,.hb .hw i,.mbar i,.tb').forEach(bar=>{
-    const w=bar.style.width; if(!w)return;
-    bar.style.transition='none'; bar.style.width='0%';
-    bar.getBoundingClientRect();
-    bar.style.transition='width .75s cubic-bezier(.2,.8,.2,1)';
-    bar.style.width=w;
-  });
+  if(!GS()||!root)return;
+  const rows=[...root.querySelectorAll('.st,.hb,.row,.mcard,.acard,.tlx,.stat,.pk')].slice(0,26);
+  if(rows.length)gsap.from(rows,{y:10,opacity:0,duration:.42,ease:'power2.out',
+    stagger:{each:.028,from:'start'},clearProps:'transform,opacity'});
+  const bars=[...root.querySelectorAll('.stbar i,.rwell i,.sbtrack i,.hb .hw i,.mbar i,.tb')]
+    .filter(b=>b.style.width);
+  bars.forEach(b=>gsap.fromTo(b,{width:'0%'},{width:b.style.width,duration:.75,ease:'power2.out'}));
   countUp(root);
 }
 function countUp(root){
-  if(CALM.matches)return;
+  if(!GS())return;
   root.querySelectorAll('.stp,.rval,.bignum b,.tile b,.ms b,.hold b,.hv').forEach(el=>{
     if(el.dataset.counted)return;
     const raw=el.firstChild&&el.firstChild.nodeType===3?el.firstChild.nodeValue:el.textContent;
@@ -1331,36 +1326,39 @@ function countUp(root){
     const grouped=m[2].includes(',');
     el.dataset.counted='1';
     const node=el.firstChild&&el.firstChild.nodeType===3?el.firstChild:el;
-    const t0=performance.now(), dur=620;
-    const fmtN=v=>{const s=v.toFixed(dec);
-      return grouped?s.replace(/\B(?=(\d{3})+(?!\d))/g,','):s;};
-    (function step(now){
-      const k=Math.min(1,(now-t0)/dur);
-      const e=1-Math.pow(1-k,3);
-      node.nodeValue=pre+fmtN(target*e)+post;
-      if(k<1)requestAnimationFrame(step);
-    })(t0);
+    const fmtN=v=>{const t=v.toFixed(dec);
+      return grouped?t.replace(/\B(?=(\d{3})+(?!\d))/g,','):t;};
+    const box={v:0};
+    gsap.to(box,{v:target,duration:.62,ease:'power2.out',
+      onUpdate(){node.nodeValue=pre+fmtN(box.v)+post;},
+      onComplete(){node.nodeValue=pre+fmtN(target)+post;}});
   });
+}
+/* The browser's own crossfade between sections — nothing to load. The
+   callback runs asynchronously, so hand back a promise the caller can wait on
+   before animating anything inside the new view. */
+function swap(fn){
+  if(CALM.matches||!document.startViewTransition){fn();return Promise.resolve();}
+  const vt=document.startViewTransition(fn);
+  return vt.updateCallbackDone.catch(()=>{});
 }
 function go(p){
   const changing=page!==p;
   page=p;
-  document.querySelectorAll('.page').forEach(el=>el.dataset.on=el.id==='p-'+p?'1':'0');
-  document.querySelectorAll('.nav').forEach(b=>{
-    if(b.dataset.go===p)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
-  $('crumb').textContent=DATA.league||'';
-  $('seasons').hidden=p!=='records';
-  if(p==='home'){renderHome();}
-  if(p==='records'){renderStats();renderBoard();}
-  if(p==='mgrs')renderMgrs();
-  if(p==='h2h'){renderPickers();renderH2H();}
-  if(p==='awards')renderAwards();
-  const live=document.querySelector('.page[data-on="1"]');
-  if(changing&&live&&!CALM.matches){
-    live.style.animation='none';live.getBoundingClientRect();
-    live.style.animation='pagein .34s cubic-bezier(.2,.8,.2,1) both';
-  }
-  animateIn(live);
+  const build=()=>{
+    document.querySelectorAll('.page').forEach(el=>el.dataset.on=el.id==='p-'+p?'1':'0');
+    document.querySelectorAll('.nav').forEach(b=>{
+      if(b.dataset.go===p)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
+    $('crumb').textContent=DATA.league||'';
+    $('seasons').hidden=p!=='records';
+    if(p==='home'){renderHome();}
+    if(p==='records'){renderStats();renderBoard();}
+    if(p==='mgrs')renderMgrs();
+    if(p==='h2h'){renderPickers();renderH2H();}
+    if(p==='awards')renderAwards();
+  };
+  const reveal=()=>animateIn(document.querySelector('.page[data-on="1"]'));
+  if(changing)swap(build).then(reveal); else {build();reveal();}
 }
 
 function paintSeasons(){
@@ -1380,9 +1378,11 @@ document.addEventListener('click',e=>{
   const chk=e.target.closest('.chk');if(chk){
     const id=chk.dataset.chk;shown.has(id)?shown.delete(id):shown.add(id);
     if(!shown.has(sel)&&visible().length)sel=visible()[0].id;
-    savePrefs();renderStats();renderBoard();return;}
-  if(e.target.closest('#selAll')){STATS.forEach(s=>shown.add(s.id));savePrefs();renderStats();renderBoard();return;}
-  if(e.target.closest('#selNone')){shown.clear();savePrefs();renderStats();renderBoard();return;}
+    savePrefs();(()=>{renderStats();renderBoard();})();return;}
+  if(e.target.closest('#selAll')){STATS.forEach(s=>shown.add(s.id));savePrefs();
+    (()=>{renderStats();renderBoard();})();return;}
+  if(e.target.closest('#selNone')){shown.clear();savePrefs();
+    (()=>{renderStats();renderBoard();})();return;}
   const nmOpen=e.target.closest('[data-open]');if(nmOpen){
     sel=nmOpen.dataset.open;shown.add(sel);savePrefs();renderStats();renderBoard();return;}
   const mc=e.target.closest('.mcard,.hb,.st,.tlx,.row');if(mc&&mc.dataset.m){openMgr(mc.dataset.m);return;}

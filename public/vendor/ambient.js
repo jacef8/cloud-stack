@@ -45,14 +45,15 @@ function start(THREE) {
   const pos = new Float32Array(COUNT * 3);
   const col = new Float32Array(COUNT * 3);
   const drift = new Float32Array(COUNT);
-  const mint = new THREE.Color('#00E8A0'), cyan = new THREE.Color('#00D9FF'), lime = new THREE.Color('#B6FF3D');
+  // trophy gold, bronze and a warm highlight — the page's accent tokens
+  const gold = new THREE.Color('#F0B63C'), bronze = new THREE.Color('#C98A2E'), warm = new THREE.Color('#FFD27A');
 
   for (let i = 0; i < COUNT; i++) {
     pos[i * 3] = (Math.random() - 0.5) * 1500;
     pos[i * 3 + 1] = (Math.random() - 0.5) * 900;
     pos[i * 3 + 2] = (Math.random() - 0.5) * 700 - 120;
     const t = Math.random();
-    const c = t < 0.55 ? mint : t < 0.88 ? cyan : lime;
+    const c = t < 0.55 ? gold : t < 0.88 ? bronze : warm;
     col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
     drift[i] = 0.18 + Math.random() * 0.5;
   }
@@ -61,7 +62,7 @@ function start(THREE) {
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
 
   const points = new THREE.Points(geo, new THREE.PointsMaterial({
-    size: 3.6, vertexColors: true, transparent: true, opacity: 0.62,
+    size: 3.6, vertexColors: true, transparent: true, opacity: 0.5,
     depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true
   }));
   scene.add(points);

@@ -340,6 +340,24 @@ button{font:inherit;color:inherit}
 .railfoot p{margin:0;font-family:var(--mono);font-size:12px;color:var(--ink-3);line-height:1.6}
 .railfoot b{color:var(--accent);font-weight:700}
 .rec-main{display:flex;flex-direction:column;gap:15px}
+/* The filter sits beside the board at every width that has room for it
+   (directive 2.3). On the phone it moves into a drawer, so nobody has to
+   scroll past the records to reach it. */
+.drawer-only{display:none}
+.scrim{display:none}
+.filterbtn{align-items:center;gap:10px;width:100%;min-height:52px;padding:0 15px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.1);border-radius:var(--r-s);text-align:left;
+  background:linear-gradient(160deg,var(--e2-hi),var(--e2));box-shadow:var(--raise);color:var(--ink)}
+.filterbtn svg{width:20px;height:20px;flex:none;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round}
+.filterbtn span{flex:1;font-weight:700;font-size:16px}
+.filterbtn b{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--ink-3)}
+.railx{width:34px;height:34px;align-items:center;justify-content:center;cursor:pointer;
+  border:1px solid rgba(255,255,255,.1);border-radius:50%;background:var(--e2);color:var(--ink)}
+.railx svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.showbtn{position:sticky;bottom:0;width:100%;min-height:52px;margin-top:12px;cursor:pointer;border:none;
+  align-items:center;justify-content:center;gap:7px;
+  border-radius:var(--r-s);font-size:16px;font-weight:700;color:var(--on-accent);
+  background:linear-gradient(150deg,var(--accent-hi),var(--accent));box-shadow:0 4px 12px rgba(0,0,0,.72)}
 .anchor{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;align-items:center}
 .seasonhead{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap}
 .seasonmeta{display:flex;gap:10px;flex-wrap:wrap}
@@ -576,11 +594,22 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
   .page[data-on="1"]{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:none!important}
   .col{grid-template-rows:auto auto}
   .scroll{overflow:visible}
-    .rec-rail{order:2}
+  .drawer-only{display:flex}
+  #p-records .rec-rail{position:fixed;z-index:46;top:0;right:0;bottom:0;width:min(360px,88vw);
+    border-radius:var(--r) 0 0 var(--r);background:var(--e1);overflow:auto;
+    transform:translateX(105%);transition:transform .22s ease;padding-bottom:20px}
+  #p-records .rec-rail[data-open="1"]{transform:none}
+  #p-records .scrim{display:block;position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.6)}
+  .filterhead{align-items:center}
+}
+@media(max-width:699px) and (prefers-reduced-motion:reduce){
+  #p-records .rec-rail{transition:none}
 }
 @media (prefers-reduced-motion:reduce){.panel,.amb,.spin,.row,.stat,.mcard,.ring{animation:none!important;transition:none!important}}
 </style>
 <script src="/vendor/gsap.min.js"></script>
+<script src="/vendor/lenis.min.js" defer></script>
+<script src="/vendor/smooth.js" defer></script>
 <script type="module" src="/vendor/ambient.js"></script>
 
 </head>
@@ -658,19 +687,26 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
 
     <!-- ══ RECORDS ══ -->
     <section class="page" id="p-records">
-      <aside class="panel glass pad scroll rec-rail">
+      <div class="scrim" id="scrim" hidden></div>
+      <aside class="panel glass pad scroll rec-rail" id="rail">
         <div class="filterhead">
           <p class="eyebrow" style="margin:0">Stat filter</p>
           <div class="filterbtns">
             <button class="minibtn" id="selAll">All</button>
             <button class="minibtn" id="selNone">None</button>
+            <button class="railx drawer-only" id="railClose" type="button" aria-label="Close the stat filter">
+              <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
           </div>
         </div>
         <p class="hint">Check the stats you want on the board, the overview and the ballot. Tap a name to open it.</p>
         <div class="statlist" id="statlist"></div>
         <div class="railfoot"><p>Showing <b id="trackCount">9</b> of <b>9</b> stats · <b id="recCount">72</b> entries</p></div>
+        <button class="showbtn drawer-only" id="showResults" type="button">Show <b id="showCount">72</b> records</button>
       </aside>
       <main class="panel glass pad scroll rec-main">
+        <button class="filterbtn drawer-only" id="openFilter" type="button" aria-expanded="false" aria-controls="rail">
+          <svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+          <span>Stat filter</span><b id="filterCount">9 of 9</b></button>
         <section class="anchor">
           <div>
             <p class="kick" id="kicker">All-time leader</p>
@@ -1077,8 +1113,11 @@ function renderStats(){
        aria-label="Show ${s.name}"><svg viewBox="0 0 20 20"><path d="M5 10.4l3.4 3.4L15 7.1"/></svg></button>
      <span class="sname" role="button" tabindex="0" data-open="${s.id}">${s.name}<span class="sunit">${s.unit}</span></span>
    </div>`).join('');
+  const entries=visible().reduce((n,s)=>n+s.rows.length,0);
   $('trackCount').textContent=shown.size;
-  $('recCount').textContent=visible().reduce((n,s)=>n+s.rows.length,0);
+  $('recCount').textContent=entries;
+  $('filterCount').textContent=shown.size+' of '+STATS.length;
+  $('showCount').textContent=entries;
 }
 function renderBoard(){
   const s=STATS.find(x=>x.id===sel);
@@ -1233,7 +1272,9 @@ function closeMgr(){
 /* A click landing on the dialog element itself is a click outside the card. */
 $('mdlg').addEventListener('click',e=>{if(e.target===$('mdlg'))closeMgr();});
 $('mdlg').addEventListener('cancel',e=>{e.preventDefault();closeMgr();});
-addEventListener('keydown',e=>{if(e.key==='Escape')closeMgr();});
+addEventListener('keydown',e=>{if(e.key!=='Escape')return;
+  if(drawerOpen()){drawer(false);return;}
+  closeMgr();});
 
 /* ═══ MATCHUPS ═══ */
 function renderPickers(){
@@ -1342,9 +1383,26 @@ function swap(fn){
   const vt=document.startViewTransition(fn);
   return vt.updateCallbackDone.catch(()=>{});
 }
+/* The phone drawer. Opens from the board, closes on the scrim, the ×, the
+   Show button and Escape, and is forced shut whenever the layout is wide
+   enough to show the rail beside the board again. */
+function drawer(open){
+  const rail=$('rail'),scrim=$('scrim'),btn=$('openFilter');
+  if(!rail)return;
+  rail.dataset.open=open?'1':'0';
+  scrim.hidden=!open;
+  if(btn)btn.setAttribute('aria-expanded',open?'true':'false');
+  document.body.style.overflow=open?'hidden':'';
+  if(open){const first=rail.querySelector('.chk');if(first)first.focus();}
+  else if(btn&&matchMedia('(max-width:699px)').matches)btn.focus();
+}
+function drawerOpen(){return $('rail')&&$('rail').dataset.open==='1';}
+addEventListener('resize',()=>{if(!matchMedia('(max-width:699px)').matches&&drawerOpen())drawer(false);});
+
 function go(p){
   const changing=page!==p;
   page=p;
+  if(p!=='records'&&drawerOpen())drawer(false);
   const build=()=>{
     document.querySelectorAll('.page').forEach(el=>el.dataset.on=el.id==='p-'+p?'1':'0');
     document.querySelectorAll('.nav').forEach(b=>{
@@ -1367,6 +1425,9 @@ function paintSeasons(){
 }
 
 document.addEventListener('click',e=>{
+  if(e.target.closest('#openFilter')){drawer(true);return;}
+  if(e.target.closest('#railClose')||e.target.closest('#showResults')||e.target.closest('#scrim')){
+    drawer(false);return;}
   const nav=e.target.closest('.nav');if(nav){go(nav.dataset.go);return;}
   const yb=e.target.closest('#seasons button');if(yb){
     season=yb.dataset.y==='ALL'?'ALL':+yb.dataset.y;

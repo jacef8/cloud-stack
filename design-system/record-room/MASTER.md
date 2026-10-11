@@ -50,7 +50,18 @@ Space Grotesk / Instrument Sans so projects don't blur together (§2.7).
 Body 15px desktop, **16px phone**. Nothing below 12px, and 12px only for short
 uppercase labels. Figures use `tabular-nums`.
 
-## 4. Surfaces and depth
+## 4. Layout
+
+The stat filter sits **beside** the board from 700px up — a 262px rail on the
+left. Directive §2.3 wants controls next to what they change, and §4.1 lists
+"scroll past filters to find results" as rejected, so it is never stacked above.
+
+On the phone it moves into a right-hand **drawer** behind a "Stat filter" button
+that sits at the top of the board, showing how many stats are on ("9 of 9").
+The drawer closes on the ×, the scrim, Escape, a "Show N records" button, and
+whenever you leave the page or the window grows wide enough for the rail.
+
+## 5. Surfaces and depth
 
 Lighter means closer: canvas → card → raised control. Depth comes from a 1px bevel
 highlight, a short shadow (blur ≤14px) and recessed tracks — never from a glow.
@@ -63,7 +74,7 @@ highlight, a short shadow (blur ≤14px) and recessed tracks — never from a gl
   a neutral shadow, never a coloured halo.
 - Card radius 22px, controls 14px — one value each, project-wide.
 
-## 5. Motion and extra tools (directive §6)
+## 6. Motion and extra tools (directive §6)
 
 **GSAP 3.15.0** (pinned `@3`) — rows stagger in 28ms apart, bars grow from zero,
 figures count up. One motion system instead of hand-rolled keyframes, and it
@@ -78,15 +89,20 @@ reveal waits on `updateCallbackDone` before animating the new view.
 Lazy-imported, left out of the offline precache, and it disposes itself if it
 measures under 28fps.
 
-Not used: **Lenis** (§6.3 — it never runs inside the fit-one-screen shell, and
-the panels that scroll on their own keep normal scrolling), and **Flip**, which
-was tried and removed: toggled-off stats and trophies dim in place rather than
-leaving the grid, so there was no layout change for it to carry.
+**Lenis 1.x** — smooth wheel scrolling on the window, the record dialog and
+every scrolling panel. Directive §6.3 says Lenis never runs inside the
+fit-one-screen shell; **Jace asked for it anyway and that stands.** It is gated
+to fine pointers, so phones keep native momentum, and it is skipped entirely
+under reduced motion.
+
+Not used: **Flip**, which was tried and removed — toggled-off stats and
+trophies dim in place rather than leaving the grid, so there was no layout
+change for it to carry.
 
 All of the above is skipped under `prefers-reduced-motion`, and the page renders
 complete with either extra script blocked.
 
-## 6. Where this departs from the reference library
+## 7. Where this departs from the reference library
 
 | UI/UX Pro Max said | What shipped | Why |
 |---|---|---|
@@ -95,7 +111,11 @@ complete with either extra script blocked.
 | Fira Code / Fira Sans | Archivo / Inter Tight / JetBrains Mono | directive §2.7 approved list |
 | `#22C55E` status green as the accent | trophy gold | directive §2.6 — green is for status |
 
-## 7. Still open
+Departures from the directive itself, both at Jace's explicit request: **Lenis**
+inside the fit-one-screen shell (§6.3), and **three.js** as atmosphere rather
+than where 3D is the point (§6.3).
+
+## 8. Still open
 
 Directive **§6.2** now lists three.js as approved for Showpiece, which settles the
 old §2.10 question. **§6.3** still says three.js should load "only where 3D is the

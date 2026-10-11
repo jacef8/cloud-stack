@@ -46,9 +46,11 @@ jobs:
           const must=[['doctype','<!doctype html>'],['title','<title>Record Room</title>'],
                       ['viewport','name="viewport"'],['league id','LEAGUE_ID'],['history','HIST='],
                       ['manifest','manifest.webmanifest'],['service worker','/sw.js'],
-                      ['gsap','/vendor/gsap.min.js'],['ambient','/vendor/ambient.js']];
+                      ['gsap','/vendor/gsap.min.js'],['lenis','/vendor/lenis.min.js'],
+                      ['ambient','/vendor/ambient.js']];
           for(const f of ['manifest.webmanifest','sw.js','icon-192.png','icon-512.png',
                           'apple-touch-icon.png','vendor/gsap.min.js',
+                          'vendor/lenis.min.js','vendor/smooth.js',
                           'vendor/ambient.js','vendor/three.module.min.js']){
             if(!fs.existsSync('public/'+f)){console.error('::error::Missing public/'+f);process.exit(1);}
           }

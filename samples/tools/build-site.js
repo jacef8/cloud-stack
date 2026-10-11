@@ -29,12 +29,15 @@ const HEAD=`<!doctype html>
 <meta name="apple-mobile-web-app-title" content="Record Room">
 <meta name="mobile-web-app-capable" content="yes">
 `;
-// GSAP drives the reveals and the count-ups, and has to
-// be in place before the page's own script runs. The ambient field is a module
-// that imports three only when it is going to be used.
-// Pinned majors per directive 6.3: gsap@3 (3.15.0), three@0.186.
+// GSAP drives the reveals and the count-ups, and has to be in place before
+// the page's own script runs. Lenis is a classic script so the page can see
+// window.Lenis. The ambient field is a module that imports three only when it
+// is going to be used.
+// Pinned majors per directive 6.3: gsap@3 (3.15.0), lenis@1, three@0.186.
 const VENDOR = `
 <script src="/vendor/gsap.min.js"></script>
+<script src="/vendor/lenis.min.js" defer></script>
+<script src="/vendor/smooth.js" defer></script>
 <script type="module" src="/vendor/ambient.js"></script>
 `;
 const REGISTER=`
@@ -59,7 +62,7 @@ const VERSION='${version}';
 const CACHE='record-room-'+VERSION;
 const SHELL=['/','/index.html','/manifest.webmanifest',
   '/icon-192.png','/icon-512.png','/apple-touch-icon.png',
-  '/vendor/gsap.min.js','/vendor/ambient.js'];
+  '/vendor/gsap.min.js','/vendor/lenis.min.js','/vendor/smooth.js','/vendor/ambient.js'];
 /* three.module.min.js is 670KB and only some visitors ever load it, so it is
    left out of the precache and picked up by the runtime cache on first use. */
 

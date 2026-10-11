@@ -83,6 +83,11 @@ button{font:inherit;color:inherit}
   backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);
   border:1px solid rgba(255,255,255,.09);box-shadow:var(--raise)}
 @keyframes rise{from{opacity:0;transform:translateY(16px)}}
+@keyframes rowin{from{opacity:0;transform:translateY(10px)}}
+@keyframes pagein{from{opacity:0;transform:translateY(8px)}}
+@media (prefers-reduced-motion:reduce){
+  .page[data-on="1"],.st,.ring,.hb,.row,.mcard,.acard,.tlx,.stat,.pk{animation:none!important}
+}
 
 /* dock */
 .dock{display:flex;flex-direction:column;align-items:center;gap:7px;padding:13px 0}
@@ -137,6 +142,14 @@ button{font:inherit;color:inherit}
 
 .page{display:none;min-height:0}
 .page[data-on="1"]{display:grid;gap:13px}
+@media(max-width:699px){
+  .site>.dock{transition:transform .26s cubic-bezier(.2,.8,.2,1)}
+  .site>.dock[data-tucked="1"]{transform:translateY(calc(100% + env(safe-area-inset-bottom,0px)))}
+}
+@media (prefers-reduced-motion:reduce){
+  .site>.dock{transition:none}
+  .site>.dock[data-tucked="1"]{transform:none}
+}
 .scroll{overflow:auto;scrollbar-width:thin;min-height:0}
 .panel{min-height:120px}
 .scroll::-webkit-scrollbar{width:8px}
@@ -499,7 +512,7 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
   font-family:var(--mono);font-size:12px;letter-spacing:.07em;text-transform:uppercase}
 .ib-no:hover{color:var(--ink)}
 @media(max-width:699px){
-  .installbar{bottom:calc(96px + env(safe-area-inset-bottom,0px));flex-wrap:wrap}
+  .installbar{bottom:calc(74px + env(safe-area-inset-bottom,0px));flex-wrap:wrap}
   .ib-actions{flex-direction:row;width:100%;gap:9px}
   .installbar .ib-go{flex:1;min-height:46px}
   .ib-no{min-height:46px;padding:0 14px}
@@ -536,7 +549,8 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
 }
 @media(max-width:699px){
   /* nothing tappable smaller than a fingertip */
-  .nav{width:50px;height:50px}
+  .nav{width:46px;height:46px}
+  .nav svg{width:20px;height:20px}
   .chk{width:26px;height:26px}
   .sw{width:44px;height:26px}
   .sw i{width:20px;height:20px;left:13px}
@@ -556,10 +570,11 @@ dialog::backdrop{background:rgba(2,5,4,.78);backdrop-filter:blur(3px)}
   #p-home[data-on="1"]{gap:16px}
   .page[data-on="1"] > .panel{border-color:rgba(255,255,255,.14)}
   .site{height:auto;min-height:100vh;min-height:100dvh;grid-template-columns:minmax(0,1fr);
-    padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+    padding-bottom:calc(66px + env(safe-area-inset-bottom,0px))}
   .site>.dock{position:fixed;left:0;right:0;bottom:0;z-index:40;flex-direction:row;justify-content:space-around;
-    border-radius:var(--r) var(--r) 0 0;padding:9px 8px calc(9px + env(safe-area-inset-bottom,0px));gap:4px}
-  .navlab{display:none}
+    border-radius:var(--r) var(--r) 0 0;padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));gap:4px;
+    min-height:0;height:auto}
+  .navlab,.dockspace{display:none}
   .nav{width:46px;height:46px}
   .page[data-on="1"]{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:none!important}
   .col{grid-template-rows:auto auto}
@@ -1298,7 +1313,53 @@ function renderAwards(){
 
 /* ═══ routing ═══ */
 const CRUMB={home:'Overview',records:'Record book',mgrs:'Managers',h2h:'Head to head',awards:'Awards'};
+const CALM=matchMedia('(prefers-reduced-motion: reduce)');
+/* Rows arrive in sequence, bars grow from nothing, and figures count up to
+   their value. Everything here is transform and opacity, and all of it is
+   skipped outright when the reader asks for less motion. */
+function animateIn(root){
+  if(CALM.matches||!root)return;
+  const rows=[...root.querySelectorAll('.st,.ring,.hb,.row,.mcard,.acard,.tlx,.stat,.pk')].slice(0,26);
+  rows.forEach((el,i)=>{
+    el.style.animation='none';
+    el.getBoundingClientRect();
+    el.style.animation=`rowin .42s cubic-bezier(.2,.8,.2,1) ${Math.min(i*28,420)}ms both`;
+  });
+  root.querySelectorAll('.stbar i,.rwell i,.sbtrack i,.hb .hw i,.mbar i,.tb').forEach(bar=>{
+    const w=bar.style.width; if(!w)return;
+    bar.style.transition='none'; bar.style.width='0%';
+    bar.getBoundingClientRect();
+    bar.style.transition='width .75s cubic-bezier(.2,.8,.2,1)';
+    bar.style.width=w;
+  });
+  countUp(root);
+}
+function countUp(root){
+  if(CALM.matches)return;
+  root.querySelectorAll('.stp,.rval,.bignum b,.tile b,.ms b,.hold b,.hv').forEach(el=>{
+    if(el.dataset.counted)return;
+    const raw=el.firstChild&&el.firstChild.nodeType===3?el.firstChild.nodeValue:el.textContent;
+    const m=raw&&raw.match(/^([^\d-]*)([\d,]+(?:\.\d+)?)(.*)$/s);
+    if(!m)return;
+    const target=parseFloat(m[2].replace(/,/g,''));
+    if(!isFinite(target)||target<=0)return;
+    const dec=(m[2].split('.')[1]||'').length, pre=m[1], post=m[3];
+    const grouped=m[2].includes(',');
+    el.dataset.counted='1';
+    const node=el.firstChild&&el.firstChild.nodeType===3?el.firstChild:el;
+    const t0=performance.now(), dur=620;
+    const fmtN=v=>{const s=v.toFixed(dec);
+      return grouped?s.replace(/\B(?=(\d{3})+(?!\d))/g,','):s;};
+    (function step(now){
+      const k=Math.min(1,(now-t0)/dur);
+      const e=1-Math.pow(1-k,3);
+      node.nodeValue=pre+fmtN(target*e)+post;
+      if(k<1)requestAnimationFrame(step);
+    })(t0);
+  });
+}
 function go(p){
+  const changing=page!==p;
   page=p;
   document.querySelectorAll('.page').forEach(el=>el.dataset.on=el.id==='p-'+p?'1':'0');
   document.querySelectorAll('.nav').forEach(b=>{
@@ -1310,6 +1371,12 @@ function go(p){
   if(p==='mgrs')renderMgrs();
   if(p==='h2h'){renderPickers();renderH2H();}
   if(p==='awards')renderAwards();
+  const live=document.querySelector('.page[data-on="1"]');
+  if(changing&&live&&!CALM.matches){
+    live.style.animation='none';live.getBoundingClientRect();
+    live.style.animation='pagein .34s cubic-bezier(.2,.8,.2,1) both';
+  }
+  animateIn(live);
 }
 
 function paintSeasons(){
@@ -1376,6 +1443,28 @@ try{
 paintAll();
 setLive(stamp?'ok':'busy',stamp?('Saved · '+clock(stamp)):'Loading');
 $('refreshBtn').addEventListener('click',refresh);
+
+/* On a phone the dock is fixed over the content, so it slides out of the way
+   while you read down and comes straight back on any upward scroll, at the
+   top, or when a page changes. */
+(function(){
+  const dock=document.querySelector('.site>.dock');
+  if(!dock)return;
+  let lastY=0,ticking=false;
+  function show(){dock.dataset.tucked='0';}
+  function update(){
+    ticking=false;
+    if(!matchMedia('(max-width:699px)').matches){show();return;}
+    const y=Math.max(0,scrollY);
+    if(y<90||y<lastY-4)show();
+    else if(y>lastY+8)dock.dataset.tucked='1';
+    lastY=y;
+  }
+  addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(update);}},{passive:true});
+  addEventListener('resize',show);
+  dock.addEventListener('pointerenter',show);
+  document.addEventListener('click',e=>{if(e.target.closest('.nav'))show();});
+})();
 
 /* Install prompt. Chrome hands us an event we can fire on demand; iOS has no
    such API, so there the banner explains the two taps instead of pretending

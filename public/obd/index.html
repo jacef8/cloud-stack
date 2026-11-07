@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#080B0A">
+<title>OBD Reader</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#080B0A; --card:#121A19; --card-2:#1A2524; --line:rgba(255,255,255,.09);
+  --ink:#fff; --ink-2:rgba(255,255,255,.78); --ink-3:rgba(255,255,255,.55);
+  --accent:#00E8A0; --accent-2:#00D9FF; --on-accent:#03170F;
+  --warn:#FFB547; --bad:#FF5C6C;
+  --r:18px; --r-s:12px;
+  --text:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--text);font-size:15px;
+  -webkit-font-smoothing:antialiased;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px}
+h1{font-size:22px;margin:0 auto 0 0;letter-spacing:-.01em}
+h1 span{color:var(--accent)}
+.btn{border:1px solid var(--line);background:var(--card-2);border-radius:999px;padding:9px 16px;
+  cursor:pointer;font-weight:600;white-space:nowrap}
+.btn:hover:not(:disabled){background:#22302F}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover:not(:disabled){background:#2CF3B4}
+.btn.danger{border-color:rgba(255,92,108,.5);color:var(--bad)}
+.btn.small{padding:6px 12px;font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;
+  background:var(--card);border:1px solid var(--line);font-size:13px;color:var(--ink-2)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--ink-3)}
+.pill[data-s=on] .dot{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.pill[data-s=busy] .dot{background:var(--warn);animation:blink 1s infinite}
+.pill[data-s=err] .dot{background:var(--bad)}
+@keyframes blink{50%{opacity:.3}}
+.banner{border-radius:var(--r-s);padding:12px 14px;margin-bottom:14px;line-height:1.45;
+  background:rgba(255,181,71,.1);border:1px solid rgba(255,181,71,.35);color:#FFD9A0}
+.banner[hidden]{display:none}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.vehicle{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px}
+.kv .k{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.kv .v{font-size:17px;font-weight:600;margin-top:3px;word-break:break-all}
+.kv .v.mono{font-family:var(--mono);font-size:15px}
+.mil-on{color:var(--warn)}
+.tabs{display:flex;gap:6px;margin-bottom:12px;border-bottom:1px solid var(--line)}
+.tab{background:none;border:0;border-bottom:2px solid transparent;padding:10px 14px;cursor:pointer;
+  color:var(--ink-3);font-weight:600}
+.tab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+.panel[hidden]{display:none}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.toolbar .sp{flex:1}
+.muted{color:var(--ink-3);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:10px}
+.g{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 14px 12px;min-height:118px;
+  display:flex;flex-direction:column}
+.g.off{opacity:.38}
+.g .lab{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.g .val{font-size:34px;font-weight:700;letter-spacing:-.02em;margin-top:auto;font-variant-numeric:tabular-nums}
+.g .val small{font-size:14px;font-weight:600;color:var(--ink-3);margin-left:4px}
+.g .bar{height:5px;border-radius:3px;background:rgba(255,255,255,.07);margin-top:8px;overflow:hidden}
+.g .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .25s}
+.g.big{grid-column:span 2}
+.g.big .val{font-size:48px}
+@media (max-width:420px){.g.big{grid-column:span 2}.grid{grid-template-columns:repeat(2,1fr)}}
+.codes h3{font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin:18px 0 8px}
+.dtc{display:flex;gap:14px;align-items:baseline;padding:12px 14px;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-s);margin-bottom:8px}
+.dtc b{font-family:var(--mono);font-size:17px;color:var(--warn);min-width:62px}
+.dtc .d{flex:1;color:var(--ink-2);line-height:1.4}
+.dtc a{color:var(--accent-2);font-size:13px;text-decoration:none;white-space:nowrap}
+.empty{color:var(--ink-3);padding:6px 2px}
+.ok{color:var(--accent)}
+#log{font-family:var(--mono);font-size:12.5px;background:#030605;border:1px solid var(--line);border-radius:var(--r-s);
+  padding:12px;height:52vh;overflow:auto;white-space:pre-wrap;word-break:break-all;margin:0}
+#log .tx{color:var(--accent)} #log .rx{color:var(--ink-2)} #log .info{color:var(--accent-2)} #log .err{color:var(--bad)}
+.console-in{display:flex;gap:8px;margin-top:10px}
+.console-in input{flex:1;background:#030605;border:1px solid var(--line);border-radius:999px;padding:9px 14px;font-family:var(--mono)}
+.help{line-height:1.55;color:var(--ink-2)}
+.help li{margin-bottom:6px}
+select{background:var(--card-2);border:1px solid var(--line);border-radius:999px;padding:8px 12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>OBD <span>Reader</span></h1>
+    <span class="pill" id="status" data-s="off"><span class="dot"></span><span id="statusText">Not connected</span></span>
+    <select id="units" aria-label="Units">
+      <option value="us">mph · °F</option>
+      <option value="metric">km/h · °C</option>
+    </select>
+    <button class="btn" id="demoBtn">Demo</button>
+    <button class="btn primary" id="connectBtn">Connect</button>
+  </header>
+
+  <div class="banner" id="noBle" hidden>
+    This browser can't use Bluetooth. Open this page in <b>Chrome</b> on Android, Windows, Mac or ChromeOS.
+    On iPhone, Safari doesn't support it, but the free <b>Bluefy</b> browser app does.
+    You can still try <b>Demo</b> mode here.
+  </div>
+
+  <section class="card vehicle" aria-label="Vehicle">
+    <div class="kv"><div class="k">VIN</div><div class="v mono" id="vVin">—</div></div>
+    <div class="kv"><div class="k">Protocol</div><div class="v" id="vProto">—</div></div>
+    <div class="kv"><div class="k">Battery</div><div class="v" id="vBatt">—</div></div>
+    <div class="kv"><div class="k">Check engine light</div><div class="v" id="vMil">—</div></div>
+    <div class="kv"><div class="k">Adapter</div><div class="v" id="vAdapter">—</div></div>
+  </section>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-tab="live">Live data</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="codes">Trouble codes</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="console">Console</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="help">Help</button>
+  </nav>
+
+  <section class="panel" id="p-live">
+    <div class="toolbar">
+      <button class="btn" id="pollBtn" disabled>Start</button>
+      <button class="btn" id="recBtn" disabled>Record</button>
+      <button class="btn" id="csvBtn" disabled>Download CSV</button>
+      <span class="sp"></span>
+      <span class="muted" id="rate"></span>
+    </div>
+    <div class="grid" id="gauges"></div>
+  </section>
+
+  <section class="panel codes" id="p-codes" hidden>
+    <div class="toolbar">
+      <button class="btn primary" id="readBtn" disabled>Read codes</button>
+      <button class="btn danger" id="clearBtn" disabled>Clear codes</button>
+    </div>
+    <div id="codeOut"><p class="empty">Connect, then press <b>Read codes</b>.</p></div>
+  </section>
+
+  <section class="panel" id="p-console" hidden>
+    <pre id="log" aria-live="polite"></pre>
+    <form class="console-in" id="consoleForm">
+      <input id="cmdIn" placeholder="AT or OBD command, e.g. 010C or ATRV" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <button class="btn" type="submit" id="sendBtn" disabled>Send</button>
+    </form>
+  </section>
+
+  <section class="panel card help" id="p-help" hidden>
+    <ol>
+      <li>Plug the dongle into the OBD2 port (usually under the dash, left of the steering column).</li>
+      <li>Turn the key to <b>ON</b> or start the engine.</li>
+      <li>Press <b>Connect</b> and pick the dongle from the list. Don't pair it in your phone's Bluetooth settings first; this page connects to it directly. Names are often like <i>OBDII</i>, <i>IOS-Vlink</i>, <i>vLinker</i>, <i>OBDLink</i> or <i>V-LINK</i>.</li>
+      <li>The first connection can take up to 15 seconds while the adapter finds your car's protocol.</li>
+    </ol>
+    <p><b>Clearing codes</b> turns off the check-engine light, but the light comes back if the fault is still there. It also resets your emissions readiness monitors, so don't clear codes right before an inspection.</p>
+    <p><b>If it won't connect:</b> close any other OBD app on the phone (only one app can hold the dongle at a time), then unplug the dongle for 10 seconds. The Console tab shows exactly what the adapter is answering.</p>
+    <p class="muted">Standard OBD2 covers engine and emissions data. ABS, airbag and other maker-specific systems aren't included.</p>
+  </section>
+</div>
+
+<script>
+'use strict';
+
+/* ───────────── BLE transport ───────────── */
+// Service UUIDs used by common BLE ELM327 adapters. Web Bluetooth only lets us
+// touch services listed here.
+const BLE_SERVICES = [
+  0xfff0, 0xffe0, 0x18f0, 0xffe5, 0xfff1,
+  'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+  '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
+];
+
+class BleTransport {
+  constructor(){ this.onData = () => {}; this.onClose = () => {}; this.name = ''; }
+  async connect(){
+    this.device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: BLE_SERVICES });
+    this.name = this.device.name || 'BLE adapter';
+    this.device.addEventListener('gattserverdisconnected', () => this.onClose());
+    const server = await this.device.gatt.connect();
+    const services = await server.getPrimaryServices();
+    let best = null;
+    for (const svc of services) {
+      let chars;
+      try { chars = await svc.getCharacteristics(); } catch { continue; }
+      const rx = chars.find(c => c.properties.notify || c.properties.indicate);
+      const tx = chars.find(c => c.properties.write || c.properties.writeWithoutResponse);
+      if (rx && tx) { best = { rx, tx }; break; }
+      if (!best && (rx || tx)) best = { rx, tx };
+    }
+    if (!best || !best.rx || !best.tx) {
+      server.disconnect();
+      throw new Error('This device has no serial service this page recognises. Is it an ELM327-style OBD adapter?');
+    }
+    this.rx = best.rx; this.tx = best.tx;
+    const dec = new TextDecoder();
+    this.rx.addEventListener('characteristicvaluechanged', e => this.onData(dec.decode(e.target.value)));
+    await this.rx.startNotifications();
+  }
+  async write(str){
+    const bytes = new TextEncoder().encode(str);
+    const noResp = this.tx.properties.writeWithoutResponse;
+    for (let i = 0; i < bytes.length; i += 20) {
+      const chunk = bytes.slice(i, i + 20);
+      if (noResp && this.tx.writeValueWithoutResponse) await this.tx.writeValueWithoutResponse(chunk);
+      else if (this.tx.writeValueWithResponse) await this.tx.writeValueWithResponse(chunk);
+      else await this.tx.writeValue(chunk);
+    }
+  }
+  disconnect(){ try { this.device && this.device.gatt.connected && this.device.gatt.disconnect(); } catch {} }
+}
+
+/* ───────────── Demo transport: a pretend ELM327 on a CAN car ───────────── */
+class DemoTransport {
+  constructor(){ this.onData = () => {}; this.onClose = () => {}; this.name = 'Demo adapter'; this.t0 = Date.now(); this.mil = true; }
+  async connect(){ await new Promise(r => setTimeout(r, 300)); }
+  disconnect(){ this.onClose(); }
+  async write(str){
+    const cmd = str.replace(/\s+/g, '').toUpperCase();
+    const reply = this.answer(cmd);
+    // Deliver in small pieces like a real BLE link does.
+    const full = reply + '\r\r>';
+    let i = 0;
+    const step = () => {
+      if (i >= full.length) return;
+      this.onData(full.slice(i, i + 7)); i += 7;
+      setTimeout(step, 4);
+    };
+    setTimeout(step, 25 + Math.random() * 30);
+  }
+  answer(cmd){
+    if (cmd === 'ATZ') return '\r\rELM327 v1.5';
+    if (cmd === 'ATI') return 'ELM327 v1.5';
+    if (cmd === 'ATDPN') return 'A6';
+    if (cmd === 'ATRV') return (14.1 + Math.random() * .2).toFixed(1) + 'V';
+    if (cmd.startsWith('AT')) return 'OK';
+    const t = (Date.now() - this.t0) / 1000;
+    const rpm = 800 + 1700 * (1 + Math.sin(t / 3)) + Math.random() * 40;
+    const speed = Math.max(0, 55 + 40 * Math.sin(t / 3 - .4));
+    const warm = Math.min(1, t / 60);
+    const h = n => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0').toUpperCase();
+    const h2 = n => { n = Math.max(0, Math.min(65535, Math.round(n))); return h(n >> 8) + h(n & 255); };
+    const supported = [0x01,0x04,0x05,0x06,0x07,0x0B,0x0C,0x0D,0x0E,0x0F,0x10,0x11,0x1F,0x20,0x21,0x2F,0x31,0x40,0x42,0x46,0x5C];
+    const mask = base => { let m = 0; for (const p of supported) if (p > base && p <= base + 32) m |= 1 << (32 - (p - base)); return (m >>> 0).toString(16).padStart(8, '0').toUpperCase(); };
+    const map = {
+      '0100': '4100' + mask(0), '0120': '4120' + mask(0x20), '0140': '4140' + mask(0x40),
+      '0101': this.mil ? '41018407E500' : '41010007E500',
+      '0104': '4104' + h(60 + 90 * (rpm - 800) / 3400),
+      '0105': '4105' + h(40 + 20 + 70 * warm),
+      '0106': '4106' + h(128 + Math.random() * 6 - 3),
+      '0107': '4107' + h(131),
+      '010B': '410B' + h(35 + 60 * (rpm - 800) / 3400),
+      '010C': '410C' + h2(rpm * 4),
+      '010D': '410D' + h(speed * 1.609),
+      '010E': '410E' + h((12 + 64) * 2),
+      '010F': '410F' + h(40 + 24),
+      '0110': '4110' + h2((3 + 30 * (rpm - 800) / 3400) * 100),
+      '0111': '4111' + h(30 + 120 * (rpm - 800) / 3400),
+      '011F': '411F' + h2(t + 300),
+      '0121': '4121' + h2(this.mil ? 42 : 0),
+      '012F': '412F' + h(255 * .62),
+      '0131': '4131' + h2(this.mil ? 1890 : 0),
+      '0142': '4142' + h2(14150),
+      '0146': '4146' + h(40 + 18),
+      '015C': '415C' + h(40 + 30 + 60 * warm),
+      // Multi-frame CAN replies, the way an ELM327 prints them with headers off.
+      '0902': '014\r0:490201314434\r1:47503030523535\r2:42313233343536',
+      '03': this.mil ? '00A\r0:430401330134\r1:04200171000000' : '4300',
+      '07': this.mil ? '47010300' : '4700',
+      '0A': this.mil ? '4A010133' : '4A00',
+    };
+    if (cmd === '04') { this.mil = false; return '44'; }
+    return map[cmd] || 'NO DATA';
+  }
+}
+
+/* ───────────── ELM327 command channel ───────────── */
+class Elm {
+  constructor(transport, log){
+    this.t = transport; this.log = log; this.buf = ''; this.pending = null; this.chain = Promise.resolve();
+    transport.onData = s => {
+      this.buf += s;
+      const i = this.buf.indexOf('>');
+      if (i >= 0 && this.pending) {
+        const text = this.buf.slice(0, i); this.buf = this.buf.slice(i + 1);
+        const p = this.pending; this.pending = null; clearTimeout(p.timer); p.resolve(text);
+      }
+    };
+  }
+  send(cmd, timeout = 4000){
+    const run = () => new Promise((resolve, reject) => {
+      this.buf = '';
+      const timer = setTimeout(() => { this.pending = null; this.buf = ''; reject(new Error('No reply to ' + cmd)); }, timeout);
+      this.pending = { resolve, timer };
+      this.log('tx', cmd);
+      this.t.write(cmd + '\r').catch(e => { clearTimeout(timer); this.pending = null; reject(e); });
+    }).then(text => { this.log('rx', text.trim().replace(/\r+/g, ' | ')); return text; });
+    const p = this.chain.then(run, run);
+    this.chain = p.catch(() => {});
+    return p;
+  }
+}
+
+/* ───────────── Response parsing ───────────── */
+const hexBytes = s => (s.match(/[0-9A-F]{2}/g) || []).map(x => parseInt(x, 16));
+
+// Turns raw ELM327 text into a list of messages (byte arrays). Handles
+// single-line replies, several ECUs answering at once, and CAN multi-frame
+// replies ("014" byte count followed by "0:", "1:" … lines).
+function parseMessages(raw, cmd = ''){
+  const echo = cmd.replace(/\s+/g, '').toUpperCase();
+  const lines = raw.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+  const msgs = [], errors = [];
+  let cur = null, need = 0;
+  for (const line of lines) {
+    const up = line.toUpperCase().replace(/\s+/g, '');
+    if (!up || up === echo || /^(SEARCHING|BUSINIT|OK$)/.test(up)) continue;
+    if (/^[0-9A-F]{3}$/.test(up)) { if (cur && cur.length) msgs.push(cur); cur = []; need = parseInt(up, 16); continue; }
+    const fm = /^([0-9A-F]):([0-9A-F]*)$/.exec(up);
+    if (fm) {
+      if (!cur) cur = [];
+      cur.push(...hexBytes(fm[2]));
+      if (need && cur.length >= need) { msgs.push(cur.slice(0, need)); cur = null; need = 0; }
+      continue;
+    }
+    if (/^[0-9A-F]+$/.test(up) && up.length % 2 === 0) { msgs.push(hexBytes(up)); continue; }
+    errors.push(line);
+  }
+  if (cur && cur.length) msgs.push(need ? cur.slice(0, need) : cur);
+  return { msgs, errors };
+}
+
+function decodeDtc(a, b){
+  const letter = 'PCBU'[a >> 6];
+  return letter + ((a >> 4) & 3) + (a & 15).toString(16).toUpperCase() + b.toString(16).toUpperCase().padStart(2, '0');
+}
+
+// Mode 03/07/0A replies. CAN replies carry a count byte after the mode byte,
+// which makes their length even; older protocols send fixed 7-byte lines.
+function parseDtcs(msgs, modeByte){
+  const out = new Set();
+  for (const m of msgs) {
+    if (m[0] !== modeByte) continue;
+    let data = m.slice(1);
+    if (m.length % 2 === 0) data = data.slice(1);
+    for (let i = 0; i + 1 < data.length; i += 2) {
+      if (data[i] === 0 && data[i + 1] === 0) continue;
+      out.add(decodeDtc(data[i], data[i + 1]));
+    }
+  }
+  return [...out];
+}
+
+function parseVin(msgs){
+  const chars = [];
+  for (const m of msgs) {
+    if (m[0] !== 0x49 || m[1] !== 0x02) continue;
+    for (const b of m.slice(2)) {
+      const c = String.fromCharCode(b);
+      if (/[A-HJ-NPR-Z0-9]/.test(c)) chars.push(c);
+    }
+  }
+  return chars.length >= 17 ? chars.slice(-17).join('') : '';
+}
+
+/* ───────────── PIDs we show ───────────── */
+const C2F = c => c * 9 / 5 + 32;
+const KM2MI = k => k / 1.609344;
+const GAUGES = [
+  { pid: 0x0C, id: 'rpm', label: 'Engine speed', big: true, dec: (a, b) => (256 * a + b) / 4, unit: () => 'rpm', max: 7000, fmt: v => Math.round(v).toLocaleString() },
+  { pid: 0x0D, id: 'speed', label: 'Vehicle speed', big: true, dec: a => a, conv: (v, us) => us ? KM2MI(v) : v, unit: us => us ? 'mph' : 'km/h', max: us => us ? 100 : 160, fmt: v => Math.round(v) },
+  { pid: 0x05, id: 'coolant', label: 'Coolant temp', dec: a => a - 40, conv: (v, us) => us ? C2F(v) : v, unit: us => us ? '°F' : '°C', max: us => us ? 250 : 120, fmt: v => Math.round(v), slow: true },
+  { pid: 0x11, id: 'throttle', label: 'Throttle', dec: a => a * 100 / 255, unit: () => '%', max: 100, fmt: v => Math.round(v) },
+  { pid: 0x04, id: 'load', label: 'Engine load', dec: a => a * 100 / 255, unit: () => '%', max: 100, fmt: v => Math.round(v) },
+  { pid: 0x2F, id: 'fuel', label: 'Fuel level', dec: a => a * 100 / 255, unit: () => '%', max: 100, fmt: v => Math.round(v), slow: true },
+  { pid: 0x42, id: 'volts', label: 'Module voltage', dec: (a, b) => (256 * a + b) / 1000, unit: () => 'V', max: 16, fmt: v => v.toFixed(1), slow: true },
+  { pid: 0x0F, id: 'iat', label: 'Intake air temp', dec: a => a - 40, conv: (v, us) => us ? C2F(v) : v, unit: us => us ? '°F' : '°C', max: us => us ? 200 : 90, fmt: v => Math.round(v), slow: true },
+  { pid: 0x5C, id: 'oil', label: 'Oil temp', dec: a => a - 40, conv: (v, us) => us ? C2F(v) : v, unit: us => us ? '°F' : '°C', max: us => us ? 280 : 140, fmt: v => Math.round(v), slow: true },
+  { pid: 0x46, id: 'ambient', label: 'Outside air temp', dec: a => a - 40, conv: (v, us) => us ? C2F(v) : v, unit: us => us ? '°F' : '°C', max: us => us ? 120 : 50, fmt: v => Math.round(v), slow: true },
+  { pid: 0x0B, id: 'map', label: 'Manifold pressure', dec: a => a, conv: (v, us) => us ? v * 0.145038 : v, unit: us => us ? 'psi' : 'kPa', max: us => us ? 30 : 200, fmt: (v, us) => us ? v.toFixed(1) : Math.round(v) },
+  { pid: 0x10, id: 'maf', label: 'Mass air flow', dec: (a, b) => (256 * a + b) / 100, unit: () => 'g/s', max: 200, fmt: v => v.toFixed(1) },
+  { pid: 0x0E, id: 'timing', label: 'Timing advance', dec: a => a / 2 - 64, unit: () => '°', max: 60, fmt: v => v.toFixed(1) },
+  { pid: 0x06, id: 'stft', label: 'Short fuel trim B1', dec: a => (a - 128) * 100 / 128, unit: () => '%', max: 25, fmt: v => (v > 0 ? '+' : '') + v.toFixed(1), slow: true },
+  { pid: 0x07, id: 'ltft', label: 'Long fuel trim B1', dec: a => (a - 128) * 100 / 128, unit: () => '%', max: 25, fmt: v => (v > 0 ? '+' : '') + v.toFixed(1), slow: true },
+  { pid: 0x1F, id: 'runtime', label: 'Run time', dec: (a, b) => 256 * a + b, unit: () => '', max: 0, fmt: v => Math.floor(v / 60) + ':' + String(Math.floor(v % 60)).padStart(2, '0'), slow: true },
+  { pid: 0x31, id: 'sinceclear', label: 'Distance since clear', dec: (a, b) => 256 * a + b, conv: (v, us) => us ? KM2MI(v) : v, unit: us => us ? 'mi' : 'km', max: 0, fmt: v => Math.round(v).toLocaleString(), slow: true },
+  { pid: 0x21, id: 'milDist', label: 'Distance with light on', dec: (a, b) => 256 * a + b, conv: (v, us) => us ? KM2MI(v) : v, unit: us => us ? 'mi' : 'km', max: 0, fmt: v => Math.round(v).toLocaleString(), slow: true },
+];
+
+/* ───────────── Plain-English descriptions for common generic codes ───────────── */
+const DTC_TEXT = {
+  P0010:'Camshaft position actuator circuit (bank 1)', P0011:'Camshaft timing over-advanced (bank 1)', P0012:'Camshaft timing over-retarded (bank 1)',
+  P0016:'Crankshaft / camshaft position correlation (bank 1)', P0030:'O2 sensor heater control circuit (bank 1, sensor 1)',
+  P0087:'Fuel rail pressure too low', P0100:'Mass air flow sensor circuit', P0101:'Mass air flow sensor range/performance',
+  P0102:'Mass air flow sensor circuit low', P0103:'Mass air flow sensor circuit high', P0106:'Manifold pressure sensor range/performance',
+  P0107:'Manifold pressure sensor circuit low', P0108:'Manifold pressure sensor circuit high', P0110:'Intake air temp sensor circuit',
+  P0113:'Intake air temp sensor circuit high', P0115:'Coolant temp sensor circuit', P0117:'Coolant temp sensor circuit low',
+  P0118:'Coolant temp sensor circuit high', P0120:'Throttle position sensor circuit', P0121:'Throttle position sensor range/performance',
+  P0122:'Throttle position sensor circuit low', P0125:'Coolant too cold for closed-loop fuel control', P0128:'Engine running cooler than expected (thermostat)',
+  P0130:'O2 sensor circuit (bank 1, sensor 1)', P0131:'O2 sensor low voltage (bank 1, sensor 1)', P0133:'O2 sensor slow response (bank 1, sensor 1)',
+  P0135:'O2 sensor heater circuit (bank 1, sensor 1)', P0136:'O2 sensor circuit (bank 1, sensor 2)', P0141:'O2 sensor heater circuit (bank 1, sensor 2)',
+  P0155:'O2 sensor heater circuit (bank 2, sensor 1)', P0161:'O2 sensor heater circuit (bank 2, sensor 2)',
+  P0171:'Engine running lean (bank 1)', P0172:'Engine running rich (bank 1)', P0174:'Engine running lean (bank 2)', P0175:'Engine running rich (bank 2)',
+  P0193:'Fuel rail pressure sensor circuit high', P0217:'Engine overheating', P0219:'Engine overspeed',
+  P0300:'Random / multiple cylinder misfire', P0301:'Cylinder 1 misfire', P0302:'Cylinder 2 misfire', P0303:'Cylinder 3 misfire',
+  P0304:'Cylinder 4 misfire', P0305:'Cylinder 5 misfire', P0306:'Cylinder 6 misfire', P0307:'Cylinder 7 misfire', P0308:'Cylinder 8 misfire',
+  P0325:'Knock sensor circuit (bank 1)', P0335:'Crankshaft position sensor circuit', P0340:'Camshaft position sensor circuit (bank 1)',
+  P0351:'Ignition coil A circuit', P0352:'Ignition coil B circuit', P0353:'Ignition coil C circuit', P0354:'Ignition coil D circuit',
+  P0400:'EGR flow', P0401:'EGR flow insufficient', P0402:'EGR flow excessive', P0411:'Secondary air injection flow',
+  P0420:'Catalytic converter efficiency below threshold (bank 1)', P0430:'Catalytic converter efficiency below threshold (bank 2)',
+  P0440:'Evaporative emission (EVAP) system', P0441:'EVAP incorrect purge flow', P0442:'EVAP small leak detected',
+  P0443:'EVAP purge valve circuit', P0446:'EVAP vent control circuit', P0449:'EVAP vent valve circuit',
+  P0455:'EVAP large leak detected (check the gas cap)', P0456:'EVAP very small leak detected', P0457:'EVAP leak (fuel cap loose or off)',
+  P0496:'EVAP high purge flow', P0500:'Vehicle speed sensor', P0505:'Idle air control system', P0506:'Idle speed lower than expected',
+  P0507:'Idle speed higher than expected', P0562:'System voltage low', P0563:'System voltage high', P0571:'Brake switch circuit',
+  P0600:'Engine computer communication link', P0606:'Engine computer processor fault', P0700:'Transmission control system (more codes in the transmission module)',
+  P0705:'Transmission range sensor circuit', P0715:'Transmission input speed sensor', P0720:'Transmission output speed sensor',
+  P0730:'Incorrect gear ratio', P0741:'Torque converter clutch stuck off', P0750:'Shift solenoid A',
+  P2096:'Post-catalyst fuel trim too lean (bank 1)', P2097:'Post-catalyst fuel trim too rich (bank 1)', P2135:'Throttle position sensors disagree',
+  P2187:'System too lean at idle (bank 1)', P2188:'System too rich at idle (bank 1)', P2195:'O2 sensor signal stuck lean (bank 1, sensor 1)',
+  P2196:'O2 sensor signal stuck rich (bank 1, sensor 1)', P2270:'O2 sensor signal stuck lean (bank 1, sensor 2)',
+  P2A00:'O2 sensor circuit range/performance (bank 1, sensor 1)', U0100:'Lost communication with engine computer',
+  U0101:'Lost communication with transmission computer', U0121:'Lost communication with ABS module', U0140:'Lost communication with body module',
+};
+function describeDtc(code){
+  if (DTC_TEXT[code]) return DTC_TEXT[code];
+  if (/^P03[0-9]{2}$/.test(code) && +code.slice(3) > 0 && +code.slice(3) <= 12) return 'Cylinder ' + +code.slice(3) + ' misfire';
+  if (code[1] !== '0' && code[1] !== '2') return 'Manufacturer-specific code. Look it up for your make.';
+  const area = { P: 'Engine / transmission', C: 'Chassis', B: 'Body', U: 'Network' }[code[0]];
+  return area + ' code. Not in the built-in list; tap Look up.';
+}
+
+/* ───────────── App ───────────── */
+const $ = id => document.getElementById(id);
+const state = { elm: null, transport: null, supported: new Set(), polling: false, recording: false, log: [], values: {}, connected: false };
+const us = () => $('units').value === 'us';
+
+function log(kind, text){
+  const el = $('log');
+  const line = document.createElement('div');
+  line.className = kind;
+  line.textContent = (kind === 'tx' ? '> ' : kind === 'rx' ? '  ' : '# ') + text;
+  el.appendChild(line);
+  while (el.childNodes.length > 600) el.firstChild.remove();
+  el.scrollTop = el.scrollHeight;
+}
+function setStatus(s, text){ $('status').dataset.s = s; $('statusText').textContent = text; }
+function setConnected(on){
+  state.connected = on;
+  for (const id of ['pollBtn', 'recBtn', 'readBtn', 'clearBtn', 'sendBtn']) $(id).disabled = !on;
+  $('connectBtn').textContent = on ? 'Disconnect' : 'Connect';
+  $('connectBtn').disabled = !on && !('bluetooth' in navigator);
+  $('connectBtn').classList.toggle('primary', !on);
+  $('demoBtn').disabled = on;
+}
+
+function buildGauges(){
+  const grid = $('gauges'); grid.innerHTML = '';
+  for (const g of GAUGES) {
+    const el = document.createElement('div');
+    el.className = 'g' + (g.big ? ' big' : '') + (state.connected && !state.supported.has(g.pid) ? ' off' : '');
+    el.id = 'g-' + g.id;
+    el.innerHTML = `<div class="lab"></div><div class="val">—<small></small></div>${g.max ? '<div class="bar"><i></i></div>' : ''}`;
+    el.querySelector('.lab').textContent = g.label;
+    if (state.connected && !state.supported.has(g.pid)) el.title = 'Your car does not report this';
+    grid.appendChild(el);
+    if (state.values[g.id] != null) renderGauge(g);
+  }
+}
+function renderGauge(g){
+  const el = $('g-' + g.id); if (!el) return;
+  const raw = state.values[g.id];
+  const v = g.conv ? g.conv(raw, us()) : raw;
+  const unit = g.unit(us());
+  el.querySelector('.val').innerHTML = '';
+  el.querySelector('.val').append(document.createTextNode(g.fmt(v, us())));
+  const sm = document.createElement('small'); sm.textContent = unit; el.querySelector('.val').append(sm);
+  const bar = el.querySelector('.bar i');
+  if (bar) { const max = typeof g.max === 'function' ? g.max(us()) : g.max; bar.style.width = Math.max(0, Math.min(100, Math.abs(v) / max * 100)) + '%'; }
+}
+
+async function query(mode, pid, timeout){
+  const cmd = mode + pid.toString(16).toUpperCase().padStart(2, '0');
+  const { msgs } = parseMessages(await state.elm.send(cmd, timeout), cmd);
+  const want = parseInt(mode, 16) + 0x40;
+  const m = msgs.find(m => m[0] === want && m[1] === pid);
+  return m ? m.slice(2) : null;
+}
+
+async function initAdapter(){
+  const e = state.elm;
+  setStatus('busy', 'Setting up adapter…');
+  try { await e.send('ATZ', 5000); } catch { log('info', 'Adapter ignored reset, carrying on'); }
+  await new Promise(r => setTimeout(r, 400));
+  for (const c of ['ATE0', 'ATL0', 'ATS0', 'ATH0', 'ATAT1', 'ATSP0']) { try { await e.send(c); } catch {} }
+  try { $('vAdapter').textContent = (await e.send('ATI')).replace(/[\r\n>]+/g, ' ').trim() || state.transport.name; } catch {}
+
+  setStatus('busy', 'Finding your car…');
+  state.supported = new Set();
+  for (const base of [0x00, 0x20, 0x40, 0x60]) {
+    let d;
+    try { d = await query('01', base, base === 0 ? 20000 : 4000); } catch { d = null; }
+    if (!d || d.length < 4) {
+      if (base === 0) throw new Error("The adapter is working but the car didn't answer. Is the key turned to ON?");
+      break;
+    }
+    for (let i = 0; i < 32; i++) if ((d[i >> 3] >> (7 - (i & 7))) & 1) state.supported.add(base + i + 1);
+    if (!state.supported.has(base + 0x20)) break;
+  }
+  log('info', 'Car supports PIDs: ' + [...state.supported].map(p => p.toString(16).toUpperCase().padStart(2, '0')).join(' '));
+
+  try {
+    const p = (await e.send('ATDPN')).replace(/[^0-9A-C]/gi, '').slice(-1).toUpperCase();
+    const names = { 1: 'SAE J1850 PWM', 2: 'SAE J1850 VPW', 3: 'ISO 9141-2', 4: 'ISO 14230 KWP (5 baud)', 5: 'ISO 14230 KWP (fast)', 6: 'CAN 11-bit 500k', 7: 'CAN 29-bit 500k', 8: 'CAN 11-bit 250k', 9: 'CAN 29-bit 250k', A: 'SAE J1939', B: 'User CAN 1', C: 'User CAN 2' };
+    $('vProto').textContent = names[p] || '—';
+  } catch {}
+  await refreshVehicle();
+  try {
+    const { msgs } = parseMessages(await e.send('0902', 6000), '0902');
+    const vin = parseVin(msgs);
+    $('vVin').textContent = vin || 'Not reported';
+  } catch { $('vVin').textContent = 'Not reported'; }
+}
+
+async function refreshVehicle(){
+  try {
+    const r = (await state.elm.send('ATRV')).match(/(\d+(\.\d+)?)\s*V/i);
+    if (r) $('vBatt').textContent = (+r[1]).toFixed(1) + ' V';
+  } catch {}
+  try {
+    const d = await query('01', 0x01);
+    if (d) {
+      const on = !!(d[0] & 0x80), n = d[0] & 0x7f;
+      const el = $('vMil');
+      el.textContent = on ? `ON · ${n} code${n === 1 ? '' : 's'}` : (n ? `Off · ${n} stored` : 'Off');
+      el.className = 'v' + (on ? ' mil-on' : ' ok');
+    }
+  } catch {}
+}
+
+async function connect(useDemo){
+  const transport = useDemo ? new DemoTransport() : new BleTransport();
+  state.transport = transport;
+  setStatus('busy', useDemo ? 'Starting demo…' : 'Choose your adapter…');
+  try {
+    await transport.connect();
+    log('info', 'Connected to ' + transport.name);
+    transport.onClose = () => onDisconnected();
+    state.elm = new Elm(transport, log);
+    await initAdapter();
+    setConnected(true);
+    buildGauges();
+    setStatus('on', useDemo ? 'Demo car' : 'Connected · ' + transport.name);
+    startPolling();
+  } catch (err) {
+    const msg = err && err.name === 'NotFoundError' ? 'No adapter chosen' : (err.message || String(err));
+    log('err', msg);
+    setStatus('err', msg.length > 60 ? 'Connection failed (see Console)' : msg);
+    transport.onClose = () => {};
+    transport.disconnect();
+    state.elm = null;
+    setConnected(false);
+  }
+}
+function onDisconnected(){
+  if (!state.connected) return;
+  state.polling = false; state.elm = null;
+  setConnected(false);
+  $('pollBtn').textContent = 'Start';
+  setStatus('err', 'Adapter disconnected');
+  log('info', 'Disconnected');
+  buildGauges();
+}
+function disconnect(){
+  state.polling = false;
+  const t = state.transport;
+  state.connected = false;
+  if (t) { t.onClose = () => {}; t.disconnect(); }
+  state.elm = null;
+  setConnected(false);
+  $('pollBtn').textContent = 'Start';
+  setStatus('off', 'Not connected');
+  buildGauges();
+}
+
+function stopPolling(){
+  state.polling = false; $('pollBtn').textContent = 'Start';
+  return state.pollLoop || Promise.resolve();
+}
+function startPolling(){
+  if (state.polling || !state.elm) return;
+  state.polling = true; $('pollBtn').textContent = 'Pause';
+  state.pollLoop = pollLoop();
+}
+async function pollLoop(){
+  let cycle = 0;
+  while (state.polling && state.elm) {
+    const t0 = performance.now();
+    const list = GAUGES.filter(g => state.supported.has(g.pid) && (!g.slow || cycle % 5 === 0));
+    for (const g of list) {
+      if (!state.polling || !state.elm) break;
+      try {
+        const d = await query('01', g.pid);
+        if (d && d.length) { state.values[g.id] = g.dec(d[0], d[1] || 0); renderGauge(g); }
+      } catch (e) { log('err', e.message); }
+    }
+    if (cycle % 15 === 0 && state.elm) await refreshVehicle();
+    if (state.recording) state.log.push({ time: new Date().toISOString(), ...state.values });
+    $('csvBtn').disabled = !state.log.length;
+    const ms = performance.now() - t0;
+    $('rate').textContent = list.length ? `${(list.length / ms * 1000).toFixed(1)} readings/s` : '';
+    cycle++;
+    await new Promise(r => setTimeout(r, 50));
+  }
+}
+
+async function readCodes(){
+  const out = $('codeOut');
+  const wasPolling = state.polling; await stopPolling();
+  out.innerHTML = '<p class="empty">Reading…</p>';
+  const groups = [
+    ['03', 0x43, 'Stored codes', 'These turned on the check-engine light.'],
+    ['07', 0x47, 'Pending codes', 'Seen once; the car is watching to see if they come back.'],
+    ['0A', 0x4A, 'Permanent codes', "Clear themselves once the car confirms the fault is fixed; they can't be erased by hand."],
+  ];
+  const frag = document.createDocumentFragment();
+  for (const [cmd, byte, title, sub] of groups) {
+    const h = document.createElement('h3'); h.textContent = title; frag.append(h);
+    let codes = null;
+    try { codes = parseDtcs(parseMessages(await state.elm.send(cmd, 8000), cmd).msgs, byte); } catch (e) { log('err', e.message); }
+    if (codes === null) { const p = document.createElement('p'); p.className = 'empty'; p.textContent = 'No answer.'; frag.append(p); continue; }
+    if (!codes.length) { const p = document.createElement('p'); p.className = 'empty ok'; p.textContent = 'None'; frag.append(p); continue; }
+    const p = document.createElement('p'); p.className = 'muted'; p.textContent = sub; frag.append(p);
+    for (const c of codes) {
+      const row = document.createElement('div'); row.className = 'dtc';
+      const b = document.createElement('b'); b.textContent = c;
+      const d = document.createElement('span'); d.className = 'd'; d.textContent = describeDtc(c);
+      const a = document.createElement('a'); a.href = 'https://www.google.com/search?q=' + encodeURIComponent(c + ' code'); a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Look up ↗';
+      row.append(b, d, a); frag.append(row);
+    }
+  }
+  out.innerHTML = ''; out.append(frag);
+  await refreshVehicle();
+  if (wasPolling) startPolling();
+}
+
+async function clearCodes(){
+  if (!confirm('Clear all trouble codes and turn off the check-engine light?\n\nThis also resets emissions readiness monitors, so the car may fail an inspection until it has been driven for a while.\n\nFor best results the engine should be OFF with the key ON.')) return;
+  const wasPolling = state.polling; await stopPolling();
+  try {
+    const r = await state.elm.send('04', 10000);
+    if (/44/.test(r.replace(/\s/g, ''))) log('info', 'Codes cleared'); else log('err', 'Car did not confirm the clear: ' + r.trim());
+  } catch (e) { log('err', e.message); }
+  await readCodes();
+  if (wasPolling) startPolling();
+}
+
+function downloadCsv(){
+  const cols = ['time', ...GAUGES.filter(g => state.supported.has(g.pid)).map(g => g.id)];
+  const head = cols.map(c => { const g = GAUGES.find(x => x.id === c); return g ? `${g.label} (${g.unit(us()) || 's'})` : c; });
+  const rows = state.log.map(r => cols.map(c => {
+    const g = GAUGES.find(x => x.id === c);
+    if (!g) return r[c];
+    if (r[c] == null) return '';
+    const v = g.conv ? g.conv(r[c], us()) : r[c];
+    return Math.round(v * 100) / 100;
+  }).join(','));
+  const blob = new Blob([[head.map(h => `"${h}"`).join(','), ...rows].join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'obd-log-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.csv';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/* ───────────── Wiring ───────────── */
+if (!('bluetooth' in navigator)) { $('noBle').hidden = false; $('connectBtn').disabled = true; }
+$('units').value = localStorage.getItem('obd-units') || 'us';
+$('units').onchange = () => { localStorage.setItem('obd-units', $('units').value); buildGauges(); };
+$('connectBtn').onclick = () => state.connected ? disconnect() : connect(false);
+$('demoBtn').onclick = () => connect(true);
+$('pollBtn').onclick = () => state.polling ? stopPolling() : startPolling();
+$('recBtn').onclick = () => {
+  state.recording = !state.recording;
+  if (state.recording) state.log = [];
+  $('recBtn').textContent = state.recording ? 'Stop recording' : 'Record';
+  $('recBtn').classList.toggle('danger', state.recording);
+};
+$('csvBtn').onclick = downloadCsv;
+$('readBtn').onclick = readCodes;
+$('clearBtn').onclick = clearCodes;
+$('consoleForm').onsubmit = async e => {
+  e.preventDefault();
+  const cmd = $('cmdIn').value.trim();
+  if (!cmd || !state.elm) return;
+  $('cmdIn').value = '';
+  const wasPolling = state.polling; await stopPolling();
+  try { await state.elm.send(cmd, 10000); } catch (err) { log('err', err.message); }
+  if (wasPolling) startPolling();
+};
+for (const t of document.querySelectorAll('.tab')) t.onclick = () => {
+  for (const x of document.querySelectorAll('.tab')) x.setAttribute('aria-selected', x === t);
+  for (const p of document.querySelectorAll('.panel')) p.hidden = p.id !== 'p-' + t.dataset.tab;
+};
+buildGauges();
+
+// Exposed for testing the parsers from the browser console.
+window.OBD = { parseMessages, parseDtcs, parseVin, decodeDtc, describeDtc };
+</script>
+</body>
+</html>

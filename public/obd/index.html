@@ -157,6 +157,7 @@ select{background:var(--card-2);border:1px solid var(--line);border-radius:999px
       <li>The first connection can take up to 15 seconds while the adapter finds your car's protocol.</li>
     </ol>
     <p><b>Clearing codes</b> turns off the check-engine light, but the light comes back if the fault is still there. It also resets your emissions readiness monitors, so don't clear codes right before an inspection.</p>
+    <p><b>Not sure your dongle is BLE?</b> Press Connect with the dongle plugged in and the key ON. If it shows up in the list, it's BLE and will work here. If it never appears, but your phone can pair with it in Bluetooth settings (often with a PIN like 1234), it's Classic Bluetooth. Web pages can't reach Classic dongles, so that would need an Android app instead.</p>
     <p><b>If it won't connect:</b> close any other OBD app on the phone (only one app can hold the dongle at a time), then unplug the dongle for 10 seconds. The Console tab shows exactly what the adapter is answering.</p>
     <p class="muted">Standard OBD2 covers engine and emissions data. ABS, airbag and other maker-specific systems aren't included.</p>
   </section>
@@ -557,6 +558,7 @@ async function connect(useDemo){
     startPolling();
   } catch (err) {
     const msg = err && err.name === 'NotFoundError' ? 'No adapter chosen' : (err.message || String(err));
+    if (err && err.name === 'NotFoundError') log('info', "Didn't see your dongle in the list? It may be Classic Bluetooth rather than BLE. See the Help tab.");
     log('err', msg);
     setStatus('err', msg.length > 60 ? 'Connection failed (see Console)' : msg);
     transport.onClose = () => {};

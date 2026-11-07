@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111418">
+<meta name="description" content="Find the radio stations around you and stream them on your phone.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Local Radio">
+<title>Local Radio</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+  :root {
+    --bg: #111418; --panel: #1a1f26; --panel-2: #222832; --line: #2d3540;
+    --text: #eef1f5; --muted: #8b96a5; --accent: #ffb547; --accent-2: #ff7a45;
+    --ok: #4ade80; --bad: #f87171;
+    --safe-b: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { padding-bottom: calc(150px + var(--safe-b)); }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--bg);
+    padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 8px; border-bottom: 1px solid var(--line); }
+  h1 { font-size: 20px; margin: 0 0 2px; letter-spacing: .3px; }
+  h1 span { color: var(--accent); }
+  #where { color: var(--muted); font-size: 13px; min-height: 18px; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .search { margin-top: 10px; }
+  .search input { flex: 1; min-width: 0; background: var(--panel); border: 1px solid var(--line);
+    color: var(--text); border-radius: 10px; padding: 10px 12px; font-size: 16px; }
+  .btn { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 12px; white-space: nowrap; }
+  .btn.primary { background: var(--accent); color: #1a1205; border-color: var(--accent); font-weight: 600; }
+  .tabs { display: flex; gap: 6px; margin-top: 10px; overflow-x: auto; }
+  .tab { background: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px;
+    font-size: 14px; color: var(--muted); white-space: nowrap; }
+  .tab[aria-selected="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .range { margin-top: 8px; font-size: 13px; color: var(--muted); }
+  .range input { flex: 1; accent-color: var(--accent); }
+
+  /* Tuner dial */
+  .dial-wrap { padding: 14px 16px 4px; }
+  .dial { position: relative; height: 70px; background: linear-gradient(#0c0f13, #151a20);
+    border: 1px solid var(--line); border-radius: 12px; overflow: hidden; touch-action: pan-y; }
+  .ticks { position: absolute; inset: 0; }
+  .tick { position: absolute; bottom: 0; width: 1px; background: #3a4452; }
+  .tick.major { background: #6b7685; }
+  .tick-label { position: absolute; bottom: 22px; transform: translateX(-50%); font-size: 10px; color: var(--muted); }
+  .mark { position: absolute; top: 6px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%;
+    background: var(--accent); opacity: .55; }
+  .mark.fav { background: var(--accent-2); opacity: 1; }
+  .needle { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--accent-2);
+    box-shadow: 0 0 10px var(--accent-2); transition: left .25s ease; }
+  .tuner-controls { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+  .freq { font: 600 34px/1 ui-monospace, "SF Mono", Menlo, monospace; color: var(--accent); }
+  .freq small { font-size: 14px; color: var(--muted); margin-left: 4px; }
+  .seek { width: 54px; height: 44px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--line); font-size: 18px; }
+
+  main { padding: 6px 12px 0; }
+  .section-title { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 14px 4px 6px; }
+  .list { list-style: none; margin: 0; padding: 0; }
+  .station { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 12px; }
+  .station:active, .station.playing { background: var(--panel); }
+  .station.playing .name { color: var(--accent); }
+  .logo { width: 44px; height: 44px; flex: none; border-radius: 10px; background: var(--panel-2);
+    display: grid; place-items: center; overflow: hidden; font-weight: 700; color: var(--muted); font-size: 13px; }
+  .logo img { width: 100%; height: 100%; object-fit: cover; }
+  .meta { flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 0; }
+  .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sub { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pill { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 6px; background: var(--panel-2);
+    color: var(--accent); margin-right: 4px; font-weight: 600; }
+  .star { background: none; border: 0; font-size: 22px; color: #4b5563; padding: 6px; }
+  .star[aria-pressed="true"] { color: var(--accent); }
+  .empty, .status { color: var(--muted); text-align: center; padding: 24px 16px; }
+  .status .btn { margin-top: 10px; }
+
+  /* Player */
+  .player { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: rgba(26,31,38,.97);
+    backdrop-filter: blur(10px); border-top: 1px solid var(--line); padding: 12px 16px calc(12px + var(--safe-b)); }
+  .player .row { gap: 12px; }
+  .player .logo { width: 52px; height: 52px; }
+  .play { width: 56px; height: 56px; flex: none; border-radius: 50%; border: 0; background: var(--accent);
+    color: #1a1205; font-size: 22px; display: grid; place-items: center; }
+  .play:disabled { opacity: .4; }
+  #pState { font-size: 13px; color: var(--muted); }
+  #pState.err { color: var(--bad); }
+  #pState.live::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--ok); margin-right: 6px; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 50% { opacity: .3; } }
+  .vol { margin-top: 8px; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+  .vol input { flex: 1; accent-color: var(--accent); }
+  .spin { display: inline-block; width: 18px; height: 18px; border: 2px solid currentColor; border-right-color: transparent;
+    border-radius: 50%; animation: rot .8s linear infinite; }
+  @keyframes rot { to { transform: rotate(360deg); } }
+  .note { color: var(--muted); font-size: 12px; text-align: center; padding: 18px 16px 0; }
+  .note a { color: var(--muted); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Local <span>Radio</span></h1>
+  <div id="where">Finding stations near you…</div>
+  <form class="row search" id="searchForm" autocomplete="off">
+    <input id="q" type="search" placeholder="Station, frequency, city or genre" enterkeyhint="search" aria-label="Search">
+    <button class="btn" type="button" id="locate" title="Use my location" aria-label="Use my location">📍</button>
+  </form>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="near" aria-selected="true">Near me</button>
+    <button class="tab" role="tab" data-tab="fav" aria-selected="false">Favorites</button>
+    <button class="tab" role="tab" data-tab="search" aria-selected="false" hidden id="searchTab">Search</button>
+  </div>
+  <label class="row range" id="rangeRow">Within <input type="range" id="radius" min="10" max="200" step="10" value="60"> <span id="radiusLabel">60 mi</span></label>
+</header>
+
+<section class="dial-wrap" aria-label="FM tuner">
+  <div class="dial" id="dial"><div class="ticks" id="ticks"></div><div class="needle" id="needle" style="left:50%"></div></div>
+  <div class="tuner-controls">
+    <button class="seek" id="seekDown" aria-label="Seek down">⏮</button>
+    <div class="freq" id="freq">--.-<small>FM</small></div>
+    <button class="seek" id="seekUp" aria-label="Seek up">⏭</button>
+  </div>
+</section>
+
+<main>
+  <div id="status" class="status" hidden></div>
+  <div id="withFreq"><div class="section-title">On the FM / AM dial</div><ul class="list" id="listFreq"></ul></div>
+  <div id="noFreq"><div class="section-title">Other local streams</div><ul class="list" id="listOther"></ul></div>
+  <p class="note">Stations stream over the internet, so this works anywhere you have data. Directory by
+    <a href="https://www.radio-browser.info" target="_blank" rel="noopener">radio-browser.info</a>.</p>
+</main>
+
+<div class="player" id="player">
+  <div class="row">
+    <div class="logo" id="pLogo">FM</div>
+    <div class="meta">
+      <div class="name" id="pName">Pick a station</div>
+      <div id="pState">Tap any station to start listening</div>
+    </div>
+    <button class="play" id="playBtn" aria-label="Play" disabled>▶</button>
+  </div>
+  <label class="vol">🔈 <input type="range" id="vol" min="0" max="1" step="0.05" value="1" aria-label="Volume"> 🔊</label>
+</div>
+
+<audio id="audio" preload="none" playsinline></audio>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---- Radio Browser directory (free, no key). Try mirrors in order. ----
+  const MIRRORS = ['https://de1.api.radio-browser.info', 'https://de2.api.radio-browser.info',
+                   'https://fi1.api.radio-browser.info', 'https://all.api.radio-browser.info'];
+  let mirror = sessionStorage.getItem('rb-mirror') || MIRRORS[0];
+
+  async function api(path, params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    const order = [mirror, ...MIRRORS.filter(m => m !== mirror)];
+    let lastErr;
+    for (const base of order) {
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 8000);
+        const res = await fetch(`${base}${path}${qs ? '?' + qs : ''}`, { signal: ctrl.signal });
+        clearTimeout(t);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        mirror = base; sessionStorage.setItem('rb-mirror', base);
+        return await res.json();
+      } catch (e) { lastErr = e; }
+    }
+    throw lastErr || new Error('Directory unavailable');
+  }
+
+  // ---- Helpers ----
+  const $ = id => document.getElementById(id);
+  const KM_PER_MI = 1.609344;
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+  };
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  function haversineMi(a, b) {
+    const R = 3958.8, rad = x => x * Math.PI / 180;
+    const dLat = rad(b.lat - a.lat), dLon = rad(b.lon - a.lon);
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+
+  // Pull a broadcast frequency out of the name/tags, e.g. "WXRT 93.1", "KISS FM 102.7", "WBBM 780 AM".
+  function parseFreq(st) {
+    const text = `${st.name} ${st.tags || ''}`;
+    const fm = text.match(/(?:^|[^\d.])(8[7-9]|9\d|10[0-7])[.,]([1-9])(?![\d.])/);
+    if (fm) {
+      const f = parseFloat(`${fm[1]}.${fm[2]}`);
+      if (f >= 87.5 && f <= 108) return { band: 'FM', f };
+    }
+    const am = text.match(/(?:^|\D)(5[3-9]\d|[6-9]\d\d|1[0-6]\d\d|1700)\s*(?:AM|kHz)\b/i)
+            || text.match(/\bAM\s*(5[3-9]\d|[6-9]\d\d|1[0-6]\d\d|1700)\b/i);
+    if (am) return { band: 'AM', f: parseInt(am[1], 10) };
+    return null;
+  }
+
+  // ---- State ----
+  let here = store.get('lastLocation', null);       // {lat, lon, label}
+  let radiusMi = store.get('radiusMi', 60);
+  let tab = 'near';
+  let stations = [];                                 // current list
+  let favs = store.get('favorites', {});             // uuid -> station
+  let current = null;
+  let tunedFM = store.get('tunedFM', 98.1);
+
+  const audio = $('audio');
+  // iPhones ignore page volume control; the hardware buttons handle it.
+  if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))
+    document.querySelector('.vol').hidden = true;
+  audio.volume = store.get('volume', 1);
+  $('vol').value = audio.volume;
+  $('radius').value = radiusMi; $('radiusLabel').textContent = radiusMi + ' mi';
+
+  function normalize(s) {
+    const st = {
+      id: s.stationuuid, name: (s.name || '').trim() || 'Unnamed station',
+      url: s.url_resolved || s.url, homepage: s.homepage, favicon: s.favicon,
+      tags: s.tags || '', city: s.state ? s.state : '', country: s.countrycode || s.country || '',
+      codec: s.codec, bitrate: s.bitrate, hls: !!s.hls,
+      lat: s.geo_lat, lon: s.geo_long
+    };
+    st.freq = parseFreq(s);
+    if (here && st.lat != null && st.lon != null) st.mi = haversineMi(here, { lat: st.lat, lon: st.lon });
+    return st;
+  }
+
+  function dedupe(list) {
+    // Same station often appears several times (different bitrates/mirrors). Keep the best one.
+    const seen = new Map();
+    for (const st of list) {
+      const key = (st.freq ? st.freq.band + st.freq.f : '') + '|' + st.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const prev = seen.get(key);
+      const score = x => (x.url && x.url.startsWith('https') ? 1000 : 0) + (x.bitrate || 0);
+      if (!prev || score(st) > score(prev)) seen.set(key, st);
+    }
+    return [...seen.values()];
+  }
+
+  // ---- Loading ----
+  function setStatus(html) { const el = $('status'); el.innerHTML = html; el.hidden = !html; }
+
+  async function loadNearby() {
+    if (!here) { askLocation(); return; }
+    $('where').textContent = `${here.label || 'Your location'} · within ${radiusMi} mi`;
+    setStatus('<span class="spin"></span>');
+    renderLists([]);
+    try {
+      const raw = await api('/json/stations/search', {
+        geo_lat: here.lat.toFixed(4), geo_long: here.lon.toFixed(4),
+        geo_distance: Math.round(radiusMi * KM_PER_MI * 1000), // meters
+        hidebroken: 'true', has_geo_info: 'true', order: 'clickcount', reverse: 'true', limit: 300
+      });
+      stations = dedupe(raw.map(normalize)).sort((a, b) => (a.mi ?? 1e9) - (b.mi ?? 1e9));
+      if (!stations.length) {
+        setStatus(`No stations listed within ${radiusMi} miles.<br><button class="btn" id="widen">Search wider</button>`);
+        $('widen').onclick = () => { setRadius(Math.min(200, radiusMi * 2)); loadNearby(); };
+      } else setStatus('');
+      renderLists(stations);
+    } catch (e) {
+      setStatus(`Couldn't reach the station directory. Check your connection.<br><button class="btn" id="retry">Try again</button>`);
+      $('retry').onclick = loadNearby;
+    }
+  }
+
+  async function runSearch(q) {
+    tab = 'search'; $('searchTab').hidden = false; syncTabs();
+    setStatus('<span class="spin"></span>'); renderLists([]);
+    const base = { hidebroken: 'true', order: 'clickcount', reverse: 'true', limit: 120 };
+    const freq = q.match(/^\s*(\d{2,4}(?:[.,]\d)?)\s*(fm|am)?\s*$/i);
+    try {
+      let lists;
+      if (freq) {
+        // Frequency search: names commonly include the number, e.g. "WXRT 93.1 FM".
+        lists = [await api('/json/stations/search', { ...base, name: freq[1].replace(',', '.') })];
+      } else {
+        lists = await Promise.all([
+          api('/json/stations/search', { ...base, name: q }),
+          api('/json/stations/search', { ...base, state: q, limit: 200 }),
+          api('/json/stations/search', { ...base, tag: q.toLowerCase(), limit: 60 })
+        ]);
+      }
+      let res = dedupe(lists.flat().map(normalize));
+      // Prefer results close to the user when we know where they are.
+      res.sort((a, b) => (a.mi ?? 1e9) - (b.mi ?? 1e9));
+      stations = res;
+      setStatus(res.length ? '' : `Nothing found for “${esc(q)}”.`);
+      $('where').textContent = `${res.length} result${res.length === 1 ? '' : 's'} for “${q}”`;
+      renderLists(res);
+    } catch {
+      setStatus(`Couldn't reach the station directory.<br><button class="btn" id="retry">Try again</button>`);
+      $('retry').onclick = () => runSearch(q);
+    }
+  }
+
+  function askLocation(manual, quiet) {
+    if (!('geolocation' in navigator)) { if (!quiet) noLocation(); return; }
+    if (!quiet) { $('where').textContent = 'Finding your location…'; setStatus('<span class="spin"></span>'); }
+    navigator.geolocation.getCurrentPosition(async pos => {
+      const fresh = { lat: pos.coords.latitude, lon: pos.coords.longitude, label: 'Near you' };
+      // When refreshing quietly, only reload if you've moved a few miles.
+      if (quiet && here && haversineMi(here, fresh) < 3) return;
+      here = fresh;
+      store.set('lastLocation', here);
+      if (tab === 'near') loadNearby();
+      reverseLabel();
+    }, () => { if (!quiet) noLocation(manual); }, { enableHighAccuracy: false, timeout: 12000, maximumAge: 10 * 60 * 1000 });
+  }
+
+  // Best-effort place name using the stations themselves: most common state among the closest ones.
+  function reverseLabel() {
+    setTimeout(() => {
+      const near = stations.filter(s => s.city && s.mi != null && s.mi < 40).slice(0, 15);
+      if (!near.length) return;
+      const counts = {};
+      near.forEach(s => counts[s.city] = (counts[s.city] || 0) + 1);
+      const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+      here.label = `Near ${top}`; store.set('lastLocation', here);
+      if (tab === 'near') $('where').textContent = `${here.label} · within ${radiusMi} mi`;
+    }, 2500);
+  }
+
+  function noLocation(manual) {
+    $('where').textContent = 'Location is off';
+    setStatus(`Allow location to see stations near you, or search for your city or state above.
+      ${manual ? '' : '<br><button class="btn primary" id="allow">Use my location</button>'}`);
+    const b = $('allow'); if (b) b.onclick = () => askLocation(true);
+    renderLists([]);
+  }
+
+  // ---- Rendering ----
+  function logoHTML(st) {
+    const words = st.name.replace(/[^A-Za-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+    const call = words.find(w => /^[KWCX][A-Z]{2,3}$/.test(w));          // US/Canada call letters, e.g. WXRT
+    const initials = esc(call || words.filter(w => /^[A-Za-z]/.test(w)).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'FM');
+    if (st.favicon && /^https:/.test(st.favicon))
+      return `<img src="${esc(st.favicon)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createTextNode('${initials}'))">`;
+    return initials;
+  }
+  const freqText = f => f ? (f.band === 'FM' ? f.f.toFixed(1) : f.f) + ' ' + f.band : '';
+
+  function stationLI(st) {
+    const bits = [];
+    if (st.mi != null) bits.push(st.mi < 1 ? '<1 mi' : Math.round(st.mi) + ' mi');
+    if (st.city) bits.push(esc(st.city));
+    const genre = st.tags.split(',').map(t => t.trim()).filter(t => t && !/^\d/.test(t) && !/^(fm|am|radio)$/i.test(t))[0];
+    if (genre) bits.push(esc(genre));
+    const isFav = !!favs[st.id];
+    return `<li class="station${current && current.id === st.id ? ' playing' : ''}" data-id="${esc(st.id)}">
+      <div class="logo">${logoHTML(st)}</div>
+      <button class="meta" data-play="${esc(st.id)}">
+        <div class="name">${st.freq ? `<span class="pill">${freqText(st.freq)}</span>` : ''}${esc(st.name)}</div>
+        <div class="sub">${bits.join(' · ') || '&nbsp;'}</div>
+      </button>
+      <button class="star" data-fav="${esc(st.id)}" aria-pressed="${isFav}" aria-label="${isFav ? 'Remove from' : 'Add to'} favorites">${isFav ? '★' : '☆'}</button>
+    </li>`;
+  }
+
+  let visible = [];
+  function renderLists(list) {
+    visible = list;
+    const withF = list.filter(s => s.freq).sort((a, b) =>
+      a.freq.band === b.freq.band ? a.freq.f - b.freq.f : a.freq.band === 'FM' ? -1 : 1);
+    const other = list.filter(s => !s.freq);
+    $('listFreq').innerHTML = withF.map(stationLI).join('');
+    $('listOther').innerHTML = other.map(stationLI).join('');
+    $('withFreq').hidden = !withF.length;
+    $('noFreq').hidden = !other.length;
+    $('noFreq').querySelector('.section-title').textContent = withF.length ? 'Other local streams' : 'Stations';
+    drawMarks();
+  }
+
+  // ---- Dial ----
+  const FM_MIN = 87.5, FM_MAX = 108;
+  const pct = f => ((f - FM_MIN) / (FM_MAX - FM_MIN)) * 100;
+  function drawTicks() {
+    let html = '';
+    for (let f = 88; f <= 108; f += 0.5) {
+      const major = f % 2 === 0;
+      html += `<div class="tick${major ? ' major' : ''}" style="left:${pct(f)}%;height:${major ? 18 : 9}px"></div>`;
+      if (major && f < 108) html += `<div class="tick-label" style="left:${pct(f)}%">${f}</div>`;
+    }
+    $('ticks').dataset.base = html;
+  }
+  function fmStations() {
+    return visible.filter(s => s.freq && s.freq.band === 'FM').sort((a, b) => a.freq.f - b.freq.f);
+  }
+  function drawMarks() {
+    const marks = fmStations().map(s =>
+      `<div class="mark${favs[s.id] ? ' fav' : ''}" style="left:${pct(s.freq.f)}%" title="${esc(s.name)}"></div>`).join('');
+    $('ticks').innerHTML = $('ticks').dataset.base + marks;
+  }
+  function setNeedle(f, band = 'FM') {
+    if (band === 'FM') {
+      tunedFM = f; store.set('tunedFM', f);
+      $('needle').style.left = pct(f) + '%';
+      $('freq').innerHTML = `${f.toFixed(1)}<small>FM</small>`;
+    } else {
+      $('freq').innerHTML = `${f}<small>AM</small>`;
+    }
+  }
+  function seek(dir) {
+    const list = fmStations();
+    if (!list.length) { setStatusBriefly('No local stations with a known FM frequency yet.'); return; }
+    const from = current && current.freq && current.freq.band === 'FM' ? current.freq.f : tunedFM;
+    let next = dir > 0 ? list.find(s => s.freq.f > from + 0.01) : [...list].reverse().find(s => s.freq.f < from - 0.01);
+    if (!next) next = dir > 0 ? list[0] : list[list.length - 1]; // wrap around the band
+    play(next);
+  }
+  // Tap or drag on the dial to tune to the nearest station.
+  function dialTune(clientX) {
+    const r = $('dial').getBoundingClientRect();
+    const f = FM_MIN + Math.min(1, Math.max(0, (clientX - r.left) / r.width)) * (FM_MAX - FM_MIN);
+    const list = fmStations();
+    if (!list.length) { setNeedle(Math.round(f * 10) / 10); return null; }
+    const best = list.reduce((a, b) => Math.abs(b.freq.f - f) < Math.abs(a.freq.f - f) ? b : a);
+    setNeedle(best.freq.f);
+    return best;
+  }
+  let dragging = null;
+  $('dial').addEventListener('pointerdown', e => { dragging = dialTune(e.clientX); $('dial').setPointerCapture(e.pointerId); });
+  $('dial').addEventListener('pointermove', e => { if (dragging !== null) dragging = dialTune(e.clientX); });
+  $('dial').addEventListener('pointerup', () => { if (dragging) play(dragging); dragging = null; });
+  $('seekUp').onclick = () => seek(1);
+  $('seekDown').onclick = () => seek(-1);
+
+  let briefTimer;
+  function setStatusBriefly(msg) {
+    const el = $('pState'); const prev = el.textContent; el.textContent = msg; el.className = '';
+    clearTimeout(briefTimer); briefTimer = setTimeout(() => { if (el.textContent === msg) el.textContent = prev; }, 2500);
+  }
+
+  // ---- Playback ----
+  let hls = null;
+  function setPState(text, cls = '') { const el = $('pState'); el.textContent = text; el.className = cls; }
+
+  async function loadHls() {
+    if (window.Hls) return window.Hls;
+    await new Promise((ok, fail) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js';
+      s.onload = ok; s.onerror = fail; document.head.appendChild(s);
+    });
+    return window.Hls;
+  }
+
+  async function play(st) {
+    current = st;
+    store.set('lastStation', st);
+    $('pName').textContent = (st.freq ? freqText(st.freq) + ' · ' : '') + st.name;
+    $('pLogo').innerHTML = logoHTML(st);
+    $('playBtn').disabled = false;
+    if (st.freq) setNeedle(st.freq.f, st.freq.band);
+    document.querySelectorAll('.station.playing').forEach(el => el.classList.remove('playing'));
+    document.querySelectorAll(`.station[data-id="${CSS.escape(st.id)}"]`).forEach(el => el.classList.add('playing'));
+    setPState('Tuning in…');
+    $('playBtn').innerHTML = '<span class="spin"></span>';
+
+    if (hls) { hls.destroy(); hls = null; }
+    // This page is served over https; browsers block plain-http audio, so try the https version first.
+    let url = st.url || '';
+    const candidates = url.startsWith('http://') ? [url.replace(/^http:/, 'https:'), url] : [url];
+    const isHls = st.hls || /\.m3u8(\?|$)/i.test(url);
+
+    try {
+      if (isHls && !audio.canPlayType('application/vnd.apple.mpegurl')) {
+        const Hls = await loadHls();
+        if (!Hls.isSupported()) throw new Error('HLS unsupported');
+        hls = new Hls(); hls.loadSource(candidates[0]); hls.attachMedia(audio);
+        await audio.play();
+      } else {
+        let ok = false, lastErr;
+        for (const u of candidates) {
+          if (current !== st) return; // user switched away
+          try { audio.src = u; await audio.play(); ok = true; break; } catch (e) { lastErr = e; }
+        }
+        if (!ok) throw lastErr;
+      }
+      if (current !== st) return;
+      // Count the listen in the directory (helps keep its popularity ranking honest).
+      api('/json/url/' + encodeURIComponent(st.id)).catch(() => {});
+    } catch (e) {
+      if (current !== st) return;
+      if (e && e.name === 'NotAllowedError') { setPState('Tap ▶ to start'); $('playBtn').textContent = '▶'; return; }
+      setPState(url.startsWith('http://') ? 'This station only streams over an insecure link your phone blocks. Try another.' : "This station isn't streaming right now. Try another.", 'err');
+      $('playBtn').textContent = '▶';
+    }
+    updateMediaSession();
+  }
+
+  audio.addEventListener('playing', () => { setPState('Live', 'live'); $('playBtn').textContent = '❚❚'; $('playBtn').setAttribute('aria-label', 'Pause'); });
+  audio.addEventListener('waiting', () => setPState('Buffering…'));
+  audio.addEventListener('pause', () => { if (current) { setPState('Paused'); $('playBtn').textContent = '▶'; $('playBtn').setAttribute('aria-label', 'Play'); } });
+
+  function togglePlay() {
+    if (!current) return;
+    if (audio.paused) {
+      // Live radio: reconnect so you hear "now", not where you paused.
+      play(current);
+    } else {
+      audio.pause();
+    }
+  }
+  $('playBtn').onclick = togglePlay;
+  $('vol').oninput = e => { audio.volume = +e.target.value; store.set('volume', audio.volume); };
+
+  // Lock-screen / headphone controls.
+  function updateMediaSession() {
+    if (!('mediaSession' in navigator) || !current) return;
+    const art = current.favicon && /^https:/.test(current.favicon) ? [{ src: current.favicon, sizes: '512x512' }] : [{ src: 'icon-512.png', sizes: '512x512', type: 'image/png' }];
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: current.name, artist: current.freq ? freqText(current.freq) : 'Live radio',
+      album: current.city || 'Local Radio', artwork: art
+    });
+    const ms = navigator.mediaSession;
+    ms.setActionHandler('play', togglePlay);
+    ms.setActionHandler('pause', () => audio.pause());
+    try { ms.setActionHandler('stop', () => audio.pause()); } catch {}
+    ms.setActionHandler('nexttrack', () => seek(1));
+    ms.setActionHandler('previoustrack', () => seek(-1));
+  }
+
+  // ---- Interaction ----
+  function findStation(id) { return visible.find(s => s.id === id) || favs[id] || stations.find(s => s.id === id); }
+  document.querySelector('main').addEventListener('click', e => {
+    const p = e.target.closest('[data-play]');
+    if (p) { const st = findStation(p.dataset.play); if (st) play(st); return; }
+    const f = e.target.closest('[data-fav]');
+    if (f) {
+      const st = findStation(f.dataset.fav); if (!st) return;
+      if (favs[st.id]) delete favs[st.id]; else favs[st.id] = st;
+      store.set('favorites', favs);
+      if (tab === 'fav') showFavs(); else renderLists(visible);
+    }
+  });
+
+  function showFavs() {
+    const list = Object.values(favs).map(s => (here && s.lat != null) ? { ...s, mi: haversineMi(here, { lat: s.lat, lon: s.lon }) } : s);
+    $('where').textContent = `${list.length} favorite${list.length === 1 ? '' : 's'}`;
+    setStatus(list.length ? '' : 'Tap ☆ next to a station to save it here.');
+    renderLists(list);
+  }
+
+  function syncTabs() {
+    document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === tab)));
+    $('rangeRow').hidden = tab !== 'near';
+  }
+  document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+    tab = t.dataset.tab; syncTabs();
+    if (tab === 'near') loadNearby();
+    else if (tab === 'fav') showFavs();
+    else if ($('q').value.trim()) runSearch($('q').value.trim());
+  });
+
+  $('searchForm').onsubmit = e => {
+    e.preventDefault(); const q = $('q').value.trim();
+    $('q').blur();
+    if (q) runSearch(q); else { tab = 'near'; syncTabs(); loadNearby(); }
+  };
+  $('locate').onclick = () => { tab = 'near'; syncTabs(); $('q').value = ''; askLocation(true); };
+
+  function setRadius(v) { radiusMi = v; $('radius').value = v; $('radiusLabel').textContent = v + ' mi'; store.set('radiusMi', v); }
+  let radiusTimer;
+  $('radius').oninput = e => { setRadius(+e.target.value); clearTimeout(radiusTimer); radiusTimer = setTimeout(loadNearby, 400); };
+
+  // ---- Start ----
+  drawTicks(); drawMarks(); setNeedle(tunedFM);
+  const last = store.get('lastStation', null);
+  if (last) {
+    current = last; $('pName').textContent = (last.freq ? freqText(last.freq) + ' · ' : '') + last.name;
+    $('pLogo').innerHTML = logoHTML(last); $('playBtn').disabled = false; setPState('Tap ▶ to resume');
+    if (last.freq) setNeedle(last.freq.f, last.freq.band);
+  }
+  if (here) { loadNearby(); askLocation(false, true); }  // last-known area now, quiet refresh
+  else askLocation();
+
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+</script>
+</body>
+</html>

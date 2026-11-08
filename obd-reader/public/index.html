@@ -315,6 +315,7 @@ class DemoTransport {
       '07': this.mil ? '47010300' : '4700',
       '0A': this.mil ? '4A010133' : '4A00',
     };
+    if (cmd === '1AB0' && this.hdr === '7E0') return '5AB011';
     if (cmd === '22199A' && this.hdr === '7E0') return '62199A0' + (speed < 1 ? 1 : speed < 15 ? 1 : speed < 28 ? 2 : speed < 45 ? 3 : 4);
     if (cmd === '221940' && this.hdr === '7E2') return '621940' + h(40 + 60 + 25 * warm);
     if (this.hdr === '7E2') return 'NO DATA';
@@ -562,26 +563,38 @@ async function readGmCodes(mod, timeout = 8000){
 // on 0x240-0x25F and answer on that + 0x400. Ask each one for a short
 // identifier; a positive or negative answer both mean a module is there.
 const GM_NAMES = { '241': 'Body control module', '243': 'ABS / brake module' };
+// Is anything at this address? Ask for a short identifier ($1A B0), then
+// try "tester present" ($3E). Any reply, even a refusal, means yes.
+async function gmPing(e, req, resp){
+  await e.send('ATSH' + req); await setRecv(e, resp);
+  for (const [cmd, ok] of [['1AB0', 0x5A], ['3E', 0x7E]]) {
+    let raw = '';
+    try { raw = await e.send(cmd, 1500); } catch {}
+    const { msgs } = parseMessages(raw, cmd);
+    if (msgs.some(m => m[0] === ok || m[0] === 0x7F)) return true;
+  }
+  return false;
+}
 async function scanGmModules(progress){
   const e = state.elm, found = [];
+  let ecmOk = false;
   try {
     await e.send('ATST19');
+    // Check the method on the engine computer first, which is always reachable.
+    progress('engine computer');
+    ecmOk = await gmPing(e, '7E0', '7E8').catch(() => false);
     for (let id = 0x240; id <= 0x25F; id++) {
       const req = id.toString(16).toUpperCase();
-      progress(req);
-      try {
-        await e.send('ATSH' + req); await setRecv(e, (id + 0x400).toString(16).toUpperCase());
-        const raw = await e.send('1AB0', 1500);
-        const { msgs } = parseMessages(raw, '1AB0');
-        if (msgs.some(m => m[0] === 0x5A || (m[0] === 0x7F && m[1] === 0x1A))) found.push(req);
-      } catch (err) { log('err', err.message); }
+      progress(req + ' of 25F');
+      try { if (await gmPing(e, req, (id + 0x400).toString(16).toUpperCase())) found.push(req); }
+      catch (err) { log('err', err.message); }
     }
   } finally {
     for (const c of [...RECV_RESET, 'ATSH7DF', 'ATST32']) { try { await e.send(c); } catch {} }
     state.hdr = '7DF';
   }
-  log('info', 'GM modules that answered: ' + (found.join(', ') || 'none'));
-  return found;
+  log('info', 'Engine computer answered the check: ' + (ecmOk ? 'yes' : 'no') + ' · GM modules that answered: ' + (found.join(', ') || 'none'));
+  return { found, ecmOk };
 }
 const gmModule = req => {
   const id = parseInt(req, 16);
@@ -619,13 +632,16 @@ async function readAbs(){
   elm.log = (k, t) => { trace.push((k === 'tx' ? '> ' : '  ') + t); origLog(k, t); };
   const status = text => { out.innerHTML = ''; out.append(para(text)); };
   const results = [];
+  let ecmOk = null, scanned = false;
   try {
     status('Reading the ABS module…');
     const first = state.absMod || GM_MODULES.abs;
     let res = await readGmCodes(first).catch(e => (log('err', e.message), { answered: false, codes: [] }));
     if (res.answered) results.push({ mod: first, res });
     else {
-      const found = await scanGmModules(id => status(`The usual ABS address didn't answer. Looking for GM modules… (${id} of 25F)`));
+      const scan = await scanGmModules(id => status(`The usual ABS address didn't answer. Looking for GM modules… (${id})`));
+      const found = scan.found;
+      ecmOk = scan.ecmOk; scanned = true;
       for (const req of found) {
         const mod = gmModule(req);
         status('Reading codes from ' + mod.name + '…');
@@ -644,8 +660,11 @@ async function readAbs(){
   const abs = results.find(r => r.mod.req === '243' && r.res.answered) || results.find(r => r.res.codes.some(c => c.code[0] === 'C'));
   if (abs) state.absMod = abs.mod;
 
+  state.absNone = scanned && !results.length;
   if (!results.length) {
-    out.append(para("No GM modules answered on this connection. Either this adapter can't send GM's module commands, or the modules on this vehicle are on a wire OBD adapters can't reach. The adapter's replies are below; send a screenshot of them."));
+    out.append(para(ecmOk
+      ? "Your engine computer answered the same check, so the adapter and method work, but no other GM module answered. On this vehicle the ABS module is on GM's separate low-speed wire, which ELM327 adapters can't connect to. Reading it needs a GM-capable adapter (for example OBDLink MX+) or a scanner that lists ABS for GM."
+      : "No GM modules answered, and the engine computer didn't answer the check either, so this adapter may not handle GM's module commands. The adapter's replies are below; send a screenshot of them."));
   }
   for (const { mod, res } of results) {
     const h = document.createElement('h4'); h.style.margin = '14px 0 6px'; h.textContent = mod.name + (mod.req !== '243' ? ` (address ${mod.req})` : ''); out.append(h);
@@ -671,6 +690,7 @@ async function readAbs(){
 async function clearAbs(){
   const out = $('absOut'), mod = state.absMod || GM_MODULES.abs;
   if (!gmProtocolOk(out)) return;
+  if (state.absNone && !state.absMod) { out.prepend(para('Nothing to clear: no ABS module answered on this connection.')); return; }
   if (!confirm('Clear the ABS module codes?\n\nIf the fault is still there, the ABS and traction lights will come back on, usually as soon as the truck moves.')) return;
   let ok = false;
   try { ok = await clearGmCodes(mod); } catch (e) { log('err', e.message); }
@@ -991,7 +1011,7 @@ async function initAdapter(){
     state.proto = p;
     $('vProto').textContent = names[p] || '—';
   } catch {}
-  state.vin = ''; state.isGM = null; state.absMod = null;
+  state.vin = ''; state.isGM = null; state.absMod = null; state.absNone = false;
   try {
     const { msgs } = parseMessages(await e.send('0902', 6000), '0902');
     state.vin = parseVin(msgs);

@@ -164,7 +164,7 @@ select{background:var(--card-2);border:1px solid var(--line);border-radius:999px
 
     <div class="abs">
       <h3>ABS / traction control <span class="beta">GM · experimental</span></h3>
-      <p class="muted">Reads the brake module (EBCM) using GM's own diagnostic commands. For GM trucks and SUVs from about 2007 on whose protocol shows CAN 11-bit 500k.</p>
+      <p class="muted" id="absNote">Reads the brake module (EBCM) using GM's own diagnostic commands. For GM trucks and SUVs from about 2007 on whose protocol shows CAN 11-bit 500k.</p>
       <div class="toolbar">
         <button class="btn primary" id="absReadBtn" disabled>Read ABS codes</button>
         <button class="btn danger" id="absClearBtn" disabled>Clear ABS codes</button>
@@ -191,7 +191,7 @@ select{background:var(--card-2);border:1px solid var(--line);border-radius:999px
     <p><b>Clearing codes</b> turns off the check-engine light, but the light comes back if the fault is still there. It also resets your emissions readiness monitors, so don't clear codes right before an inspection.</p>
     <p><b>Not sure your dongle is BLE?</b> Press Connect with the dongle plugged in and the key ON. If it shows up in the list, it's BLE and will work here. If it never appears, but your phone can pair with it in Bluetooth settings (often with a PIN like 1234), it's Classic Bluetooth. Web pages can't reach Classic dongles, so that would need an Android app instead.</p>
     <p><b>If it won't connect:</b> close any other OBD app on the phone (only one app can hold the dongle at a time), then unplug the dongle for 10 seconds. The Console tab shows exactly what the adapter is answering.</p>
-    <p class="muted">Standard OBD2 covers engine and emissions data. On GM vehicles the Trouble codes tab can also read the ABS module. Airbag and tire-pressure codes on GM trucks sit on a separate GM-only wire that ELM327 adapters can't reach.</p>
+    <p class="muted">Standard OBD2 covers engine and emissions data. It works on any car or light truck sold in the US from 1996 on, of any make. On GM vehicles the Trouble codes tab can also read the ABS module, and Live data adds gear and transmission temperature. Airbag and tire-pressure codes on GM trucks sit on a separate GM-only wire that ELM327 adapters can't reach.</p>
   </section>
 </div>
 
@@ -308,7 +308,7 @@ class DemoTransport {
       '0146': '4146' + h(40 + 18),
       '015C': '415C' + h(40 + 30 + 60 * warm),
       // Multi-frame CAN replies, the way an ELM327 prints them with headers off.
-      '0902': '014\r0:490201314434\r1:47503030523535\r2:42313233343536',
+      '0902': '014\r0:490201314743\r1:454B31394A3738\r2:5A313233343536',
       '03': this.mil ? '00A\r0:430401330134\r1:04200171000000' : '4300',
       '07': this.mil ? '47010300' : '4700',
       '0A': this.mil ? '4A010133' : '4A00',
@@ -622,7 +622,7 @@ const CODE_HELP = {
            checks: ['Replace the gas cap (cheap and often the fix)', 'A smoke test finds small leaks quickly'] },
   P0455: { causes: ['Gas cap loose, missing or damaged', 'Disconnected or cracked EVAP hose', 'Purge valve stuck open', 'Vent valve or canister problem'],
            checks: ['Tighten or replace the gas cap and clear the code', 'Inspect hoses around the charcoal canister near the fuel tank'] },
-  P0446: { causes: ['Failed EVAP vent valve (on GM trucks it sits near the fuel tank and often clogs with dirt)', 'Wiring to the vent valve', 'Blocked vent filter'],
+  P0446: { causes: ['Failed EVAP vent valve', 'On GM trucks the vent valve sits near the fuel tank and often clogs with dirt', 'Wiring to the vent valve', 'Blocked vent filter'],
            checks: ['Inspect the vent valve and its filter for mud or debris', 'Check the connector for corrosion'] },
   P0135: { causes: ['Failed heater inside the O2 sensor (most common)', 'Blown O2 heater fuse', 'Damaged wiring near the exhaust'],
            checks: ['Check the O2 heater fuse', 'Measure heater resistance at the sensor; an open circuit means the sensor needs replacing'] },
@@ -630,8 +630,8 @@ const CODE_HELP = {
            checks: ['Look for exhaust leaks', 'Fix any fuel trim codes first', 'O2 sensors often wear out after about 100,000 miles'] },
   P0401: { causes: ['Carbon-clogged EGR passages', 'Faulty EGR valve', 'EGR wiring'],
            checks: ['Clean the EGR valve and passages', 'Check the valve connector'] },
-  P0327: { causes: ['Knock sensor or its wiring; on GM 4.8/5.3/6.0 V8s the sensors sit under the intake manifold and their harness often corrodes'],
-           checks: ['Check for water or corrosion at the knock sensor connector', 'Repair usually means removing the intake manifold'] },
+  P0327: { causes: ['Failed knock sensor or damaged wiring', 'On GM 4.8/5.3/6.0 V8s the sensors sit under the intake manifold and their harness often corrodes'],
+           checks: ['Check for water or corrosion at the knock sensor connector', 'On GM V8s, repair usually means removing the intake manifold'] },
   P0335: { causes: ['Failing crankshaft position sensor', 'Wiring or connector', 'Damaged reluctor wheel (less common)'],
            checks: ['Often causes stalling or no-start when hot', 'Inspect the connector, then replace the sensor'] },
   P0340: { causes: ['Failing camshaft position sensor', 'Wiring or connector', 'Timing chain stretch'],
@@ -652,7 +652,7 @@ const CODE_HELP = {
            checks: ['Test fuel pressure with a gauge', 'Listen for the pump priming at key-on'] },
   P0217: { causes: ['Low coolant or leak', 'Cooling fan or fan clutch not working', 'Stuck thermostat', 'Failing water pump'],
            checks: ['Stop driving if the temperature gauge is high', 'Check coolant level with the engine cold', 'Check the fan'] },
-  P0500: { causes: ['Vehicle speed sensor (on GM trucks, usually on the transmission tail housing)', 'Wiring', 'Instrument cluster (if only the speedometer misbehaves)'],
+  P0500: { causes: ['Vehicle speed sensor', 'On GM trucks the sensor is usually on the transmission tail housing', 'Wiring', 'Instrument cluster (if only the speedometer misbehaves)'],
            checks: ['Speedometer and shifting may act up', 'Inspect the sensor connector at the transmission'] },
   P0562: { causes: ['Weak battery', 'Failing alternator', 'Loose or corroded battery terminals', 'Bad ground strap'],
            checks: ['With the engine running, Module voltage should be about 13.5–14.7 V', 'Clean the terminals and check the ground straps'] },
@@ -693,7 +693,23 @@ for (let n = 1; n <= 8; n++) CODE_HELP['P030' + n] = {
 const WMI = { '1G1':'Chevrolet','1GC':'Chevrolet','1GN':'Chevrolet','1GB':'Chevrolet','2G1':'Chevrolet','2GC':'Chevrolet','2GN':'Chevrolet','3G1':'Chevrolet',
   '3GC':'Chevrolet','3GN':'Chevrolet','KL1':'Chevrolet','1GT':'GMC','2GT':'GMC','3GT':'GMC','1GK':'GMC','1GD':'GMC','1G6':'Cadillac','1GY':'Cadillac',
   '1FT':'Ford','1FA':'Ford','1FM':'Ford','3FA':'Ford','1FD':'Ford','2FM':'Ford','1D7':'Dodge','3D7':'Dodge','1C6':'Ram','3C6':'Ram','1J4':'Jeep','1C4':'Jeep/Chrysler',
-  '1N4':'Nissan','1N6':'Nissan','5N1':'Nissan','JTD':'Toyota','4T1':'Toyota','5TF':'Toyota','5TD':'Toyota','JTE':'Toyota','1HG':'Honda','2HG':'Honda','5FN':'Honda','5J6':'Honda' };
+  '1N4':'Nissan','1N6':'Nissan','5N1':'Nissan','JTD':'Toyota','4T1':'Toyota','5TF':'Toyota','5TD':'Toyota','JTE':'Toyota','1HG':'Honda','2HG':'Honda','5FN':'Honda','5J6':'Honda',
+  '1B3':'Dodge','2B3':'Dodge','1B7':'Dodge','3B7':'Dodge','1D3':'Dodge','1D4':'Dodge','2D4':'Dodge','2D8':'Dodge','2C3':'Chrysler','1C3':'Chrysler','2C4':'Chrysler',
+  '3C4':'Chrysler','1J8':'Jeep','1FU':'Freightliner','KMH':'Hyundai','5NP':'Hyundai','KNA':'Kia','KND':'Kia','5XY':'Kia','JF1':'Subaru','JF2':'Subaru','4S4':'Subaru',
+  '3VW':'Volkswagen','WVW':'Volkswagen','1VW':'Volkswagen','JM1':'Mazda','JM3':'Mazda','WBA':'BMW','5UX':'BMW','WDD':'Mercedes-Benz','4JG':'Mercedes-Benz',
+  'JTH':'Lexus','2T2':'Lexus','2T1':'Toyota','3TM':'Toyota','JN1':'Nissan','JN8':'Nissan','1GM':'Pontiac','1G2':'Pontiac','1G4':'Buick','5GA':'Buick','1G8':'Saturn','5GR':'Hummer' };
+// Broader fallback when the exact 3-character maker code isn't listed.
+const WMI2 = { '1G':'GM','2G':'GM','3G':'GM','KL':'GM','1F':'Ford','2F':'Ford','3F':'Ford','1D':'Dodge','2D':'Dodge','3D':'Dodge','1B':'Dodge','2B':'Dodge','3B':'Dodge',
+  '1C':'Chrysler/Dodge/Jeep/Ram','2C':'Chrysler/Dodge','3C':'Chrysler/Dodge/Ram','1J':'Jeep','JT':'Toyota','4T':'Toyota','5T':'Toyota','1N':'Nissan','JN':'Nissan','5N':'Nissan/Hyundai',
+  'JH':'Honda','1H':'Honda','2H':'Honda','5F':'Honda','5J':'Honda','KM':'Hyundai','KN':'Kia','JF':'Subaru','4S':'Subaru','JM':'Mazda','WB':'BMW','WD':'Mercedes-Benz','WV':'Volkswagen','3V':'Volkswagen' };
+const isGmVin = vin => /^([123]G|KL|5G)/.test(vin);
+function updateMakeUi(){
+  const nonGm = state.isGM === false;
+  $('absNote').textContent = nonGm
+    ? `ABS reading currently works on GM vehicles only. This ${state.vehicle || 'vehicle'} uses different commands.`
+    : "Reads the brake module (EBCM) using GM's own diagnostic commands. For GM trucks and SUVs from about 2007 on whose protocol shows CAN 11-bit 500k.";
+  for (const id of ['absReadBtn', 'absClearBtn']) $(id).disabled = !state.connected || nonGm;
+}
 function vinYear(vin){
   const c = vin[9], letters = 'ABCDEFGHJKLMNPRSTVWXY';
   if (/[1-9]/.test(c)) return 2000 + +c;
@@ -703,8 +719,9 @@ function vinYear(vin){
 }
 function titleCase(s){ return String(s || '').toLowerCase().replace(/\b[a-z]/g, m => m.toUpperCase()); }
 async function identifyVehicle(vin){
-  const year = vinYear(vin), make = WMI[vin.slice(0, 3)];
+  const year = vinYear(vin), make = WMI[vin.slice(0, 3)] || WMI2[vin.slice(0, 2)];
   state.vehicle = make ? [year, make].filter(Boolean).join(' ') : (year ? year + ' vehicle' : null);
+  updateMakeUi();
   $('vName').textContent = state.vehicle || '—';
   try {
     const ctl = new AbortController(); setTimeout(() => ctl.abort(), 8000);
@@ -712,7 +729,7 @@ async function identifyVehicle(vin){
     const v = (await r.json()).Results[0];
     const eng = v.DisplacementL ? (+v.DisplacementL).toFixed(1) + 'L' : '';
     const name = [v.ModelYear, titleCase(v.Make), v.Model, v.Trim || v.Series, eng].filter(Boolean).join(' ');
-    if (v.Make && v.Model) { state.vehicle = name; $('vName').textContent = name; }
+    if (v.Make && v.Model) { state.vehicle = name; $('vName').textContent = name; updateMakeUi(); }
   } catch (e) { log('info', 'Online VIN lookup unavailable; using the VIN year and maker'); }
 }
 
@@ -780,7 +797,9 @@ function codeRow(code, opt){
     more.innerHTML = '';
     const help = CODE_HELP[code];
     if (help) {
-      for (const [title, items] of [['Likely causes', help.causes], ['Check first', help.checks]]) {
+      // Hide GM-specific tips once we know the vehicle isn't a GM.
+      const fits = it => state.isGM !== false || !/\bGM\b/.test(it);
+      for (const [title, items] of [['Likely causes', help.causes.filter(fits)], ['Check first', help.checks.filter(fits)]]) {
         const h = document.createElement('h4'); h.textContent = title; more.append(h);
         const ul = document.createElement('ul');
         for (const it of items) { const li = document.createElement('li'); li.textContent = it; ul.append(li); }
@@ -826,7 +845,8 @@ function log(kind, text){
 function setStatus(s, text){ $('status').dataset.s = s; $('statusText').textContent = text; }
 function setConnected(on){
   state.connected = on;
-  for (const id of ['pollBtn', 'recBtn', 'readBtn', 'clearBtn', 'sendBtn', 'absReadBtn', 'absClearBtn']) $(id).disabled = !on;
+  for (const id of ['pollBtn', 'recBtn', 'readBtn', 'clearBtn', 'sendBtn']) $(id).disabled = !on;
+  updateMakeUi();
   $('connectBtn').textContent = on ? 'Disconnect' : 'Connect';
   $('connectBtn').disabled = !on && !('bluetooth' in navigator);
   $('connectBtn').classList.toggle('primary', !on);
@@ -894,15 +914,20 @@ async function initAdapter(){
     state.proto = p;
     $('vProto').textContent = names[p] || '—';
   } catch {}
-  await probeExtras();
-  await refreshVehicle();
+  state.vin = ''; state.isGM = null;
   try {
     const { msgs } = parseMessages(await e.send('0902', 6000), '0902');
-    const vin = parseVin(msgs);
-    $('vVin').textContent = vin || 'Not reported';
-    state.vin = vin;
-    if (vin) identifyVehicle(vin);
-  } catch { $('vVin').textContent = 'Not reported'; }
+    state.vin = parseVin(msgs);
+  } catch {}
+  $('vVin').textContent = state.vin || 'Not reported';
+  // GM-only extras (ABS, gear, transmission temp) use GM's own commands.
+  // Other makers can answer the same requests with unrelated data, so only
+  // use them when the VIN says the vehicle is a GM.
+  state.isGM = state.vin ? isGmVin(state.vin) : null;
+  if (state.vin) identifyVehicle(state.vin); else $('vName').textContent = 'Unknown (no VIN reported)';
+  updateMakeUi();
+  await probeExtras();
+  await refreshVehicle();
 }
 
 async function query22(did, timeout){
@@ -918,7 +943,7 @@ async function query22(did, timeout){
 async function probeExtras(){
   state.gearSrc = state.supported.has(0xA4) ? 'std' : null;
   state.transTemp = false;
-  if (state.proto !== '6') return;
+  if (state.proto !== '6' || !state.isGM) return;
   try {
     await setHeader('7E0');
     if (!state.gearSrc) { const d = await query22(0x199A, 2000).catch(() => null); if (d && d.length) state.gearSrc = 'gm'; }
@@ -1081,7 +1106,7 @@ async function readCodes(){
     try { codes = parseDtcs(parseMessages(await state.elm.send(cmd, 8000), cmd).msgs, byte); } catch (e) { log('err', e.message); }
     state.codes.engine[title] = codes || [];
     if (codes === null) { const p = document.createElement('p'); p.className = 'empty'; p.textContent = 'No answer.'; frag.append(p); continue; }
-    if (!codes.length) { const p = document.createElement('p'); p.className = 'empty ok'; p.textContent = 'None'; frag.append(p); continue; }
+    if (!codes.length) { const p = document.createElement('p'); p.className = 'empty ok'; p.textContent = cmd === '0A' ? 'None (vehicles from before about 2010 don\'t keep permanent codes)' : 'None'; frag.append(p); continue; }
     const p = document.createElement('p'); p.className = 'muted'; p.textContent = sub; frag.append(p);
     const kind = title.split(' ')[0].toLowerCase();
     for (const c of codes) frag.append(codeRow(c, { module: 'engine computer', status: kind + ' code' }));

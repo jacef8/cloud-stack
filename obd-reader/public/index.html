@@ -269,7 +269,9 @@ class DemoTransport {
     if (cmd === 'ATI') return 'ELM327 v1.5';
     if (cmd === 'ATDPN') return 'A6';
     if (cmd.startsWith('ATSH')) { this.hdr = cmd.slice(4); return 'OK'; }
-    if (this.hdr === '243' && !cmd.startsWith('AT')) {
+    if (/^2[45][0-9A-F]$/.test(this.hdr || '') && !cmd.startsWith('AT')) {
+      if (this.hdr !== (this.absAddr || '243')) return 'NO DATA';
+      if (cmd === '1AB0') return '5AB0' + this.hdr.slice(1);
       if (cmd.startsWith('03A981')) return this.abs !== false
         ? '8140355A18000000\r8142670492000000\r8100000000000000'
         : '8100000000000000';
@@ -526,35 +528,74 @@ function gmStatusText(st){
   return t.join(' · ');
 }
 
-async function readGmCodes(mod){
+// Listen only to one CAN address. Some cheap adapters don't know ATCRA;
+// ATCF + ATCM does the same job on them.
+async function setRecv(e, id){
+  const r = await e.send('ATCRA' + id);
+  if (/\?/.test(r)) { log('info', 'Adapter lacks ATCRA; using ATCF/ATCM'); await e.send('ATCF' + id); await e.send('ATCM7FF'); }
+}
+const RECV_RESET = ['ATCRA', 'ATAR'];
+
+async function readGmCodes(mod, timeout = 8000){
   const e = state.elm;
   try {
     // Raw CAN frames, addressed to the module, listening on its report address.
-    for (const c of ['ATCAF0', 'ATSH' + mod.req, 'ATCRA' + mod.report, 'ATAT0', 'ATSTFF']) await e.send(c);
+    await e.send('ATCAF0'); await e.send('ATSH' + mod.req); await setRecv(e, mod.report);
+    for (const c of ['ATAT0', 'ATSTFF']) await e.send(c);
     // Mask 12 asks for current and history codes; FF (every code it knows) is the fallback.
     for (const mask of ['12', 'FF']) {
       const cmd = '03A981' + mask;
       let raw = '';
-      try { raw = await e.send(cmd, 8000); } catch (err) { log('err', err.message); }
+      try { raw = await e.send(cmd, timeout); } catch (err) { log('err', err.message); }
       const res = parseGmA9(raw, cmd);
       if (res.answered && res.rejected == null) return res;
       if (res.rejected != null) log('info', mod.name + ' refused mask ' + mask + ' (reason ' + res.rejected.toString(16).toUpperCase() + ')');
     }
     return { answered: false, codes: [] };
   } finally {
-    for (const c of ['ATCRA', 'ATCAF1', 'ATSH7DF', 'ATST32', 'ATAT1']) { try { await e.send(c); } catch {} }
+    for (const c of [...RECV_RESET, 'ATCAF1', 'ATSH7DF', 'ATST32', 'ATAT1']) { try { await e.send(c); } catch {} }
     state.hdr = '7DF';
   }
 }
 
+// GM modules other than the engine and transmission computers take requests
+// on 0x240-0x25F and answer on that + 0x400. Ask each one for a short
+// identifier; a positive or negative answer both mean a module is there.
+const GM_NAMES = { '241': 'Body control module', '243': 'ABS / brake module' };
+async function scanGmModules(progress){
+  const e = state.elm, found = [];
+  try {
+    await e.send('ATST19');
+    for (let id = 0x240; id <= 0x25F; id++) {
+      const req = id.toString(16).toUpperCase();
+      progress(req);
+      try {
+        await e.send('ATSH' + req); await setRecv(e, (id + 0x400).toString(16).toUpperCase());
+        const raw = await e.send('1AB0', 1500);
+        const { msgs } = parseMessages(raw, '1AB0');
+        if (msgs.some(m => m[0] === 0x5A || (m[0] === 0x7F && m[1] === 0x1A))) found.push(req);
+      } catch (err) { log('err', err.message); }
+    }
+  } finally {
+    for (const c of [...RECV_RESET, 'ATSH7DF', 'ATST32']) { try { await e.send(c); } catch {} }
+    state.hdr = '7DF';
+  }
+  log('info', 'GM modules that answered: ' + (found.join(', ') || 'none'));
+  return found;
+}
+const gmModule = req => {
+  const id = parseInt(req, 16);
+  return { name: GM_NAMES[req] || 'Module ' + req, req, resp: (id + 0x400).toString(16).toUpperCase(), report: (id + 0x300).toString(16).toUpperCase() };
+};
+
 async function clearGmCodes(mod){
   const e = state.elm;
   try {
-    for (const c of ['ATSH' + mod.req, 'ATCRA' + mod.resp]) await e.send(c);
+    await e.send('ATSH' + mod.req); await setRecv(e, mod.resp);
     const r = await e.send('04', 8000);
     return parseMessages(r, '04').msgs.some(m => m[0] === 0x44);
   } finally {
-    for (const c of ['ATCRA', 'ATSH7DF']) { try { await e.send(c); } catch {} }
+    for (const c of [...RECV_RESET, 'ATSH7DF']) { try { await e.send(c); } catch {} }
     state.hdr = '7DF';
   }
 }
@@ -568,32 +609,67 @@ function gmProtocolOk(out){
   return false;
 }
 
+function para(text, cls){ const p = document.createElement('p'); p.className = cls || 'empty'; p.textContent = text; return p; }
+
 async function readAbs(){
-  const out = $('absOut'), mod = GM_MODULES.abs;
+  const out = $('absOut');
   if (!gmProtocolOk(out)) return;
-  out.innerHTML = '<p class="empty">Reading the ABS module…</p>';
-  let res;
-  try { res = await readGmCodes(mod); } catch (e) { log('err', e.message); res = { answered: false, codes: [] }; }
+  // Keep this read's adapter conversation to show under the result.
+  const trace = [], elm = state.elm, origLog = elm.log;
+  elm.log = (k, t) => { trace.push((k === 'tx' ? '> ' : '  ') + t); origLog(k, t); };
+  const status = text => { out.innerHTML = ''; out.append(para(text)); };
+  const results = [];
+  try {
+    status('Reading the ABS module…');
+    const first = state.absMod || GM_MODULES.abs;
+    let res = await readGmCodes(first).catch(e => (log('err', e.message), { answered: false, codes: [] }));
+    if (res.answered) results.push({ mod: first, res });
+    else {
+      const found = await scanGmModules(id => status(`The usual ABS address didn't answer. Looking for GM modules… (${id} of 25F)`));
+      for (const req of found) {
+        const mod = gmModule(req);
+        status('Reading codes from ' + mod.name + '…');
+        res = await readGmCodes(mod, 4000).catch(e => (log('err', e.message), { answered: false, codes: [] }));
+        results.push({ mod, res });
+      }
+    }
+  } finally { elm.log = origLog; }
+
   out.innerHTML = '';
-  state.codes.abs = res.codes;
+  const all = [];
+  for (const { mod, res } of results) for (const c of res.codes) all.push({ ...c, module: mod.name });
+  state.codes.abs = all;
   updateAskAll();
-  if (!res.answered) {
-    const p = document.createElement('p'); p.className = 'empty';
-    p.textContent = "The ABS module didn't answer. This only works on GM vehicles. If yours is GM, open the Console tab, take a screenshot and send it so the address can be checked.";
-    out.append(p);
-  } else if (!res.codes.length) {
-    const p = document.createElement('p'); p.className = 'empty ok'; p.textContent = 'None. The ABS module answered and has no codes stored.';
-    out.append(p);
-  } else {
+  // Remember which module has chassis codes or the ABS address, for clearing.
+  const abs = results.find(r => r.mod.req === '243' && r.res.answered) || results.find(r => r.res.codes.some(c => c.code[0] === 'C'));
+  if (abs) state.absMod = abs.mod;
+
+  if (!results.length) {
+    out.append(para("No GM modules answered on this connection. Either this adapter can't send GM's module commands, or the modules on this vehicle are on a wire OBD adapters can't reach. The adapter's replies are below; send a screenshot of them."));
+  }
+  for (const { mod, res } of results) {
+    const h = document.createElement('h4'); h.style.margin = '14px 0 6px'; h.textContent = mod.name + (mod.req !== '243' ? ` (address ${mod.req})` : ''); out.append(h);
+    if (!res.answered) { out.append(para('Found, but it didn\'t answer the code request.')); continue; }
+    if (!res.codes.length) { out.append(para('No codes stored.', 'empty ok')); continue; }
     for (const c of res.codes) {
       const sym = [...c.symptoms].map(x => x.toString(16).toUpperCase().padStart(2, '0')).join(', ');
-      out.append(codeRow(c.code, { module: 'ABS module', status: gmStatusText(c.status), symptom: sym }));
+      out.append(codeRow(c.code, { module: mod.name, status: gmStatusText(c.status), symptom: sym }));
     }
+  }
+  if (results.length > 1 || !results.length || !results[0].res.answered) {
+    const note = para('Codes starting with C are chassis codes, which usually come from the ABS module. B codes are body (including airbag), U codes are network.', 'muted');
+    if (results.length) out.append(note);
+    const det = document.createElement('details'); det.style.marginTop = '10px';
+    const sum = document.createElement('summary'); sum.className = 'muted'; sum.textContent = "Adapter's replies (for troubleshooting)";
+    const pre = document.createElement('pre'); pre.style.cssText = 'font-family:var(--mono);font-size:12px;white-space:pre-wrap;max-height:40vh;overflow:auto;background:#030605;padding:10px;border-radius:10px';
+    pre.textContent = trace.slice(0, 400).join('\n');
+    det.append(sum, pre); if (!results.length) det.open = true;
+    out.append(det);
   }
 }
 
 async function clearAbs(){
-  const out = $('absOut'), mod = GM_MODULES.abs;
+  const out = $('absOut'), mod = state.absMod || GM_MODULES.abs;
   if (!gmProtocolOk(out)) return;
   if (!confirm('Clear the ABS module codes?\n\nIf the fault is still there, the ABS and traction lights will come back on, usually as soon as the truck moves.')) return;
   let ok = false;
@@ -754,7 +830,7 @@ function vehicleLine(){
 function allCodesList(except){
   const out = [];
   for (const [title, list] of Object.entries(state.codes.engine)) for (const c of list || []) if (c !== except) out.push(c + ' (' + title.split(' ')[0].toLowerCase() + ', engine)');
-  for (const c of state.codes.abs || []) if (c.code !== except) out.push(c.code + ' (ABS, ' + gmStatusText(c.status).toLowerCase() + ')');
+  for (const c of state.codes.abs || []) if (c.code !== except) out.push(c.code + ' (' + (c.module || 'ABS module') + ', ' + gmStatusText(c.status).toLowerCase() + ')');
   return out;
 }
 function codePrompt(code, opt){
@@ -915,7 +991,7 @@ async function initAdapter(){
     state.proto = p;
     $('vProto').textContent = names[p] || '—';
   } catch {}
-  state.vin = ''; state.isGM = null;
+  state.vin = ''; state.isGM = null; state.absMod = null;
   try {
     const { msgs } = parseMessages(await e.send('0902', 6000), '0902');
     state.vin = parseVin(msgs);

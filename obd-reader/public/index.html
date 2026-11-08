@@ -57,7 +57,9 @@ h1 span{color:var(--accent)}
 .kv .v{font-size:17px;font-weight:600;margin-top:3px;word-break:break-all}
 .kv .v.mono{font-family:var(--mono);font-size:15px}
 .mil-on{color:var(--warn)}
-.tabs{display:flex;gap:6px;margin-bottom:12px;border-bottom:1px solid var(--line)}
+.tabs{display:flex;gap:2px;margin-bottom:12px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{white-space:nowrap;flex:none}
 .tab{background:none;border:0;border-bottom:2px solid transparent;padding:10px 14px;cursor:pointer;
   color:var(--ink-3);font-weight:600}
 .tab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
@@ -108,6 +110,55 @@ h1 span{color:var(--accent)}
 .console-in input{flex:1;background:#030605;border:1px solid var(--line);border-radius:999px;padding:9px 14px;font-family:var(--mono)}
 .help{line-height:1.55;color:var(--ink-2)}
 .help li{margin-bottom:6px}
+/* dashboard */
+.dash{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.dial{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px 10px 12px;position:relative;display:flex;flex-direction:column;align-items:center}
+.dial svg{width:100%;max-width:300px;height:auto;display:block}
+.dial .needle{transition:transform .35s cubic-bezier(.3,.7,.3,1);transform-origin:100px 100px;transform-box:view-box}
+.dash:not(.glance) .dial:not(.num) .dv{display:none}
+.dial .sv{font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.dial .dv{font:700 clamp(22px,7vw,34px)/1 var(--text);font-variant-numeric:tabular-nums;margin-top:-34px;letter-spacing:-.02em}
+.dial .du{font-size:13px;color:var(--ink-3);margin-left:4px;font-weight:600}
+.dial .dl{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin-top:2px;text-align:center}
+.dial.num{justify-content:center;min-height:150px}
+.dial.num .dv{font-size:64px;margin-top:0}
+.dial select{position:absolute;inset:auto 8px 8px 8px;width:auto}
+.dash.glance .dial{min-height:140px;justify-content:center}
+.dash.glance .dial svg{display:none}
+.dash.glance .dial .dv{font-size:60px;margin-top:0}
+.dash.night{filter:sepia(1) hue-rotate(-50deg) saturate(5) brightness(.62)}
+#p-dash:fullscreen{background:var(--bg);padding:10px;overflow:auto}
+#p-dash:fullscreen .dash{height:calc(100vh - 66px);grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr}
+#p-dash:fullscreen .dial{min-height:0;justify-content:center}
+#p-dash:fullscreen .dial svg{max-height:calc((100vh - 66px) / 2 - 64px);width:auto}
+#p-dash:fullscreen .dial .dv{font-size:clamp(28px,6vh,60px)}
+#p-dash:fullscreen .dial.num .dv,#p-dash:fullscreen .dash.glance .dial .dv{font-size:clamp(48px,14vh,120px)}
+@media (orientation:portrait){#p-dash:fullscreen .dash{grid-template-columns:repeat(2,1fr)}#p-dash:fullscreen .dial svg{max-height:calc((100vh - 66px) / 3 - 60px)}}
+/* fuel, performance, alerts */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r-s);padding:12px 14px}
+.stat .k{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.stat .v{font-size:24px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+.stat .v small{font-size:13px;color:var(--ink-3);margin-left:3px;font-weight:600}
+.hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:12px}
+.hero .stat .v{font-size:52px;letter-spacing:-.02em}
+.card h3{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.form label{font-size:12px;color:var(--ink-3);display:flex;flex-direction:column;gap:4px}
+.form input,.form select,.rule input,.rule select{background:#030605;border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:var(--ink);font:inherit;width:100%}
+.rule{display:grid;grid-template-columns:auto 1fr 64px 92px;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.rule input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
+.runbox{text-align:center;padding:22px 10px}
+.runbox .big{font:700 84px/1 var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.runbox .sub{color:var(--ink-3);margin-top:6px}
+table.res{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+table.res td,table.res th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
+table.res th{font-size:12px;color:var(--ink-3);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+#alertBar{position:fixed;left:10px;right:10px;top:calc(10px + env(safe-area-inset-top));z-index:50;background:#5A0F18;border:1px solid var(--bad);
+  color:#fff;border-radius:14px;padding:12px 16px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.6);display:flex;gap:10px;align-items:center}
+#alertBar[hidden]{display:none}
+#alertBar button{margin-left:auto}
+.sect{margin-top:14px}
 select{background:var(--card-2);border:1px solid var(--line);border-radius:999px;padding:8px 12px}
 </style>
 </head>
@@ -125,6 +176,7 @@ select{background:var(--card-2);border:1px solid var(--line);border-radius:999px
     <button class="btn primary" id="connectBtn">Connect</button>
   </header>
 
+  <div id="alertBar" role="alert" hidden><span id="alertText"></span><button class="btn small" id="alertOk">OK</button></div>
   <div class="banner" id="noBle" hidden>
     This browser can't use Bluetooth. Open this page in <b>Chrome</b> on Android, Windows, Mac or ChromeOS.
     On iPhone, Safari doesn't support it, but the free <b>Bluefy</b> browser app does.
@@ -141,13 +193,74 @@ select{background:var(--card-2);border:1px solid var(--line);border-radius:999px
   </section>
 
   <nav class="tabs" role="tablist">
-    <button class="tab" role="tab" aria-selected="true" data-tab="live">Live data</button>
+    <button class="tab" role="tab" aria-selected="true" data-tab="dash">Dashboard</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="live">Live data</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="fuel">Fuel</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="perf">Performance</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="alerts">Alerts</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="codes">Trouble codes</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="console">Console</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="help">Help</button>
   </nav>
 
-  <section class="panel" id="p-live">
+  <section class="panel" id="p-dash">
+    <div class="toolbar">
+      <button class="btn small" id="dashFull">Full screen</button>
+      <button class="btn small" id="dashMode">Glance view</button>
+      <button class="btn small" id="dashNight">Night</button>
+      <button class="btn small" id="dashEdit">Customize</button>
+      <span class="sp"></span><span class="muted" id="dashHint"></span>
+    </div>
+    <div class="dash" id="dash"></div>
+  </section>
+
+  <section class="panel" id="p-fuel" hidden>
+    <div class="hero">
+      <div class="stat"><div class="k">Right now</div><div class="v" id="fNow">—</div></div>
+      <div class="stat"><div class="k">Fuel flow</div><div class="v" id="fFlow">—</div></div>
+      <div class="stat"><div class="k">Range left</div><div class="v" id="fRange">—</div></div>
+    </div>
+    <p class="muted" id="fMethod"></p>
+    <div class="card sect"><h3>This drive</h3><div class="stats" id="fDrive"></div></div>
+    <div class="card sect"><h3>Trip <span class="muted" id="fTripSince" style="text-transform:none;letter-spacing:0"></span></h3>
+      <div class="stats" id="fTrip"></div>
+      <div class="toolbar"><button class="btn small danger" id="fReset">Reset trip</button></div>
+    </div>
+    <div class="card sect"><h3>Settings</h3>
+      <div class="form">
+        <label>Fuel <select id="sFuel"><option value="gas">Gasoline (incl. E10)</option><option value="e85">E85</option></select></label>
+        <label><span id="sPriceL">Price per gallon</span><input id="sPrice" type="number" step="0.01" min="0" inputmode="decimal"></label>
+        <label><span id="sTankL">Tank size (gallons)</span><input id="sTank" type="number" step="0.1" min="1" inputmode="decimal"></label>
+        <label>Correction (%) <input id="sCorr" type="number" step="0.1" inputmode="decimal"></label>
+      </div>
+      <p class="muted">At your next fill-up, fill the tank, reset the trip, and drive. At the following fill-up enter what the pump says, and the correction is worked out for you.</p>
+      <div class="form"><label><span id="sPumpL">Gallons pumped</span><input id="sPump" type="number" step="0.001" min="0" inputmode="decimal"></label>
+        <label>&nbsp;<button class="btn small" id="sCal">Calibrate from fill-up</button></label></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-perf" hidden>
+    <p class="muted">Use only on a closed course or where it's legal and safe. Times come from the truck's speed reading, so expect about ±0.3 s.</p>
+    <div class="toolbar">
+      <button class="btn primary" id="pArmAccel" disabled>Arm 0–60 / ¼ mile</button>
+      <button class="btn" id="pArmBrake" disabled>Arm 60–0 braking</button>
+      <button class="btn" id="pCancel" hidden>Cancel</button>
+    </div>
+    <div class="card runbox"><div class="big" id="pBig">—</div><div class="sub" id="pSub">Connect, then arm a timer.</div></div>
+    <div class="card sect"><h3>Results</h3><div id="pResults"><p class="empty">No runs yet.</p></div></div>
+    <div class="card sect"><h3>Horsepower estimate</h3>
+      <div class="form"><label><span id="sWeightL">Vehicle weight with people (lb)</span><input id="sWeight" type="number" step="10" min="500" inputmode="numeric"></label></div>
+      <p class="muted">Estimated at the wheels from how fast speed rises during a 0–60 run. Wind and rolling resistance are ignored, so it reads low at higher speeds; use it to compare runs, not as a dyno number.</p>
+    </div>
+  </section>
+
+  <section class="panel" id="p-alerts" hidden>
+    <p class="muted">Beeps, vibrates and shows a banner when a reading crosses its limit. Keep this app open on screen while driving for alerts to sound.</p>
+    <div class="card" id="aRules"></div>
+    <div class="toolbar sect"><button class="btn small" id="aTest">Test alert sound</button></div>
+  </section>
+
+  <section class="panel" id="p-live" hidden>
     <div class="toolbar">
       <button class="btn" id="pollBtn" disabled>Start</button>
       <button class="btn" id="recBtn" disabled>Record</button>
@@ -835,6 +948,7 @@ async function identifyVehicle(vin){
     const v = (await r.json()).Results[0];
     const eng = v.DisplacementL ? (+v.DisplacementL).toFixed(1) + 'L' : '';
     const name = [v.ModelYear, titleCase(v.Make), v.Model, v.Trim || v.Series, eng].filter(Boolean).join(' ');
+    if (v.DisplacementL) state.displacementL = +v.DisplacementL;
     if (v.Make && v.Model) { state.vehicle = name; state.make = titleCase(v.Make); $('vName').textContent = name; updateMakeUi(); }
   } catch (e) { log('info', 'Online VIN lookup unavailable; using the VIN year and maker'); }
 }
@@ -951,7 +1065,9 @@ function log(kind, text){
 function setStatus(s, text){ $('status').dataset.s = s; $('statusText').textContent = text; }
 function setConnected(on){
   state.connected = on;
-  for (const id of ['pollBtn', 'recBtn', 'readBtn', 'clearBtn', 'sendBtn']) $(id).disabled = !on;
+  for (const id of ['pollBtn', 'recBtn', 'readBtn', 'clearBtn', 'sendBtn', 'pArmAccel', 'pArmBrake']) $(id).disabled = !on;
+  if (!on) perfCancel();
+  buildDash(); fuelRender();
   updateMakeUi();
   $('connectBtn').textContent = on ? 'Disconnect' : 'Connect';
   $('connectBtn').disabled = !on && !('bluetooth' in navigator);
@@ -982,6 +1098,7 @@ function renderGauge(g){
   const sm = document.createElement('small'); sm.textContent = unit; el.querySelector('.val').append(sm);
   const bar = el.querySelector('.bar i');
   if (bar) { const max = typeof g.max === 'function' ? g.max(us()) : g.max; bar.style.width = Math.max(0, Math.min(100, Math.abs(v) / max * 100)) + '%'; }
+  dashOnValue(g.id);
 }
 
 async function query(mode, pid, timeout){
@@ -1021,6 +1138,7 @@ async function initAdapter(){
     $('vProto').textContent = names[p] || '—';
   } catch {}
   state.vin = ''; state.isGM = null; state.absMod = null; state.absNone = false;
+  fuelResetDrive();
   try {
     const { msgs } = parseMessages(await e.send('0902', 6000), '0902');
     state.vin = parseVin(msgs);
@@ -1229,7 +1347,10 @@ async function pollLoop(){
   if (state.gearSrc === 'gm' && state.elm) { try { await setHeader('7E0'); } catch {} }
   while (state.polling && state.elm) {
     const t0 = performance.now();
-    const list = GAUGES.filter(g => avail(g) && (!g.slow || cycle % 5 === 0));
+    // A performance run reads only speed (and rpm while waiting), for more
+    // readings per second.
+    const ids = perfPollIds();
+    const list = ids ? GAUGES.filter(g => ids.includes(g.id) && avail(g)) : GAUGES.filter(g => avail(g) && (!g.slow || cycle % 5 === 0));
     for (const g of list) {
       if (!state.polling || !state.elm) break;
       try {
@@ -1238,10 +1359,15 @@ async function pollLoop(){
           if (v != null) { state.values[g.id] = v; renderGauge(g); }
         } else {
           const d = await query('01', g.pid);
-          if (d && d.length) { state.values[g.id] = g.dec(d[0], d[1] || 0); renderGauge(g); }
+          if (d && d.length) {
+            state.values[g.id] = g.dec(d[0], d[1] || 0); renderGauge(g);
+            if (g.id === 'speed') perfOnSpeed(performance.now(), state.values.speed);
+          }
         }
       } catch (e) { log('err', e.message); }
     }
+    fuelTick();
+    alertsTick();
     if (cycle % 15 === 0 && state.elm) await refreshVehicle();
     if (state.recording) state.log.push({ time: new Date().toISOString(), ...state.values });
     $('csvBtn').disabled = !state.log.length;
@@ -1324,7 +1450,7 @@ function downloadCsv(){
 /* ───────────── Wiring ───────────── */
 if (!('bluetooth' in navigator)) { $('noBle').hidden = false; $('connectBtn').disabled = true; }
 $('units').value = localStorage.getItem('obd-units') || 'us';
-$('units').onchange = () => { localStorage.setItem('obd-units', $('units').value); buildGauges(); };
+$('units').onchange = () => { localStorage.setItem('obd-units', $('units').value); buildGauges(); buildDash(); fuelRender(); fuelSettingsUi(); perfRenderResults(); alertsUi(); };
 $('connectBtn').onclick = () => state.connected ? disconnect() : connect(false);
 $('demoBtn').onclick = () => connect(true);
 $('pollBtn').onclick = () => state.polling ? stopPolling() : startPolling();
@@ -1349,8 +1475,427 @@ $('consoleForm').onsubmit = async e => {
 for (const t of document.querySelectorAll('.tab')) t.onclick = () => {
   for (const x of document.querySelectorAll('.tab')) x.setAttribute('aria-selected', x === t);
   for (const p of document.querySelectorAll('.panel')) p.hidden = p.id !== 'p-' + t.dataset.tab;
+  updateWakeLock();
 };
 buildGauges();
+
+/* ───────────── Settings ───────────── */
+const SETTINGS_KEY = 'obd-settings';
+const settings = Object.assign({
+  dash: { slots: ['rpm', 'speed', 'gear', 'coolant', 'volts', 'econ'], glance: false, night: false },
+  fuel: { type: 'gas', price: 3.50, tankL: 75.7, corr: 0 },   // price per gallon (US) or per litre (metric)
+  weightKg: 2700,
+  alerts: null,
+}, JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'));
+const saveSettings = () => localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+const L_PER_GAL = 3.785411784, KG_PER_LB = 0.45359237, KM_PER_MI = 1.609344;
+// Linear unit conversions can be undone, for settings typed in display units.
+const toDisplay = (g, raw) => g.conv ? g.conv(raw, us()) : raw;
+const toRaw = (g, v) => { if (!g.conv) return v; const b = g.conv(0, us()), a = g.conv(1, us()) - b; return (v - b) / a; };
+
+/* ───────────── Computed readings (fuel) ───────────── */
+const EXTRA_GAUGES = [
+  { id: 'econ', label: 'Fuel economy', conv: (v, us) => v == null ? null : us ? v * 2.352145 : (v > 0.05 ? 100 / v : null),
+    unit: us => us ? 'mpg' : 'L/100 km', max: () => 30, fmt: v => v == null ? '—' : v.toFixed(1) },
+  { id: 'fuelRate', label: 'Fuel flow', conv: (v, us) => us ? v / L_PER_GAL : v, unit: us => us ? 'gal/h' : 'L/h',
+    max: us => us ? 8 : 30, fmt: v => v.toFixed(2) },
+  { id: 'tripEcon', label: 'Trip average', conv: (v, us) => v == null ? null : us ? v * 2.352145 : (v > 0.05 ? 100 / v : null),
+    unit: us => us ? 'mpg' : 'L/100 km', max: () => 30, fmt: v => v == null ? '—' : v.toFixed(1) },
+];
+const allGauges = () => [...GAUGES, ...EXTRA_GAUGES];
+const gaugeById = id => allGauges().find(g => g.id === id);
+const extraAvail = g => g.id === 'econ' || g.id === 'fuelRate' || g.id === 'tripEcon' ? fuelMethod() !== null : true;
+const availAny = g => EXTRA_GAUGES.includes(g) ? extraAvail(g) : avail(g);
+
+/* ───────────── Dashboard ───────────── */
+// Dial ranges in display units, where 0..max isn't right.
+const DIAL_MIN = { coolant: us => us ? 100 : 40, oil: us => us ? 100 : 40, transTemp: us => us ? 100 : 40, iat: us => us ? 0 : -20,
+  ambient: us => us ? 0 : -20, stft: () => -25, ltft: () => -25, timing: () => -10, volts: () => 8 };
+// Warning zones in display units: [from, to].
+const DIAL_ZONE = { rpm: () => [5600, 7000], coolant: us => us ? [235, 250] : [113, 120], volts: () => [8, 11.8],
+  transTemp: us => us ? [220, 250] : [104, 120], oil: us => us ? [260, 280] : [127, 140], fuel: () => [0, 10] };
+const NUMERIC = new Set(['gear', 'runtime', 'sinceclear', 'milDist']);
+const A0 = -120, A1 = 120;   // dial sweep, degrees
+function polar(a, r){ const t = (a - 90) * Math.PI / 180; return [100 + r * Math.cos(t), 100 + r * Math.sin(t)]; }
+function arcPath(a0, a1, r){ const [x0, y0] = polar(a0, r), [x1, y1] = polar(a1, r); return `M${x0.toFixed(1)} ${y0.toFixed(1)} A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`; }
+function dialRange(g){ const u = us(); return [DIAL_MIN[g.id] ? DIAL_MIN[g.id](u) : 0, typeof g.max === 'function' ? g.max(u) : g.max]; }
+function dialSvg(g){
+  const [lo, hi] = dialRange(g), ang = v => A0 + (A1 - A0) * Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
+  let ticks = '';
+  for (let i = 0; i <= 10; i++) {
+    const a = A0 + (A1 - A0) * i / 10, major = i % 2 === 0;
+    const [x0, y0] = polar(a, major ? 66 : 70), [x1, y1] = polar(a, 78);
+    ticks += `<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="#fff" stroke-opacity="${major ? .6 : .25}" stroke-width="${major ? 2.5 : 1.5}"/>`;
+    if (major && i > 0 && i < 10) { const [tx, ty] = polar(a, 56); const v = lo + (hi - lo) * i / 10;
+      ticks += `<text x="${tx.toFixed(1)}" y="${(ty + 4).toFixed(1)}" text-anchor="middle" font-size="11" fill="#fff" fill-opacity=".55">${Math.abs(hi - lo) >= 1000 ? +(v / 1000).toFixed(1) : +v.toFixed(Math.abs(hi - lo) < 10 ? 1 : 0)}</text>`; }
+  }
+  const z = DIAL_ZONE[g.id] && DIAL_ZONE[g.id](us());
+  const zone = z ? `<path d="${arcPath(ang(z[0]), ang(z[1]), 84)}" fill="none" stroke="var(--bad)" stroke-width="6" stroke-opacity=".8"/>` : '';
+  return `<svg viewBox="0 0 200 145" aria-hidden="true">
+    <defs><linearGradient id="dg" x1="0" x2="1"><stop offset="0" stop-color="#00E8A0"/><stop offset="1" stop-color="#00D9FF"/></linearGradient></defs>
+    <path d="${arcPath(A0, A1, 84)}" fill="none" stroke="#fff" stroke-opacity=".08" stroke-width="6" stroke-linecap="round"/>${zone}
+    <path class="prog" d="" fill="none" stroke="url(#dg)" stroke-width="6" stroke-linecap="round"/>${ticks}
+    <g class="needle"><line x1="100" y1="46" x2="100" y2="12" stroke="#fff" stroke-width="4" stroke-linecap="round"/></g>
+    <text class="sv" x="100" y="112" text-anchor="middle" font-size="34" font-weight="700" fill="#fff">—</text>
+    <text class="su" x="100" y="130" text-anchor="middle" font-size="12" font-weight="600" fill="#fff" fill-opacity=".55"></text></svg>`;
+}
+function buildDash(){
+  const el = $('dash'); if (!el) return;
+  el.innerHTML = '';
+  el.classList.toggle('glance', !!settings.dash.glance);
+  el.classList.toggle('night', !!settings.dash.night);
+  $('dashMode').textContent = settings.dash.glance ? 'Dial view' : 'Glance view';
+  $('dashNight').textContent = settings.dash.night ? 'Day' : 'Night';
+  const editing = el.dataset.edit === '1';
+  $('dashEdit').textContent = editing ? 'Done' : 'Customize';
+  settings.dash.slots.forEach((id, i) => {
+    const g = gaugeById(id) || GAUGES[0];
+    const d = document.createElement('div');
+    d.className = 'dial' + (NUMERIC.has(g.id) ? ' num' : '') + (state.connected && !availAny(g) ? ' off' : '');
+    d.dataset.id = g.id;
+    d.innerHTML = (NUMERIC.has(g.id) ? '' : dialSvg(g)) + '<div class="dv">—</div><div class="dl"></div>';
+    d.querySelector('.dl').textContent = g.label;
+    if (editing) {
+      const sel = document.createElement('select');
+      for (const o of allGauges()) { const op = document.createElement('option'); op.value = o.id; op.textContent = o.label; op.selected = o.id === g.id; sel.append(op); }
+      sel.onchange = () => { settings.dash.slots[i] = sel.value; saveSettings(); buildDash(); };
+      d.append(sel);
+    }
+    el.append(d);
+    dashOnValue(g.id);
+  });
+  $('dashHint').textContent = state.connected ? '' : 'Connect (or try Demo) to see live readings.';
+}
+function dashOnValue(id){
+  const g = gaugeById(id); if (!g) return;
+  for (const d of document.querySelectorAll(`#dash .dial[data-id="${id}"]`)) {
+    const raw = state.values[id], v = raw == null ? null : toDisplay(g, raw);
+    const dv = d.querySelector('.dv');
+    dv.textContent = v == null || (typeof v === 'number' && !isFinite(v)) ? '—' : g.fmt(v, us());
+    const u = g.unit(us()); if (u) { const s = document.createElement('span'); s.className = 'du'; s.textContent = u; dv.append(s); }
+    const sv = d.querySelector('.sv');
+    if (sv) { sv.textContent = dv.firstChild ? dv.firstChild.textContent : '—'; d.querySelector('.su').textContent = u; }
+    const needle = d.querySelector('.needle');
+    if (needle && typeof v === 'number') {
+      const [lo, hi] = dialRange(g), f = Math.max(0, Math.min(1, (v - lo) / (hi - lo))), a = A0 + (A1 - A0) * f;
+      needle.style.transform = `rotate(${a}deg)`;
+      d.querySelector('.prog').setAttribute('d', f > 0.003 ? arcPath(A0, a, 84) : '');
+    }
+  }
+}
+let wakeLock = null;
+async function updateWakeLock(){
+  const want = !$('p-dash').hidden && state.connected && document.visibilityState === 'visible';
+  try {
+    if (want && !wakeLock && navigator.wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); }
+    else if (!want && wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch {}
+}
+document.addEventListener('visibilitychange', updateWakeLock);
+$('dashMode').onclick = () => { settings.dash.glance = !settings.dash.glance; saveSettings(); buildDash(); };
+$('dashNight').onclick = () => { settings.dash.night = !settings.dash.night; saveSettings(); buildDash(); };
+$('dashEdit').onclick = () => { const el = $('dash'); el.dataset.edit = el.dataset.edit === '1' ? '' : '1'; buildDash(); };
+$('dashFull').onclick = async () => {
+  const p = $('p-dash');
+  if (document.fullscreenElement) { await document.exitFullscreen(); return; }
+  try { await p.requestFullscreen(); await screen.orientation.lock('landscape').catch(() => {}); } catch {}
+};
+document.addEventListener('fullscreenchange', () => { $('dashFull').textContent = document.fullscreenElement ? 'Exit full screen' : 'Full screen'; });
+
+/* ───────────── Fuel economy ───────────── */
+// Fuel burned = air flow ÷ air-fuel ratio, corrected by the fuel trims.
+// Vehicles without an air-flow sensor: air flow estimated from manifold
+// pressure, intake temperature, rpm and engine size (85% volumetric efficiency).
+const FUEL = { gas: { afr: 14.7, gPerL: 739 }, e85: { afr: 9.8, gPerL: 781 } };
+function fuelMethod(){
+  if (state.supported.has(0x10)) return 'maf';
+  if (state.supported.has(0x0B) && state.supported.has(0x0F) && state.supported.has(0x0C) && state.displacementL) return 'sd';
+  return null;
+}
+function airGps(){
+  const v = state.values;
+  if (fuelMethod() === 'maf') return v.maf;
+  if (fuelMethod() === 'sd' && v.rpm != null && v.map != null && v.iat != null)
+    return v.rpm / 120 * 0.85 * state.displacementL * v.map / (8.314 * (v.iat + 273.15)) * 28.97;
+  return null;
+}
+const blankStats = () => ({ km: 0, L: 0, s: 0, idleS: 0, idleL: 0 });
+let drive = blankStats(), lastFuelT = null;
+let trip = Object.assign(blankStats(), JSON.parse(localStorage.getItem('obd-trip') || 'null') || { since: Date.now() });
+if (!trip.since) trip.since = Date.now();
+function fuelResetDrive(){ drive = blankStats(); lastFuelT = null; }
+function fuelTick(){
+  const now = performance.now(), dt = lastFuelT ? (now - lastFuelT) / 1000 : 0;
+  lastFuelT = now;
+  const air = airGps(), kmh = state.values.speed, rpm = state.values.rpm;
+  if (air == null || kmh == null || rpm == null || rpm < 300) { state.values.fuelRate = null; state.values.econ = null; fuelRender(); return; }
+  const f = FUEL[settings.fuel.type] || FUEL.gas;
+  const trim = 1 + ((state.values.stft || 0) + (state.values.ltft || 0)) / 100;
+  const Lph = air / f.afr * trim / f.gPerL * 3600 * (1 + (settings.fuel.corr || 0) / 100);
+  state.values.fuelRate = Lph;
+  state.values.econ = kmh > 3 ? kmh / Lph : null;   // km per litre
+  if (dt > 0 && dt < 10) {
+    for (const t of [drive, trip]) {
+      t.km += kmh * dt / 3600; t.L += Lph * dt / 3600; t.s += dt;
+      if (kmh < 2) { t.idleS += dt; t.idleL += Lph * dt / 3600; }
+    }
+    if (Math.floor(trip.s) % 10 === 0) localStorage.setItem('obd-trip', JSON.stringify(trip));
+  }
+  state.values.tripEcon = trip.L > 0.05 ? trip.km / trip.L : null;
+  for (const id of ['econ', 'fuelRate', 'tripEcon']) dashOnValue(id);
+  fuelRender();
+}
+function fmtDur(s){ s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? `${h} h ${m} min` : `${m} min ${s % 60} s`; }
+function statsHtml(t){
+  const u = us(), dist = u ? t.km / KM_PER_MI : t.km, vol = u ? t.L / L_PER_GAL : t.L;
+  const econ = t.L > 0.05 ? (u ? (t.km / KM_PER_MI) / (t.L / L_PER_GAL) : t.L / t.km * 100) : null;
+  const cost = vol * (settings.fuel.price || 0);
+  const cells = [
+    ['Distance', dist.toFixed(1), u ? 'mi' : 'km'], ['Fuel used', vol.toFixed(u ? 2 : 1), u ? 'gal' : 'L'],
+    ['Average', econ == null || !isFinite(econ) ? '—' : econ.toFixed(1), u ? 'mpg' : 'L/100 km'], ['Cost', '$' + cost.toFixed(2), ''],
+    ['Driving time', fmtDur(t.s), ''], ['Idling', fmtDur(t.idleS) + ' · ' + (u ? (t.idleL / L_PER_GAL).toFixed(2) + ' gal' : t.idleL.toFixed(1) + ' L'), ''],
+  ];
+  return cells.map(([k, v, unit]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}${unit ? `<small>${unit}</small>` : ''}</div></div>`).join('');
+}
+function fuelRender(){
+  const m = fuelMethod(), u = us();
+  $('fMethod').textContent = !state.connected ? 'Connect (or try Demo) to start measuring.'
+    : m === 'maf' ? 'Calculated from the air-flow sensor and fuel trims.'
+    : m === 'sd' ? `Estimated from manifold pressure, intake temperature, rpm and the ${state.displacementL.toFixed(1)} L engine size.`
+    : "This vehicle doesn't report the readings needed to work out fuel use.";
+  const econ = gaugeById('econ'), rate = gaugeById('fuelRate');
+  const e = state.values.econ, r = state.values.fuelRate;
+  $('fNow').innerHTML = e == null ? (r != null ? '<small>stopped</small>' : '—') : `${econ.fmt(toDisplay(econ, e))}<small>${econ.unit(u)}</small>`;
+  $('fFlow').innerHTML = r == null ? '—' : `${rate.fmt(toDisplay(rate, r))}<small>${rate.unit(u)}</small>`;
+  const avgKmL = trip.L > 0.5 ? trip.km / trip.L : drive.L > 0.2 ? drive.km / drive.L : null, fuel = state.values.fuel;
+  $('fRange').innerHTML = avgKmL && fuel != null ? `${Math.round(fuel / 100 * settings.fuel.tankL * avgKmL / (u ? KM_PER_MI : 1))}<small>${u ? 'mi' : 'km'}</small>` : '—';
+  $('fDrive').innerHTML = statsHtml(drive);
+  $('fTrip').innerHTML = statsHtml(trip);
+  $('fTripSince').textContent = '· since ' + new Date(trip.since).toLocaleDateString();
+}
+function fuelSettingsUi(){
+  const u = us();
+  $('sFuel').value = settings.fuel.type;
+  $('sPriceL').textContent = u ? 'Price per gallon ($)' : 'Price per litre';
+  $('sPrice').value = settings.fuel.price;
+  $('sTankL').textContent = u ? 'Tank size (gallons)' : 'Tank size (litres)';
+  $('sTank').value = +(u ? settings.fuel.tankL / L_PER_GAL : settings.fuel.tankL).toFixed(1);
+  $('sCorr').value = settings.fuel.corr;
+  $('sPumpL').textContent = u ? 'Gallons pumped' : 'Litres pumped';
+  $('sWeightL').textContent = u ? 'Vehicle weight with people (lb)' : 'Vehicle weight with people (kg)';
+  $('sWeight').value = Math.round(u ? settings.weightKg / KG_PER_LB : settings.weightKg);
+}
+$('sFuel').onchange = () => { settings.fuel.type = $('sFuel').value; saveSettings(); };
+$('sPrice').onchange = () => { settings.fuel.price = +$('sPrice').value || 0; saveSettings(); fuelRender(); };
+$('sTank').onchange = () => { const v = +$('sTank').value; if (v > 0) settings.fuel.tankL = us() ? v * L_PER_GAL : v; saveSettings(); fuelRender(); };
+$('sCorr').onchange = () => { settings.fuel.corr = +$('sCorr').value || 0; saveSettings(); };
+$('sWeight').onchange = () => { const v = +$('sWeight').value; if (v > 0) settings.weightKg = us() ? v * KG_PER_LB : v; saveSettings(); };
+$('sCal').onclick = () => {
+  const pumped = +$('sPump').value, actualL = us() ? pumped * L_PER_GAL : pumped;
+  if (!(actualL > 0) || trip.L < 1) { alert('Enter the amount pumped. The trip needs at least a litre (about a quarter gallon) of measured fuel first.'); return; }
+  const old = 1 + (settings.fuel.corr || 0) / 100, factor = actualL / trip.L * old;
+  settings.fuel.corr = +((factor - 1) * 100).toFixed(1); saveSettings(); fuelSettingsUi();
+  alert(`Correction set to ${settings.fuel.corr > 0 ? '+' : ''}${settings.fuel.corr}%. The trip now starts over for the next tank.`);
+  trip = Object.assign(blankStats(), { since: Date.now() }); localStorage.setItem('obd-trip', JSON.stringify(trip)); $('sPump').value = ''; fuelRender();
+};
+$('fReset').onclick = () => {
+  if (!confirm('Reset the trip?')) return;
+  trip = Object.assign(blankStats(), { since: Date.now() }); localStorage.setItem('obd-trip', JSON.stringify(trip)); fuelRender();
+};
+
+/* ───────────── Performance timers ───────────── */
+// Times come from the vehicle speed reading. Crossing points are
+// interpolated between readings; the launch moment is extrapolated back from
+// the first two moving readings.
+const perf = { mode: null, phase: null, samples: [], start: null, dist: 0, marks: {}, peakHp: 0 };
+const QUARTER_M = 402.336;
+function perfPollIds(){
+  if (!perf.mode) return null;
+  return perf.phase === 'run' ? ['speed'] : ['speed', 'rpm'];
+}
+function perfTargets(){
+  return us() ? [['0–30 mph', 30 * KM_PER_MI], ['0–60 mph', 60 * KM_PER_MI]] : [['0–50 km/h', 50], ['0–100 km/h', 100]];
+}
+const brakeFrom = () => us() ? 60 * KM_PER_MI : 100;
+function perfArm(mode){
+  Object.assign(perf, { mode, phase: 'wait', samples: [], start: null, dist: 0, marks: {}, peakHp: 0, trap: null });
+  $('pCancel').hidden = false; $('pArmAccel').disabled = $('pArmBrake').disabled = true;
+  perfShow();
+}
+function perfCancel(){
+  perf.mode = null; perf.phase = null;
+  $('pCancel').hidden = true; $('pArmAccel').disabled = $('pArmBrake').disabled = !state.connected;
+  perfShow();
+}
+function perfShow(extra){
+  const kmh = state.values.speed, u = us();
+  const spd = kmh == null ? '—' : Math.round(u ? kmh / KM_PER_MI : kmh);
+  if (!perf.mode) { $('pBig').textContent = '—'; $('pSub').textContent = state.connected ? 'Arm a timer to start.' : 'Connect, then arm a timer.'; return; }
+  if (perf.phase === 'wait') {
+    $('pBig').textContent = spd;
+    $('pSub').textContent = perf.mode === 'accel'
+      ? (kmh > 0.5 ? 'Come to a full stop to start.' : 'Ready. Timer starts when you move.')
+      : `Get above ${u ? '60 mph' : '100 km/h'}, then brake to a stop.`;
+  } else if (perf.phase === 'run') {
+    const t = (performance.now() - perf.start) / 1000;
+    $('pBig').textContent = t.toFixed(1) + ' s';
+    $('pSub').textContent = `${spd} ${u ? 'mph' : 'km/h'} · ${(u ? perf.dist / 1609.344 : perf.dist / 1000).toFixed(2)} ${u ? 'mi' : 'km'}` + (extra ? ' · ' + extra : '');
+  }
+}
+function perfOnSpeed(t, kmh){
+  if (!perf.mode) return;
+  const s = perf.samples, prev = s[s.length - 1];
+  s.push({ t, v: kmh });
+  if (s.length > 400) s.shift();
+  if (perf.mode === 'accel') {
+    if (perf.phase === 'wait') {
+      if (kmh > 0.5 && prev && prev.v <= 0.5) { perf.phase = 'launch'; perf.zeroT = prev.t; }
+    } else if (perf.phase === 'launch') {
+      // Two moving readings: extrapolate back to the moment of launch.
+      const p1 = s[s.length - 2], p2 = s[s.length - 1], a = (p2.v - p1.v) / (p2.t - p1.t);
+      perf.start = a > 0 ? Math.max(perf.zeroT, p1.t - p1.v / a) : perf.zeroT;
+      perf.dist = (p1.v / 3.6) * (p1.t - perf.start) / 2000 + ((p1.v + p2.v) / 2 / 3.6) * (p2.t - p1.t) / 1000;
+      perf.phase = 'run';
+    } else if (perf.phase === 'run' && prev) {
+      const dtS = (t - prev.t) / 1000, d0 = perf.dist;
+      perf.dist += (prev.v + kmh) / 2 / 3.6 * dtS;
+      // Rough wheel horsepower: mass × acceleration × speed. Acceleration is
+      // measured over at least 0.7 s; speed only comes in whole km/h, so
+      // closer readings exaggerate it.
+      let k = s.length - 2;
+      while (k > 0 && t - s[k].t < 700) k--;
+      const old = s[k];
+      if (old && t - old.t >= 700 && old.t >= perf.start) {
+        const a = (kmh - old.v) / 3.6 / ((t - old.t) / 1000), vms = (kmh + old.v) / 2 / 3.6, hp = settings.weightKg * a * vms / 745.7;
+        if (hp > perf.peakHp && hp < 2000 && kmh < 140) perf.peakHp = hp;
+      }
+      for (const [name, target] of perfTargets()) if (!perf.marks[name] && prev.v < target && kmh >= target)
+        perf.marks[name] = (prev.t + (t - prev.t) * (target - prev.v) / (kmh - prev.v) - perf.start) / 1000;
+      if (!perf.marks.quarter && d0 < QUARTER_M && perf.dist >= QUARTER_M) {
+        const f = (QUARTER_M - d0) / (perf.dist - d0);
+        perf.marks.quarter = (prev.t + (t - prev.t) * f - perf.start) / 1000; perf.trap = prev.v + (kmh - prev.v) * f;
+      }
+      const elapsed = (t - perf.start) / 1000;
+      if (kmh < 1 || elapsed > 60 || (perf.marks.quarter && kmh < prev.v - 2)) perfFinish();
+    }
+  } else if (perf.mode === 'brake') {
+    const from = brakeFrom();
+    if (perf.phase === 'wait' && prev && prev.v >= from && kmh < from) {
+      perf.phase = 'run'; perf.start = prev.t + (t - prev.t) * (prev.v - from) / (prev.v - kmh);
+      perf.dist = (from + kmh) / 2 / 3.6 * (t - perf.start) / 1000;
+    } else if (perf.phase === 'run' && prev) {
+      perf.dist += (prev.v + kmh) / 2 / 3.6 * (t - prev.t) / 1000;
+      if (kmh < 0.5) perfFinish();
+      else if (kmh > prev.v + 3) { perf.phase = 'wait'; perf.dist = 0; }   // let off the brake: start over
+    }
+  }
+  perfShow();
+}
+function perfFinish(){
+  const u = us(), r = { when: Date.now(), mode: perf.mode };
+  if (perf.mode === 'accel') {
+    for (const [name] of perfTargets()) if (perf.marks[name] != null) r[name] = +perf.marks[name].toFixed(2);
+    if (perf.marks.quarter != null) { r.quarter = +perf.marks.quarter.toFixed(2); r.trapKmh = perf.trap; }
+    if (perf.peakHp > 0) r.hp = Math.round(perf.peakHp);
+  } else {
+    r.brakeT = +((performance.now() - perf.start) / 1000).toFixed(2); r.brakeM = perf.dist; r.fromKmh = brakeFrom();
+  }
+  const list = JSON.parse(localStorage.getItem('obd-runs') || '[]'); list.unshift(r); localStorage.setItem('obd-runs', JSON.stringify(list.slice(0, 20)));
+  perfCancel();
+  $('pBig').textContent = perf.mode === 'brake' || r.mode === 'brake' ? r.brakeT + ' s' : (r['0–60 mph'] ?? r['0–100 km/h'] ?? r.quarter ?? '—') + (typeof (r['0–60 mph'] ?? r['0–100 km/h'] ?? r.quarter) === 'number' ? ' s' : '');
+  $('pSub').textContent = 'Run saved below.';
+  perfRenderResults();
+}
+function perfRenderResults(){
+  const list = JSON.parse(localStorage.getItem('obd-runs') || '[]'), u = us(), out = $('pResults');
+  if (!list.length) { out.innerHTML = '<p class="empty">No runs yet.</p>'; return; }
+  const sp = k => k == null ? '—' : Math.round(u ? k / KM_PER_MI : k) + (u ? ' mph' : ' km/h');
+  const rows = list.map(r => {
+    const d = new Date(r.when).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    if (r.mode === 'brake') return `<tr><td>${d}</td><td>${sp(r.fromKmh)}–0</td><td>${r.brakeT.toFixed(2)} s · ${u ? Math.round(r.brakeM * 3.28084) + ' ft' : Math.round(r.brakeM) + ' m'}</td></tr>`;
+    const parts = Object.keys(r).filter(k => k.startsWith('0–')).map(k => `${k}: ${r[k].toFixed(2)} s`);
+    if (r.quarter) parts.push(`¼ mi: ${r.quarter.toFixed(2)} s @ ${sp(r.trapKmh)}`);
+    if (r.hp) parts.push(`~${u ? r.hp : Math.round(r.hp * 0.7457)} ${u ? 'whp' : 'kW'}`);
+    return `<tr><td>${d}</td><td>Acceleration</td><td>${parts.join(' · ') || 'stopped early'}</td></tr>`;
+  }).join('');
+  out.innerHTML = `<table class="res"><tr><th>When</th><th>Run</th><th>Result</th></tr>${rows}</table><div class="toolbar sect"><button class="btn small" id="pClear">Clear results</button></div>`;
+  $('pClear').onclick = () => { if (confirm('Delete all saved runs?')) { localStorage.removeItem('obd-runs'); perfRenderResults(); } };
+}
+$('pArmAccel').onclick = () => perfArm('accel');
+$('pArmBrake').onclick = () => perfArm('brake');
+$('pCancel').onclick = perfCancel;
+setInterval(() => { if (perf.phase === 'run') perfShow(); }, 100);
+
+/* ───────────── Alerts ───────────── */
+// Limits are stored in the vehicle's own units (°C, km/h, kPa) so switching
+// mph/°F doesn't change them.
+const DEFAULT_ALERTS = [
+  { id: 'coolant', cmp: '>', v: (235 - 32) * 5 / 9, on: true }, { id: 'transTemp', cmp: '>', v: (220 - 32) * 5 / 9, on: true },
+  { id: 'volts', cmp: '<', v: 12.0, on: true, running: true }, { id: 'rpm', cmp: '>', v: 5600, on: true },
+  { id: 'fuel', cmp: '<', v: 10, on: true }, { id: 'oil', cmp: '>', v: (260 - 32) * 5 / 9, on: true },
+  { id: 'speed', cmp: '>', v: 80 * 1.609344, on: false },
+];
+if (!settings.alerts) settings.alerts = DEFAULT_ALERTS;
+const alertState = {};
+let audioCtx = null;
+function beep(){
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const t = audioCtx.currentTime;
+    for (const [i, f] of [[0, 880], [0.22, 660], [0.44, 880]]) {
+      const o = audioCtx.createOscillator(), gn = audioCtx.createGain();
+      o.frequency.value = f; o.type = 'square'; gn.gain.setValueAtTime(0.0001, t + i);
+      gn.gain.exponentialRampToValueAtTime(0.25, t + i + 0.02); gn.gain.exponentialRampToValueAtTime(0.0001, t + i + 0.18);
+      o.connect(gn).connect(audioCtx.destination); o.start(t + i); o.stop(t + i + 0.2);
+    }
+  } catch {}
+  try { navigator.vibrate && navigator.vibrate([300, 120, 300]); } catch {}
+}
+function showAlert(text){ $('alertText').textContent = text; $('alertBar').hidden = false; }
+$('alertOk').onclick = () => { $('alertBar').hidden = true; };
+function alertsTick(){
+  const now = Date.now(), running = (state.values.rpm || 0) > 400;
+  for (const r of settings.alerts) {
+    if (!r.on) continue;
+    const g = gaugeById(r.id), raw = state.values[r.id], st = alertState[r.id] = alertState[r.id] || { n: 0, active: false, last: 0 };
+    if (!g || raw == null || (r.running && !running)) { st.n = 0; continue; }
+    const over = r.cmp === '>' ? raw > r.v : raw < r.v;
+    const clear = r.cmp === '>' ? raw < r.v - Math.abs(r.v) * 0.03 : raw > r.v + Math.abs(r.v) * 0.03;
+    st.n = over ? st.n + 1 : 0;
+    if (st.n >= 2 && (!st.active || now - st.last > 60000)) {
+      st.active = true; st.last = now;
+      const v = toDisplay(g, raw);
+      showAlert(`${g.label} ${r.cmp === '>' ? 'high' : 'low'}: ${g.fmt(v, us())} ${g.unit(us())}`);
+      beep();
+      log('info', 'Alert: ' + $('alertText').textContent);
+    } else if (st.active && clear) st.active = false;
+  }
+}
+function alertsUi(){
+  const box = $('aRules'); box.innerHTML = '';
+  settings.alerts.forEach(r => {
+    const g = gaugeById(r.id); if (!g) return;
+    const row = document.createElement('div'); row.className = 'rule';
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = r.on; cb.setAttribute('aria-label', 'Enable ' + g.label);
+    const lab = document.createElement('div');
+    lab.innerHTML = `<b></b><div class="muted"></div>`;
+    lab.querySelector('b').textContent = g.label;
+    lab.querySelector('.muted').textContent = (state.connected && !availAny(g) ? 'Not reported by this vehicle' : (r.cmp === '>' ? 'Alert above' : 'Alert below') + (r.running ? ', engine running' : ''));
+    const cmp = document.createElement('div'); cmp.textContent = r.cmp === '>' ? 'above' : 'below'; cmp.className = 'muted';
+    const inp = document.createElement('input'); inp.type = 'number'; inp.step = 'any'; inp.inputMode = 'decimal';
+    inp.value = +toDisplay(g, r.v).toFixed(1);
+    const unit = document.createElement('span'); unit.className = 'muted'; unit.textContent = ' ' + g.unit(us());
+    const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.alignItems = 'center'; wrap.append(inp, unit);
+    cb.onchange = () => { r.on = cb.checked; saveSettings(); };
+    inp.onchange = () => { const v = +inp.value; if (isFinite(v)) { r.v = toRaw(g, v); saveSettings(); } };
+    row.append(cb, lab, cmp, wrap); box.append(row);
+  });
+}
+$('aTest').onclick = () => { beep(); showAlert('Test alert: this is what an alert looks and sounds like.'); };
+// Audio may only start after a tap; unlock it on the first one.
+document.addEventListener('pointerdown', () => { try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume(); } catch {} }, { once: true });
+
+buildDash(); fuelSettingsUi(); fuelRender(); perfRenderResults(); alertsUi();
 
 /* ───────────── Installable app ───────────── */
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {

@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#080B0A">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="OBD Reader">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>OBD Reader</title>
 <style>
 :root{
@@ -29,6 +35,7 @@ h1 span{color:var(--accent)}
 .btn{border:1px solid var(--line);background:var(--card-2);border-radius:999px;padding:9px 16px;
   cursor:pointer;font-weight:600;white-space:nowrap}
 .btn:hover:not(:disabled){background:#22302F}
+.btn[hidden]{display:none}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .btn.primary:hover:not(:disabled){background:#2CF3B4}
@@ -113,6 +120,7 @@ select{background:var(--card-2);border:1px solid var(--line);border-radius:999px
       <option value="us">mph · °F</option>
       <option value="metric">km/h · °C</option>
     </select>
+    <button class="btn" id="installBtn" hidden>Install app</button>
     <button class="btn" id="demoBtn">Demo</button>
     <button class="btn primary" id="connectBtn">Connect</button>
   </header>
@@ -191,6 +199,7 @@ select{background:var(--card-2);border:1px solid var(--line);border-radius:999px
     <p><b>Clearing codes</b> turns off the check-engine light, but the light comes back if the fault is still there. It also resets your emissions readiness monitors, so don't clear codes right before an inspection.</p>
     <p><b>Not sure your dongle is BLE?</b> Press Connect with the dongle plugged in and the key ON. If it shows up in the list, it's BLE and will work here. If it never appears, but your phone can pair with it in Bluetooth settings (often with a PIN like 1234), it's Classic Bluetooth. Web pages can't reach Classic dongles, so that would need an Android app instead.</p>
     <p><b>If it won't connect:</b> close any other OBD app on the phone (only one app can hold the dongle at a time), then unplug the dongle for 10 seconds. The Console tab shows exactly what the adapter is answering.</p>
+    <p><b>Install it as an app:</b> on Android, tap <b>Install app</b> at the top (or Chrome's ⋮ menu → <b>Install app</b> / <b>Add to Home screen</b>). It gets its own icon, opens full screen, and still opens with no signal. On iPhone, open this page in the Bluefy browser for Bluetooth.</p>
     <p class="muted">Standard OBD2 covers engine and emissions data. It works on any car or light truck sold in the US from 1996 on, of any make. On GM vehicles the Trouble codes tab can also read the ABS module, and Live data adds gear and transmission temperature. Airbag and tire-pressure codes on GM trucks sit on a separate GM-only wire that ELM327 adapters can't reach.</p>
   </section>
 </div>
@@ -1342,6 +1351,21 @@ for (const t of document.querySelectorAll('.tab')) t.onclick = () => {
   for (const p of document.querySelectorAll('.panel')) p.hidden = p.id !== 'p-' + t.dataset.tab;
 };
 buildGauges();
+
+/* ───────────── Installable app ───────────── */
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  navigator.serviceWorker.register('/sw.js').catch(e => log('err', 'Offline support unavailable: ' + e.message));
+}
+let installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; $('installBtn').hidden = false; });
+window.addEventListener('appinstalled', () => { installPrompt = null; $('installBtn').hidden = true; log('info', 'Installed as an app'); });
+$('installBtn').onclick = async () => {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  const { outcome } = await installPrompt.userChoice;
+  if (outcome === 'accepted') $('installBtn').hidden = true;
+  installPrompt = null;
+};
 
 // Exposed for testing the parsers from the browser console.
 window.OBD = { parseMessages, parseDtcs, parseVin, decodeDtc, describeDtc, parseGmA9 };

@@ -77,6 +77,10 @@ h1 span{color:var(--accent)}
 .dtc .d{flex:1;color:var(--ink-2);line-height:1.4}
 .dtc a{color:var(--accent-2);font-size:13px;text-decoration:none;white-space:nowrap}
 .empty{color:var(--ink-3);padding:6px 2px}
+.dtc .st{display:block;font-size:13px;color:var(--ink-3);margin-top:3px}
+.beta{font-size:11px;letter-spacing:.04em;text-transform:none;padding:2px 8px;border-radius:999px;margin-left:6px;
+  background:rgba(0,217,255,.12);color:var(--accent-2);vertical-align:middle}
+.abs{margin-top:26px;padding-top:6px;border-top:1px solid var(--line)}
 .ok{color:var(--accent)}
 #log{font-family:var(--mono);font-size:12.5px;background:#030605;border:1px solid var(--line);border-radius:var(--r-s);
   padding:12px;height:52vh;overflow:auto;white-space:pre-wrap;word-break:break-all;margin:0}
@@ -139,6 +143,16 @@ select{background:var(--card-2);border:1px solid var(--line);border-radius:999px
       <button class="btn danger" id="clearBtn" disabled>Clear codes</button>
     </div>
     <div id="codeOut"><p class="empty">Connect, then press <b>Read codes</b>.</p></div>
+
+    <div class="abs">
+      <h3>ABS / traction control <span class="beta">GM · experimental</span></h3>
+      <p class="muted">Reads the brake module (EBCM) using GM's own diagnostic commands. For GM trucks and SUVs from about 2007 on whose protocol shows CAN 11-bit 500k.</p>
+      <div class="toolbar">
+        <button class="btn primary" id="absReadBtn" disabled>Read ABS codes</button>
+        <button class="btn danger" id="absClearBtn" disabled>Clear ABS codes</button>
+      </div>
+      <div id="absOut"></div>
+    </div>
   </section>
 
   <section class="panel" id="p-console" hidden>
@@ -159,7 +173,7 @@ select{background:var(--card-2);border:1px solid var(--line);border-radius:999px
     <p><b>Clearing codes</b> turns off the check-engine light, but the light comes back if the fault is still there. It also resets your emissions readiness monitors, so don't clear codes right before an inspection.</p>
     <p><b>Not sure your dongle is BLE?</b> Press Connect with the dongle plugged in and the key ON. If it shows up in the list, it's BLE and will work here. If it never appears, but your phone can pair with it in Bluetooth settings (often with a PIN like 1234), it's Classic Bluetooth. Web pages can't reach Classic dongles, so that would need an Android app instead.</p>
     <p><b>If it won't connect:</b> close any other OBD app on the phone (only one app can hold the dongle at a time), then unplug the dongle for 10 seconds. The Console tab shows exactly what the adapter is answering.</p>
-    <p class="muted">Standard OBD2 covers engine and emissions data. ABS, airbag and other maker-specific systems aren't included.</p>
+    <p class="muted">Standard OBD2 covers engine and emissions data. On GM vehicles the Trouble codes tab can also read the ABS module. Airbag and tire-pressure codes on GM trucks sit on a separate GM-only wire that ELM327 adapters can't reach.</p>
   </section>
 </div>
 
@@ -236,6 +250,14 @@ class DemoTransport {
     if (cmd === 'ATZ') return '\r\rELM327 v1.5';
     if (cmd === 'ATI') return 'ELM327 v1.5';
     if (cmd === 'ATDPN') return 'A6';
+    if (cmd.startsWith('ATSH')) { this.hdr = cmd.slice(4); return 'OK'; }
+    if (this.hdr === '243' && !cmd.startsWith('AT')) {
+      if (cmd.startsWith('03A981')) return this.abs !== false
+        ? '8140355A18000000\r8142670492000000\r8100000000000000'
+        : '8100000000000000';
+      if (cmd === '04') { this.abs = false; return '44'; }
+      return 'NO DATA';
+    }
     if (cmd === 'ATRV') return (14.1 + Math.random() * .2).toFixed(1) + 'V';
     if (cmd.startsWith('AT')) return 'OK';
     const t = (Date.now() - this.t0) / 1000;
@@ -424,6 +446,12 @@ const DTC_TEXT = {
   P2187:'System too lean at idle (bank 1)', P2188:'System too rich at idle (bank 1)', P2195:'O2 sensor signal stuck lean (bank 1, sensor 1)',
   P2196:'O2 sensor signal stuck rich (bank 1, sensor 1)', P2270:'O2 sensor signal stuck lean (bank 1, sensor 2)',
   P2A00:'O2 sensor circuit range/performance (bank 1, sensor 1)', U0100:'Lost communication with engine computer',
+  C0035:'Left front wheel speed sensor circuit', C0040:'Right front wheel speed sensor circuit',
+  C0045:'Left rear wheel speed sensor circuit', C0050:'Right rear wheel speed sensor circuit',
+  C0110:'ABS pump motor circuit', C0161:'ABS/traction brake switch circuit', C0186:'Lateral accelerometer sensor circuit',
+  C0196:'Yaw rate sensor circuit', C0265:'ABS (EBCM) relay circuit', C0267:'ABS pump motor circuit open or shorted',
+  C0455:'Steering wheel position sensor circuit', C0550:'ABS control module (EBCM) internal fault',
+  C0561:'Stability system disabled; fault information stored', C0710:'Steering position signal',
   U0101:'Lost communication with transmission computer', U0121:'Lost communication with ABS module', U0140:'Lost communication with body module',
 };
 function describeDtc(code){
@@ -432,6 +460,129 @@ function describeDtc(code){
   if (code[1] !== '0' && code[1] !== '2') return 'Manufacturer-specific code. Look it up for your make.';
   const area = { P: 'Engine / transmission', C: 'Chassis', B: 'Body', U: 'Network' }[code[0]];
   return area + ' code. Not in the built-in list; tap Look up.';
+}
+
+/* ───────────── GM module codes (GMLAN service $A9) ───────────── */
+// GM modules other than the engine computer don't answer generic mode 03.
+// They report codes with GM's ReadDiagnosticInformation ($A9) service: the
+// request goes to the module's address and each code comes back as its own
+// unacknowledged frame on address + 0x300, laid out as
+// 81 <dtc hi> <dtc lo> <symptom> <status>.
+const GM_MODULES = {
+  abs: { name: 'ABS / brake module', req: '243', resp: '643', report: '543' },
+};
+// Status bits: 7 warning light requested, 4 history, 3 failed since cleared, 1 current.
+const GM_FAULT_BITS = 0x80 | 0x10 | 0x08 | 0x02;
+
+function parseGmA9(raw, cmd){
+  const { msgs } = parseMessages(raw, cmd);
+  const found = new Map();
+  let answered = false, rejected = null;
+  for (let m of msgs) {
+    if (m[1] === 0x7F && m[2] === 0xA9) m = m.slice(1);  // negative reply with a length byte
+    if (m[0] === 0x7F && m[1] === 0xA9) { answered = true; rejected = m[2]; continue; }
+    if (m[0] !== 0x81 || m.length < 5) continue;
+    answered = true;
+    const [, hi, lo, symptom, status] = m;
+    if (!hi && !lo) continue;                 // end of list / no codes
+    if (!(status & GM_FAULT_BITS)) continue;  // supported by the module but never failed
+    const code = decodeDtc(hi, lo);
+    const row = found.get(code) || { code, status: 0, symptoms: new Set() };
+    row.status |= status; row.symptoms.add(symptom);
+    found.set(code, row);
+  }
+  return { answered, rejected, codes: [...found.values()] };
+}
+
+function gmStatusText(st){
+  const t = [];
+  if (st & 0x02) t.push('Active now');
+  else if (st & 0x10) t.push('History: not active right now');
+  else if (st & 0x08) t.push('Failed since codes were last cleared');
+  if (st & 0x80) t.push('turned on a warning light');
+  return t.join(' · ');
+}
+
+async function readGmCodes(mod){
+  const e = state.elm;
+  try {
+    // Raw CAN frames, addressed to the module, listening on its report address.
+    for (const c of ['ATCAF0', 'ATSH' + mod.req, 'ATCRA' + mod.report, 'ATAT0', 'ATSTFF']) await e.send(c);
+    // Mask 12 asks for current and history codes; FF (every code it knows) is the fallback.
+    for (const mask of ['12', 'FF']) {
+      const cmd = '03A981' + mask;
+      let raw = '';
+      try { raw = await e.send(cmd, 8000); } catch (err) { log('err', err.message); }
+      const res = parseGmA9(raw, cmd);
+      if (res.answered && res.rejected == null) return res;
+      if (res.rejected != null) log('info', mod.name + ' refused mask ' + mask + ' (reason ' + res.rejected.toString(16).toUpperCase() + ')');
+    }
+    return { answered: false, codes: [] };
+  } finally {
+    for (const c of ['ATCRA', 'ATCAF1', 'ATSH7DF', 'ATST32', 'ATAT1']) { try { await e.send(c); } catch {} }
+  }
+}
+
+async function clearGmCodes(mod){
+  const e = state.elm;
+  try {
+    for (const c of ['ATSH' + mod.req, 'ATCRA' + mod.resp]) await e.send(c);
+    const r = await e.send('04', 8000);
+    return parseMessages(r, '04').msgs.some(m => m[0] === 0x44);
+  } finally {
+    for (const c of ['ATCRA', 'ATSH7DF']) { try { await e.send(c); } catch {} }
+  }
+}
+
+function gmProtocolOk(out){
+  if (state.proto === '6') return true;
+  out.innerHTML = '';
+  const p = document.createElement('p'); p.className = 'empty';
+  p.textContent = "This only works on vehicles whose protocol shows CAN 11-bit 500k (most GM trucks and SUVs from 2007 on). Yours reports a different protocol.";
+  out.append(p);
+  return false;
+}
+
+async function readAbs(){
+  const out = $('absOut'), mod = GM_MODULES.abs;
+  if (!gmProtocolOk(out)) return;
+  const wasPolling = state.polling; await stopPolling();
+  out.innerHTML = '<p class="empty">Reading the ABS module…</p>';
+  let res;
+  try { res = await readGmCodes(mod); } catch (e) { log('err', e.message); res = { answered: false, codes: [] }; }
+  out.innerHTML = '';
+  if (!res.answered) {
+    const p = document.createElement('p'); p.className = 'empty';
+    p.textContent = "The ABS module didn't answer. This only works on GM vehicles. If yours is GM, open the Console tab, take a screenshot and send it so the address can be checked.";
+    out.append(p);
+  } else if (!res.codes.length) {
+    const p = document.createElement('p'); p.className = 'empty ok'; p.textContent = 'None. The ABS module answered and has no codes stored.';
+    out.append(p);
+  } else {
+    for (const c of res.codes) {
+      const row = document.createElement('div'); row.className = 'dtc';
+      const b = document.createElement('b'); b.textContent = c.code;
+      const d = document.createElement('span'); d.className = 'd'; d.textContent = describeDtc(c.code);
+      const st = document.createElement('span'); st.className = 'st';
+      st.textContent = gmStatusText(c.status) + ' · symptom ' + [...c.symptoms].map(x => x.toString(16).toUpperCase().padStart(2, '0')).join(', ');
+      d.append(st);
+      const a = document.createElement('a'); a.href = 'https://www.google.com/search?q=' + encodeURIComponent(c.code + ' GM ABS code'); a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Look up ↗';
+      row.append(b, d, a); out.append(row);
+    }
+  }
+  if (wasPolling) startPolling();
+}
+
+async function clearAbs(){
+  const out = $('absOut'), mod = GM_MODULES.abs;
+  if (!gmProtocolOk(out)) return;
+  if (!confirm('Clear the ABS module codes?\n\nIf the fault is still there, the ABS and traction lights will come back on, usually as soon as the truck moves.')) return;
+  const wasPolling = state.polling; await stopPolling();
+  let ok = false;
+  try { ok = await clearGmCodes(mod); } catch (e) { log('err', e.message); }
+  log(ok ? 'info' : 'err', ok ? 'ABS codes cleared' : "The ABS module didn't confirm the clear");
+  await readAbs();
+  if (wasPolling && !state.polling) startPolling();
 }
 
 /* ───────────── App ───────────── */
@@ -451,7 +602,7 @@ function log(kind, text){
 function setStatus(s, text){ $('status').dataset.s = s; $('statusText').textContent = text; }
 function setConnected(on){
   state.connected = on;
-  for (const id of ['pollBtn', 'recBtn', 'readBtn', 'clearBtn', 'sendBtn']) $(id).disabled = !on;
+  for (const id of ['pollBtn', 'recBtn', 'readBtn', 'clearBtn', 'sendBtn', 'absReadBtn', 'absClearBtn']) $(id).disabled = !on;
   $('connectBtn').textContent = on ? 'Disconnect' : 'Connect';
   $('connectBtn').disabled = !on && !('bluetooth' in navigator);
   $('connectBtn').classList.toggle('primary', !on);
@@ -516,6 +667,7 @@ async function initAdapter(){
   try {
     const p = (await e.send('ATDPN')).replace(/[^0-9A-C]/gi, '').slice(-1).toUpperCase();
     const names = { 1: 'SAE J1850 PWM', 2: 'SAE J1850 VPW', 3: 'ISO 9141-2', 4: 'ISO 14230 KWP (5 baud)', 5: 'ISO 14230 KWP (fast)', 6: 'CAN 11-bit 500k', 7: 'CAN 29-bit 500k', 8: 'CAN 11-bit 250k', 9: 'CAN 29-bit 250k', A: 'SAE J1939', B: 'User CAN 1', C: 'User CAN 2' };
+    state.proto = p;
     $('vProto').textContent = names[p] || '—';
   } catch {}
   await refreshVehicle();
@@ -694,6 +846,8 @@ $('recBtn').onclick = () => {
 $('csvBtn').onclick = downloadCsv;
 $('readBtn').onclick = readCodes;
 $('clearBtn').onclick = clearCodes;
+$('absReadBtn').onclick = readAbs;
+$('absClearBtn').onclick = clearAbs;
 $('consoleForm').onsubmit = async e => {
   e.preventDefault();
   const cmd = $('cmdIn').value.trim();
@@ -710,7 +864,7 @@ for (const t of document.querySelectorAll('.tab')) t.onclick = () => {
 buildGauges();
 
 // Exposed for testing the parsers from the browser console.
-window.OBD = { parseMessages, parseDtcs, parseVin, decodeDtc, describeDtc };
+window.OBD = { parseMessages, parseDtcs, parseVin, decodeDtc, describeDtc, parseGmA9 };
 </script>
 </body>
 </html>

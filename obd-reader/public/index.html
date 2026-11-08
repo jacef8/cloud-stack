@@ -1171,6 +1171,10 @@ async function probeExtras(){
   state.transTemp = false; state.transHdr = null;
   state.gearEst = { samples: [], lastR: null, n: 0, fit: null };
   if (state.proto === '6' && state.isGM) {
+    // Outside air and coolant, to sanity-check the transmission reading.
+    let amb = null, cool = null;
+    try { const d = await query('01', 0x46, 2000); if (d && d.length) amb = d[0] - 40; } catch {}
+    try { const d = await query('01', 0x05, 2000); if (d && d.length) cool = d[0] - 40; } catch {}
     try {
       await setHeader('7E0');
       if (state.gearSrc !== 'std') { const d = await query22(0x199A, 2000).catch(() => null); if (d && d.length) state.gearSrc = 'gm'; }
@@ -1179,7 +1183,9 @@ async function probeExtras(){
       for (const h of ['7E2', '7E1', '7E0']) {
         await setHeader(h);
         const t = await query22(0x1940, 2000).catch(() => null);
-        if (t && t.length) { state.transTemp = true; state.transHdr = h; break; }
+        if (!t || !t.length) continue;
+        if (!transPlausible(t[0] - 40, amb, cool)) { log('info', `Ignored transmission temp from ${h}: ${t[0] - 40} °C is colder than both outside air and coolant`); continue; }
+        state.transTemp = true; state.transHdr = h; break;
       }
     } catch (e) { log('err', e.message); }
     finally { try { await setHeader('7DF'); } catch {} }
@@ -1257,10 +1263,34 @@ async function readGear(){
   return d && d.length ? d[0] : null;
 }
 
+// Transmission fluid can't be much colder than both the outside air and the
+// engine coolant. Some engine computers answer the GM request with a value
+// that isn't transmission temperature (a 2007 Avalanche reported 0 °C on a
+// warm day), so readings failing this check are not trusted.
+function transPlausible(c, amb, cool){
+  const refs = [amb, cool].filter(v => v != null);
+  return !refs.length || c >= Math.min(...refs) - 8;
+}
+let transBad = 0;
 async function readTransTemp(){
   const back = state.hdr;
-  try { await setHeader(state.transHdr || '7E2'); const d = await query22(0x1940); return d && d.length ? d[0] - 40 : null; }
+  let c = null;
+  try { await setHeader(state.transHdr || '7E2'); const d = await query22(0x1940); c = d && d.length ? d[0] - 40 : null; }
   finally { await setHeader(back); }
+  if (c == null) return null;
+  // Wait for outside air or coolant to be read before showing anything.
+  const canCheck = state.supported.has(0x46) || state.supported.has(0x05);
+  if (canCheck && state.values.ambient == null && state.values.coolant == null) return null;
+  if (!transPlausible(c, state.values.ambient, state.values.coolant)) {
+    if (++transBad >= 3) {
+      state.transTemp = false; delete state.values.transTemp; transBad = 0;
+      log('info', `Transmission temp hidden: it keeps reading ${c} °C, colder than outside air and coolant, so it isn't a real transmission reading`);
+      buildGauges(); buildDash();
+    }
+    return null;
+  }
+  transBad = 0;
+  return c;
 }
 
 async function refreshVehicle(){

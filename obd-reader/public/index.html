@@ -416,7 +416,7 @@ const KM2MI = k => k / 1.609344;
 const GAUGES = [
   { pid: 0x0C, id: 'rpm', label: 'Engine speed', big: true, dec: (a, b) => (256 * a + b) / 4, unit: () => 'rpm', max: 7000, fmt: v => Math.round(v).toLocaleString() },
   { pid: 0x0D, id: 'speed', label: 'Vehicle speed', big: true, dec: a => a, conv: (v, us) => us ? KM2MI(v) : v, unit: us => us ? 'mph' : 'km/h', max: us => us ? 100 : 160, fmt: v => Math.round(v) },
-  { id: 'gear', label: 'Gear', big: true, avail: () => !!state.gearSrc, read: () => readGear(), unit: () => '', csvUnit: 'gear', max: 0, fmt: v => String(v) },
+  { id: 'gear', label: 'Gear', big: true, avail: () => !!state.gearSrc, read: () => readGear(), unit: () => state.gearSrc === 'est' ? 'estimated' : '', csvUnit: 'gear', max: 0, fmt: v => String(v) },
   { id: 'transTemp', label: 'Transmission temp', avail: () => state.transTemp, read: () => readTransTemp(), slow: true, conv: (v, us) => us ? C2F(v) : v, unit: us => us ? '°F' : '°C', max: us => us ? 250 : 120, fmt: v => Math.round(v) },
   { pid: 0x05, id: 'coolant', label: 'Coolant temp', dec: a => a - 40, conv: (v, us) => us ? C2F(v) : v, unit: us => us ? '°F' : '°C', max: us => us ? 250 : 120, fmt: v => Math.round(v), slow: true },
   { pid: 0x11, id: 'throttle', label: 'Throttle', dec: a => a * 100 / 255, unit: () => '%', max: 100, fmt: v => Math.round(v) },
@@ -721,6 +721,7 @@ function titleCase(s){ return String(s || '').toLowerCase().replace(/\b[a-z]/g, 
 async function identifyVehicle(vin){
   const year = vinYear(vin), make = WMI[vin.slice(0, 3)] || WMI2[vin.slice(0, 2)];
   state.vehicle = make ? [year, make].filter(Boolean).join(' ') : (year ? year + ' vehicle' : null);
+  state.year = year; state.make = make || '';
   updateMakeUi();
   $('vName').textContent = state.vehicle || '—';
   try {
@@ -729,7 +730,7 @@ async function identifyVehicle(vin){
     const v = (await r.json()).Results[0];
     const eng = v.DisplacementL ? (+v.DisplacementL).toFixed(1) + 'L' : '';
     const name = [v.ModelYear, titleCase(v.Make), v.Model, v.Trim || v.Series, eng].filter(Boolean).join(' ');
-    if (v.Make && v.Model) { state.vehicle = name; $('vName').textContent = name; updateMakeUi(); }
+    if (v.Make && v.Model) { state.vehicle = name; state.make = titleCase(v.Make); $('vName').textContent = name; updateMakeUi(); }
   } catch (e) { log('info', 'Online VIN lookup unavailable; using the VIN year and maker'); }
 }
 
@@ -941,21 +942,93 @@ async function query22(did, timeout){
 // "current gear" (mode 22, 199A). Transmission temp: GM mode 22, 1940 on the
 // transmission computer (7E2).
 async function probeExtras(){
-  state.gearSrc = state.supported.has(0xA4) ? 'std' : null;
-  state.transTemp = false;
-  if (state.proto !== '6' || !state.isGM) return;
-  try {
-    await setHeader('7E0');
-    if (!state.gearSrc) { const d = await query22(0x199A, 2000).catch(() => null); if (d && d.length) state.gearSrc = 'gm'; }
-    await setHeader('7E2');
-    const t = await query22(0x1940, 2000).catch(() => null);
-    if (t && t.length) state.transTemp = true;
-  } catch (e) { log('err', e.message); }
-  finally { try { await setHeader('7DF'); } catch {} }
-  log('info', 'Gear: ' + (state.gearSrc ? (state.gearSrc === 'gm' ? 'GM engine computer' : 'standard PID') : 'not reported') + ' · Transmission temp: ' + (state.transTemp ? 'yes' : 'not reported'));
+  // Standard gear PID if the vehicle has it, otherwise estimate from rpm and
+  // speed (any make). On GM, the engine computer's own gear reading wins.
+  state.gearSrc = state.supported.has(0xA4) ? 'std' : (state.supported.has(0x0C) && state.supported.has(0x0D) ? 'est' : null);
+  state.transTemp = false; state.transHdr = null;
+  state.gearEst = { samples: [], lastR: null, n: 0, fit: null };
+  if (state.proto === '6' && state.isGM) {
+    try {
+      await setHeader('7E0');
+      if (state.gearSrc !== 'std') { const d = await query22(0x199A, 2000).catch(() => null); if (d && d.length) state.gearSrc = 'gm'; }
+      // Transmission temp lives on the transmission computer on most GM
+      // trucks, on the engine computer on some.
+      for (const h of ['7E2', '7E1', '7E0']) {
+        await setHeader(h);
+        const t = await query22(0x1940, 2000).catch(() => null);
+        if (t && t.length) { state.transTemp = true; state.transHdr = h; break; }
+      }
+    } catch (e) { log('err', e.message); }
+    finally { try { await setHeader('7DF'); } catch {} }
+  }
+  const src = { std: 'standard PID', gm: 'GM engine computer', est: 'estimated from rpm and speed' }[state.gearSrc] || 'not available';
+  log('info', 'Gear: ' + src + ' · Transmission temp: ' + (state.transTemp ? 'yes (' + state.transHdr + ')' : 'not reported'));
+}
+
+/* Gear estimate: in a given gear, rpm per mph = gear ratio × C, where C
+   depends on axle ratio and tire size. Steady samples of rpm/mph are
+   collected while driving, then the transmission (from a short list that
+   fits the make and year) and C that best explain them are found. */
+const GEAR_SETS = {
+  '4L60E':  [3.06, 1.63, 1.00, 0.70], '4L80E': [2.48, 1.48, 1.00, 0.75],
+  '6L80':   [4.03, 2.36, 1.53, 1.15, 0.85, 0.67], '8L90': [4.56, 2.97, 2.08, 1.69, 1.27, 1.00, 0.85, 0.65],
+  '4R70W':  [2.84, 1.55, 1.00, 0.70], '5R110W': [3.11, 2.22, 1.55, 1.00, 0.71], '6R80': [4.17, 2.34, 1.52, 1.14, 0.87, 0.69],
+  '46RE':   [2.45, 1.45, 1.00, 0.69], '545RFE': [3.00, 1.67, 1.00, 0.75, 0.67], '65RFE': [3.23, 1.84, 1.41, 1.00, 0.82, 0.62],
+  '8HP':    [4.71, 3.14, 2.10, 1.67, 1.29, 1.00, 0.84, 0.67],
+  '4-speed': [2.80, 1.50, 1.00, 0.70], '5-speed': [3.50, 2.10, 1.40, 1.00, 0.80], '6-speed': [4.10, 2.40, 1.60, 1.20, 0.90, 0.70],
+};
+function gearCandidates(){
+  const y = state.year || 2010, m = state.make || '';
+  if (/GM|Chevrolet|GMC|Cadillac|Buick|Pontiac|Hummer|Saturn/.test(m))
+    return y < 2006 ? ['4L60E', '4L80E'] : y < 2014 ? ['4L60E', '6L80', '4L80E'] : y < 2019 ? ['6L80', '8L90'] : ['8L90', '6L80'];
+  if (/Ford/.test(m)) return y < 2009 ? ['4R70W', '5R110W'] : ['6R80', '5R110W'];
+  if (/Dodge|Ram|Chrysler|Jeep/.test(m)) return y < 2013 ? ['545RFE', '65RFE', '46RE'] : ['8HP', '65RFE'];
+  return ['4-speed', '5-speed', '6-speed'];
+}
+function fitGears(){
+  const ge = state.gearEst, xs = ge.samples;
+  if (xs.length < 30) return;
+  let lo = Infinity, hi = -Infinity;
+  for (const x of xs) { if (x < lo) lo = x; if (x > hi) hi = x; }
+  if (hi - lo < 0.3) return;  // one gear seen so far: can't tell which
+  let best = null;
+  for (const name of gearCandidates()) {
+    const lr = GEAR_SETS[name].map(Math.log);
+    for (let lc = Math.log(20); lc <= Math.log(70); lc += 0.004) {
+      let cost = 0;
+      for (const x of xs) { let m = Infinity; for (const l of lr) { const d = x - lc - l; if (d * d < m) m = d * d; } cost += m; }
+      cost = cost / xs.length + 0.0004 * lr.length;  // fewer gears wins a tie
+      if (!best || cost < best.cost) best = { cost, C: Math.exp(lc), name };
+    }
+  }
+  if (best && best.cost < 0.012) {
+    const changed = !ge.fit || ge.fit.name !== best.name || Math.abs(ge.fit.C - best.C) / best.C > 0.03;
+    ge.fit = best;
+    if (changed) log('info', `Gear estimate: ${best.name}-type ratios, ${best.C.toFixed(1)} rpm per mph in 1:1 gear`);
+  }
+}
+function estimateGear(){
+  const ge = state.gearEst, rpm = state.values.rpm, kmh = state.values.speed;
+  if (rpm == null || kmh == null) return null;
+  const mph = kmh / 1.609344;
+  if (mph < 5 || rpm < 400) { ge.lastR = null; return mph < 2 ? 'Stopped' : '—'; }
+  const r = rpm / mph;
+  // Only learn from steady driving, not mid-shift.
+  if (ge.lastR && Math.abs(Math.log(r / ge.lastR)) < 0.04) {
+    ge.samples.push(Math.log(r));
+    if (ge.samples.length > 600) ge.samples.shift();
+    if (++ge.n % 10 === 0) fitGears();
+  }
+  ge.lastR = r;
+  if (!ge.fit) return 'Learning…';
+  const lr = Math.log(r) - Math.log(ge.fit.C), ratios = GEAR_SETS[ge.fit.name];
+  let g = 0;
+  for (let i = 1; i < ratios.length; i++) if (Math.abs(lr - Math.log(ratios[i])) < Math.abs(lr - Math.log(ratios[g]))) g = i;
+  return g + 1;
 }
 
 async function readGear(){
+  if (state.gearSrc === 'est') return estimateGear();
   if (state.gearSrc === 'std') { const d = await query('01', 0xA4); return d && d.length ? (d[0] >> 4) : null; }
   const d = await query22(0x199A);
   return d && d.length ? d[0] : null;
@@ -963,7 +1036,7 @@ async function readGear(){
 
 async function readTransTemp(){
   const back = state.hdr;
-  try { await setHeader('7E2'); const d = await query22(0x1940); return d && d.length ? d[0] - 40 : null; }
+  try { await setHeader(state.transHdr || '7E2'); const d = await query22(0x1940); return d && d.length ? d[0] - 40 : null; }
   finally { await setHeader(back); }
 }
 

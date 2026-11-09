@@ -545,11 +545,11 @@ const KM2MI = k => k / 1.609344;
 const GAUGES = [
   { pid: 0x0C, id: 'rpm', label: 'Engine speed', big: true, dec: (a, b) => (256 * a + b) / 4, unit: () => 'rpm', max: 7000, fmt: v => Math.round(v).toLocaleString() },
   { pid: 0x0D, id: 'speed', label: 'Vehicle speed', big: true, dec: a => a, conv: (v, us) => us ? KM2MI(v) : v, unit: us => us ? 'mph' : 'km/h', max: us => us ? 100 : 160, fmt: v => Math.round(v) },
-  { id: 'gear', label: 'Gear', big: true, avail: () => !!state.gearSrc, read: () => readGear(), unit: () => state.gearSrc === 'est' ? 'estimated' : '', csvUnit: 'gear', max: 0, fmt: v => String(v) },
+  { id: 'gear', label: 'Gear', big: true, avail: () => !!state.gearSrc, read: () => readGear(), unit: () => state.gearSrc !== 'est' ? '' : state.gearEst && state.gearEst.fit ? 'estimated' : gearProgress(), csvUnit: 'gear', max: 0, fmt: v => String(v) },
   { id: 'transTemp', label: 'Transmission temp', avail: () => state.transTemp, read: () => readTransTemp(), slow: true, conv: (v, us) => us ? C2F(v) : v, unit: us => us ? '°F' : '°C', max: us => us ? 250 : 120, fmt: v => Math.round(v) },
   { pid: 0x05, id: 'coolant', label: 'Coolant temp', dec: a => a - 40, conv: (v, us) => us ? C2F(v) : v, unit: us => us ? '°F' : '°C', max: us => us ? 250 : 120, fmt: v => Math.round(v), slow: true },
   { pid: 0x11, id: 'throttle', label: 'Throttle', dec: a => a * 100 / 255, unit: () => '%', max: 100, fmt: v => Math.round(v) },
-  { pid: 0x04, id: 'load', label: 'Engine load', dec: a => a * 100 / 255, unit: () => '%', max: 100, fmt: v => Math.round(v) },
+  { pid: 0x04, id: 'load', label: 'Engine load', dec: a => a * 100 / 255, unit: () => '%', max: 100, fmt: v => Math.round(v), slow: true },
   { pid: 0x2F, id: 'fuel', label: 'Fuel level', dec: a => a * 100 / 255, unit: () => '%', max: 100, fmt: v => Math.round(v), slow: true },
   { pid: 0x42, id: 'volts', label: 'Module voltage', dec: (a, b) => (256 * a + b) / 1000, unit: () => 'V', max: 16, fmt: v => v.toFixed(1), slow: true },
   { pid: 0x0F, id: 'iat', label: 'Intake air temp', dec: a => a - 40, conv: (v, us) => us ? C2F(v) : v, unit: us => us ? '°F' : '°C', max: us => us ? 200 : 90, fmt: v => Math.round(v), slow: true },
@@ -557,7 +557,7 @@ const GAUGES = [
   { pid: 0x46, id: 'ambient', label: 'Outside air temp', dec: a => a - 40, conv: (v, us) => us ? C2F(v) : v, unit: us => us ? '°F' : '°C', max: us => us ? 120 : 50, fmt: v => Math.round(v), slow: true },
   { pid: 0x0B, id: 'map', label: 'Manifold pressure', dec: a => a, conv: (v, us) => us ? v * 0.145038 : v, unit: us => us ? 'psi' : 'kPa', max: us => us ? 30 : 200, fmt: (v, us) => us ? v.toFixed(1) : Math.round(v) },
   { pid: 0x10, id: 'maf', label: 'Mass air flow', dec: (a, b) => (256 * a + b) / 100, unit: () => 'g/s', max: 200, fmt: v => v.toFixed(1) },
-  { pid: 0x0E, id: 'timing', label: 'Timing advance', dec: a => a / 2 - 64, unit: () => '°', max: 60, fmt: v => v.toFixed(1) },
+  { pid: 0x0E, id: 'timing', label: 'Timing advance', dec: a => a / 2 - 64, unit: () => '°', max: 60, fmt: v => v.toFixed(1), slow: true },
   { pid: 0x06, id: 'stft', label: 'Short fuel trim B1', dec: a => (a - 128) * 100 / 128, unit: () => '%', max: 25, fmt: v => (v > 0 ? '+' : '') + v.toFixed(1), slow: true },
   { pid: 0x07, id: 'ltft', label: 'Long fuel trim B1', dec: a => (a - 128) * 100 / 128, unit: () => '%', max: 25, fmt: v => (v > 0 ? '+' : '') + v.toFixed(1), slow: true },
   { pid: 0x1F, id: 'runtime', label: 'Run time', dec: (a, b) => 256 * a + b, unit: () => '', csvUnit: 's', max: 0, fmt: v => Math.floor(v / 60) + ':' + String(Math.floor(v % 60)).padStart(2, '0'), slow: true },
@@ -1174,6 +1174,12 @@ async function probeExtras(){
   state.gearSrc = state.supported.has(0xA4) ? 'std' : (state.supported.has(0x0C) && state.supported.has(0x0D) ? 'est' : null);
   state.transTemp = false; state.transHdr = null;
   state.gearEst = { samples: [], lastR: null, n: 0, fit: null };
+  if (state.gearSrc === 'est' && gearKey()) {
+    try {
+      const f = JSON.parse(localStorage.getItem(gearKey()) || 'null');
+      if (f && GEAR_SETS[f.name]) { state.gearEst.fit = f; log('info', `Gear estimate remembered for this VIN: ${f.name}-type ratios`); }
+    } catch {}
+  }
   if (state.proto === '6' && state.isGM) {
     // Outside air and coolant, to sanity-check the transmission reading.
     let amb = null, cool = null;
@@ -1218,26 +1224,42 @@ function gearCandidates(){
   if (/Dodge|Ram|Chrysler|Jeep/.test(m)) return y < 2013 ? ['545RFE', '65RFE', '46RE'] : ['8HP', '65RFE'];
   return ['4-speed', '5-speed', '6-speed'];
 }
+// Torque-converter slip only ever makes the engine turn faster than the gear
+// predicts, often 10-25% around town, so being high costs much less than
+// being low.
+const gearMiss = d => d > 0 ? Math.min(d * 0.35, 0.3) ** 2 : Math.min(-d, 0.3) ** 2;
+const GEAR_MIN_SAMPLES = 20, GEAR_MIN_SPREAD = 0.3;
+const gearKey = () => state.vin ? 'obd-gearfit-' + state.vin : null;
+function gearProgress(){
+  const xs = state.gearEst.samples;
+  if (!xs.length) return 'drive to start learning';
+  let lo = Infinity, hi = -Infinity; for (const x of xs) { if (x < lo) lo = x; if (x > hi) hi = x; }
+  if (hi - lo < GEAR_MIN_SPREAD) return 'learning · drive in a 2nd gear';
+  return 'learning ' + Math.min(99, Math.round(xs.length / GEAR_MIN_SAMPLES * 100)) + '%';
+}
 function fitGears(){
   const ge = state.gearEst, xs = ge.samples;
-  if (xs.length < 30) return;
+  if (xs.length < GEAR_MIN_SAMPLES) return;
   let lo = Infinity, hi = -Infinity;
   for (const x of xs) { if (x < lo) lo = x; if (x > hi) hi = x; }
-  if (hi - lo < 0.3) return;  // one gear seen so far: can't tell which
+  if (hi - lo < GEAR_MIN_SPREAD) return;  // one gear seen so far: can't tell which
   let best = null;
   for (const name of gearCandidates()) {
     const lr = GEAR_SETS[name].map(Math.log);
     for (let lc = Math.log(20); lc <= Math.log(70); lc += 0.004) {
       let cost = 0;
-      for (const x of xs) { let m = Infinity; for (const l of lr) { const d = x - lc - l; if (d * d < m) m = d * d; } cost += m; }
+      for (const x of xs) { let m = Infinity; for (const l of lr) { const e = gearMiss(x - lc - l); if (e < m) m = e; } cost += m; }
       cost = cost / xs.length + 0.0004 * lr.length;  // fewer gears wins a tie
       if (!best || cost < best.cost) best = { cost, C: Math.exp(lc), name };
     }
   }
-  if (best && best.cost < 0.012) {
+  if (best && best.cost < 0.02) {
     const changed = !ge.fit || ge.fit.name !== best.name || Math.abs(ge.fit.C - best.C) / best.C > 0.03;
     ge.fit = best;
-    if (changed) log('info', `Gear estimate: ${best.name}-type ratios, ${best.C.toFixed(1)} rpm per mph in 1:1 gear`);
+    if (changed) {
+      log('info', `Gear estimate: ${best.name}-type ratios, ${best.C.toFixed(1)} rpm per mph in 1:1 gear`);
+      const k = gearKey(); if (k) localStorage.setItem(k, JSON.stringify({ name: best.name, C: best.C }));
+    }
   }
 }
 function estimateGear(){
@@ -1247,7 +1269,7 @@ function estimateGear(){
   if (mph < 5 || rpm < 400) { ge.lastR = null; return mph < 2 ? 'Stopped' : '—'; }
   const r = rpm / mph;
   // Only learn from steady driving, not mid-shift.
-  if (ge.lastR && Math.abs(Math.log(r / ge.lastR)) < 0.04) {
+  if (ge.lastR && mph >= 8 && Math.abs(Math.log(r / ge.lastR)) < 0.06) {
     ge.samples.push(Math.log(r));
     if (ge.samples.length > 600) ge.samples.shift();
     if (++ge.n % 10 === 0) fitGears();
@@ -1256,7 +1278,7 @@ function estimateGear(){
   if (!ge.fit) return 'Learning…';
   const lr = Math.log(r) - Math.log(ge.fit.C), ratios = GEAR_SETS[ge.fit.name];
   let g = 0;
-  for (let i = 1; i < ratios.length; i++) if (Math.abs(lr - Math.log(ratios[i])) < Math.abs(lr - Math.log(ratios[g]))) g = i;
+  for (let i = 1; i < ratios.length; i++) if (gearMiss(lr - Math.log(ratios[i])) < gearMiss(lr - Math.log(ratios[g]))) g = i;
   return g + 1;
 }
 

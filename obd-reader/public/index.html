@@ -1396,6 +1396,22 @@ async function setHeader(h){
   state.hdr = h;
 }
 
+// Fuel sloshes in the tank, so a single fuel-level reading can be far off
+// (a 2007 Avalanche reported 2% for a moment at 18%). Show the median of the
+// last five readings instead. Every new reading is also counted, so alerts
+// only react to fresh readings, not to a stale value seen again.
+const SMOOTH = { fuel: 5 };
+const history = {}, readCount = {};
+function setValue(id, v){
+  readCount[id] = (readCount[id] || 0) + 1;
+  if (SMOOTH[id] && typeof v === 'number') {
+    const h = history[id] = history[id] || [];
+    h.push(v); if (h.length > SMOOTH[id]) h.shift();
+    v = [...h].sort((a, b) => a - b)[Math.floor(h.length / 2)];
+  }
+  state.values[id] = v;
+}
+
 async function pollLoop(){
   let cycle = 0;
   // GM's gear reading comes from the engine computer directly (7E0). Standard
@@ -1412,11 +1428,11 @@ async function pollLoop(){
       try {
         if (g.read) {
           const v = await g.read();
-          if (v != null) { state.values[g.id] = v; renderGauge(g); }
+          if (v != null) { setValue(g.id, v); renderGauge(g); }
         } else {
           const d = await query('01', g.pid);
           if (d && d.length) {
-            state.values[g.id] = g.dec(d[0], d[1] || 0); renderGauge(g);
+            setValue(g.id, g.dec(d[0], d[1] || 0)); renderGauge(g);
             if (g.id === 'speed') perfOnSpeed(performance.now(), state.values.speed);
           }
         }
@@ -1908,24 +1924,30 @@ function beep(){
   } catch {}
   try { navigator.vibrate && navigator.vibrate([300, 120, 300]); } catch {}
 }
-function showAlert(text){ $('alertText').textContent = text; $('alertBar').hidden = false; }
+function showAlert(text, id){ $('alertText').textContent = text; $('alertBar').dataset.id = id || ''; $('alertBar').hidden = false; }
 $('alertOk').onclick = () => { $('alertBar').hidden = true; };
 function alertsTick(){
   const now = Date.now(), running = (state.values.rpm || 0) > 400;
   for (const r of settings.alerts) {
     if (!r.on) continue;
-    const g = gaugeById(r.id), raw = state.values[r.id], st = alertState[r.id] = alertState[r.id] || { n: 0, active: false, last: 0 };
+    const g = gaugeById(r.id), raw = state.values[r.id], st = alertState[r.id] = alertState[r.id] || { n: 0, active: false, last: 0, seen: 0 };
     if (!g || raw == null || (r.running && !running)) { st.n = 0; continue; }
+    // Only judge a reading once (computed values like fuel economy have no count).
+    if (readCount[r.id] != null) { if (readCount[r.id] === st.seen) continue; st.seen = readCount[r.id]; }
     const over = r.cmp === '>' ? raw > r.v : raw < r.v;
     const clear = r.cmp === '>' ? raw < r.v - Math.abs(r.v) * 0.03 : raw > r.v + Math.abs(r.v) * 0.03;
     st.n = over ? st.n + 1 : 0;
     if (st.n >= 2 && (!st.active || now - st.last > 60000)) {
       st.active = true; st.last = now;
       const v = toDisplay(g, raw);
-      showAlert(`${g.label} ${r.cmp === '>' ? 'high' : 'low'}: ${g.fmt(v, us())} ${g.unit(us())}`);
+      showAlert(`${g.label} ${r.cmp === '>' ? 'high' : 'low'}: ${g.fmt(v, us())} ${g.unit(us())}`, r.id);
       beep();
       log('info', 'Alert: ' + $('alertText').textContent);
-    } else if (st.active && clear) st.active = false;
+    } else if (st.active && clear) {
+      st.active = false;
+      // Back to normal: take down this alert's banner.
+      if ($('alertBar').dataset.id === r.id) $('alertBar').hidden = true;
+    }
   }
 }
 function alertsUi(){
